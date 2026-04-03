@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Bee Events — Invoice System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1C1B18;--paper:#FDFCF9;--surface:#F3F1EC;--surface2:#EAE8E2;
+  --border:rgba(0,0,0,.08);--border-md:rgba(0,0,0,.14);--border-dk:rgba(0,0,0,.22);
+  --accent:#C8501F;--accent-lt:#FAECE6;--accent-dk:#9C3D17;
+  --green:#167A58;--green-lt:#E2F5EE;
+  --amber:#B45309;--amber-lt:#FEF3C7;
+  --red:#B91C1C;--red-lt:#FEE2E2;
+  --muted:#78766E;--hint:#ABA9A1;
+  --r:9px;--r-lg:13px;--r-xl:18px;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
+  --sh-lg:0 4px 20px rgba(0,0,0,.12),0 1px 4px rgba(0,0,0,.08);
+}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+
+/* ── LAYOUT ── */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:240px;background:var(--ink);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s cubic-bezier(.4,0,.2,1);}
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+@media(max-width:720px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .mob-topbar{display:flex!important;}
+}
+
+/* ── SIDEBAR ── */
+.sb-header{padding:20px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-logo{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:-.01em;}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.sb-nav{padding:10px 8px;flex:1;overflow-y:auto;}
+.sb-sec{font-size:9px;color:rgba(255,255,255,.25);letter-spacing:.12em;text-transform:uppercase;padding:6px 10px 5px;margin-top:4px;}
+.nb{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;background:none;color:rgba(255,255,255,.58);cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;border-radius:7px;text-align:left;transition:all .13s;position:relative;}
+.nb:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nb.active{background:rgba(255,255,255,.13);color:#fff;}
+.nb svg{width:14px;height:14px;flex-shrink:0;opacity:.6;}
+.nb.active svg{opacity:1;}
+.nb .badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center;}
+.sb-div{height:1px;background:rgba(255,255,255,.07);margin:6px 8px;}
+
+/* ── MOBILE TOPBAR ── */
+.mob-topbar{display:none;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--ink);color:#fff;position:sticky;top:0;z-index:100;}
+.mob-logo{font-family:'DM Serif Display',serif;font-size:16px;color:#fff;}
+.mob-menu{background:none;border:none;color:#fff;cursor:pointer;padding:4px;}
+.mob-menu svg{width:20px;height:20px;display:block;}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199;}
+.sb-overlay.show{display:block;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--paper);position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:19px;letter-spacing:-.01em;}
+.topbar-actions{display:flex;gap:7px;flex-wrap:wrap;}
+@media(max-width:720px){.topbar{padding:10px 14px;}}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .13s;white-space:nowrap;line-height:1.4;}
+.btn svg{width:13px;height:13px;flex-shrink:0;}
+.btn-primary{background:var(--ink);color:#fff;}.btn-primary:hover{background:#2e2d29;}
+.btn-ghost{background:var(--paper);color:var(--ink);border:1.5px solid var(--border-md);}.btn-ghost:hover{background:var(--surface);}
+.btn-accent{background:var(--accent);color:#fff;}.btn-accent:hover{background:var(--accent-dk);}
+.btn-green{background:var(--green-lt);color:var(--green);border:1.5px solid rgba(22,122,88,.2);}.btn-green:hover{background:#cbeee1;}
+.btn-red{background:var(--red-lt);color:var(--red);border:1.5px solid rgba(185,28,28,.18);}.btn-red:hover{background:#fecaca;}
+.btn-amber{background:var(--amber-lt);color:var(--amber);border:1.5px solid rgba(180,83,9,.2);}
+.btn-lg{padding:10px 18px;font-size:13px;}
+.btn-sm{padding:5px 9px;font-size:11px;}
+
+/* ── CONTENT ── */
+.content{padding:18px 22px;flex:1;}
+@media(max-width:720px){.content{padding:10px 12px;}}
+.panel{display:none;}.panel.active{display:block;}
+
+/* ── SECTION TABS (pending/completed) ── */
+.sec-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content;}
+.sec-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit;}
+.sec-tab.active{background:#fff;color:var(--ink);box-shadow:var(--sh);}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filter-bar input,.filter-bar select{font-size:12px;padding:7px 10px;border:1.5px solid var(--border-md);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;outline:none;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent);}
+.filter-bar input{min-width:160px;}
+.filter-bar select{min-width:120px;}
+
+/* ── ORDER CARDS (pending) ── */
+.order-list{display:flex;flex-direction:column;gap:8px;}
+.order-card{background:var(--paper);border:1.5px solid var(--border-md);border-radius:var(--r-lg);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:var(--sh);transition:border-color .13s;}
+.order-card:hover{border-color:var(--accent);}
+.oc-info{flex:1;min-width:0;}
+.oc-ref{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent-dk);margin-bottom:3px;}
+.oc-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.oc-meta{font-size:11px;color:var(--muted);line-height:1.4;}
+.oc-amount{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;text-align:right;flex-shrink:0;}
+.oc-btns{display:flex;gap:6px;flex-shrink:0;}
+@media(max-width:600px){.order-card{flex-wrap:wrap;}.oc-btns{width:100%;}.oc-btns .btn{flex:1;justify-content:center;}}
+
+/* ── INVOICE CARDS (completed) ── */
+.inv-card-item{background:var(--paper);border:1.5px solid var(--border-md);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden;margin-bottom:8px;}
+.inv-card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;cursor:pointer;transition:background .13s;gap:10px;}
+.inv-card-header:hover{background:var(--surface);}
+.inv-card-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--accent-dk);}
+.inv-card-name{font-size:13px;font-weight:700;}
+.inv-card-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.inv-card-amount{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0;}
+.inv-card-chevron{color:var(--hint);flex-shrink:0;transition:transform .2s;}
+.inv-card-chevron.open{transform:rotate(180deg);}
+.inv-card-body{display:none;border-top:1px solid var(--border);padding:14px 15px;}
+.inv-card-body.open{display:block;}
+.inv-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+@media(max-width:600px){.inv-card-header{flex-wrap:wrap;}.inv-card-amount{margin-left:auto;}}
+
+/* Quick view line items in card */
+.qv-table{width:100%;border-collapse:collapse;font-size:12px;}
+.qv-table th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.04em;padding:4px 6px;border-bottom:1.5px solid var(--border-md);text-align:left;}
+.qv-table th.r{text-align:right;}
+.qv-table td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.qv-table td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;}
+.qv-table tr:last-child td{border-bottom:none;}
+.qv-ret{font-size:9px;font-weight:700;background:var(--red-lt);color:var(--red);padding:1px 4px;border-radius:4px;margin-left:3px;}
+.qv-neg{color:var(--red);}
+.qv-totals{margin-top:8px;display:flex;justify-content:flex-end;}
+.qv-totals-inner{width:180px;}
+.qvt{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.qvt.dim{color:var(--muted);}.qvt.ret{color:var(--red);}
+.qvt.grand{font-weight:700;font-size:13px;border-top:1.5px solid var(--border-md);padding-top:6px;margin-top:4px;}
+.qvt .m{font-family:'DM Mono',monospace;}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--hint);}
+.empty-state svg{width:36px;height:36px;opacity:.2;display:block;margin:0 auto 8px;}
+.empty-state p{font-size:12px;line-height:1.6;}
+
+/* ── EDITOR ── */
+.editor-layout{display:grid;grid-template-columns:1fr 268px;gap:16px;align-items:start;width:100%;min-width:0;}
+@media(max-width:860px){.editor-layout{grid-template-columns:1fr;}}
+
+.card{background:var(--paper);border:1.5px solid var(--border-md);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;box-shadow:var(--sh);min-width:0;width:100%;}
+.card-hd{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);gap:6px;flex-wrap:wrap;}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+.card-body{padding:14px;}
+
+/* FORM */
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.mf{display:flex;flex-direction:column;gap:3px;}.mf.full{grid-column:1/-1;}
+.mf label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.mf input,.mf select,.mf textarea{font-size:13px;padding:7px 9px;border:1.5px solid var(--border-md);border-radius:7px;background:var(--surface);color:var(--ink);font-family:inherit;outline:none;width:100%;}
+.mf input:focus,.mf select:focus,.mf textarea:focus{border-color:var(--accent);background:var(--paper);}
+.mf textarea{resize:vertical;min-height:60px;line-height:1.5;}
+
+/* LINE ITEMS */
+.line-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;}
+.line-hd-btns{display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+
+/* Inline dropdowns for quick add */
+.qa-wrap{position:relative;display:inline-block;}
+.qa-select{font-size:12px;padding:5px 9px;border:1.5px solid var(--border-md);border-radius:7px;background:var(--paper);color:var(--ink);font-family:inherit;outline:none;cursor:pointer;max-width:160px;}
+.qa-select:focus{border-color:var(--accent);}
+@media(max-width:600px){.qa-select{max-width:110px;font-size:10px;padding:4px 5px;}}
+
+.line-tbl{width:100%;border-collapse:collapse;table-layout:fixed;}
+.line-tbl th{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:6px 4px;border-bottom:1.5px solid var(--border-md);text-align:left;}
+.line-tbl th.r{text-align:right;}
+.line-tbl td{padding:3px 2px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.line-tbl tr:last-child td{border-bottom:none;}
+.li{font-size:11px;padding:4px 5px;border:1.5px solid transparent;border-radius:6px;background:transparent;color:var(--ink);font-family:inherit;outline:none;width:100%;}
+.li textarea,.line-tbl textarea.li{vertical-align:top;}
+.li:focus{border-color:var(--accent);background:var(--paper);}
+.li.qty{width:44px!important;text-align:center;}
+.li.price{width:56px!important;text-align:right;font-family:'DM Mono',monospace;}
+.lt{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;text-align:right;padding:5px 4px;white-space:nowrap;}
+.lt.neg{color:var(--red);}
+.lrm{width:20px;height:20px;border:none;background:none;cursor:pointer;border-radius:5px;color:var(--hint);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.lrm:hover{background:var(--red-lt);color:var(--red);}
+.ret-badge{font-size:9px;font-weight:700;background:var(--red-lt);color:var(--red);padding:1px 4px;border-radius:4px;margin-right:3px;vertical-align:middle;}
+
+.totals-block{border-top:2px solid var(--border-md);padding-top:9px;margin-top:3px;}
+.tot-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 3px;}
+.tot-row.dim{color:var(--muted);}.tot-row.ret{color:var(--red);}
+.tot-row.grand{font-size:15px;font-weight:700;border-top:1.5px solid var(--border-md);margin-top:5px;padding-top:8px;}
+.tot-row .mono{font-family:'DM Mono',monospace;}
+
+/* RIGHT COL */
+.action-col{display:flex;flex-direction:column;gap:7px;}
+.action-col .btn{justify-content:center;width:100%;}
+.confirm-btn{background:var(--green);color:#fff;border:none;padding:11px 18px;border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .13s;}
+.confirm-btn:hover{background:#115e42;}
+.confirm-btn svg{width:15px;height:15px;}
+
+/* ── SETTINGS ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:720px){.settings-grid{grid-template-columns:1fr;}}
+.settings-section{margin-bottom:20px;}
+.settings-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1.5px solid var(--border-md);}
+
+/* ── PDF OVERLAY ── */
+.pdf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;align-items:center;justify-content:center;padding:12px;}
+.pdf-ov.open{display:flex;}
+.pdf-modal{background:#fff;border-radius:var(--r-xl);width:100%;max-width:700px;max-height:94vh;overflow-y:auto;box-shadow:0 24px 72px rgba(0,0,0,.3);}
+.pdf-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:10;gap:8px;}
+.pdf-bar-title{font-size:13px;font-weight:700;}
+.pdf-bar-btns{display:flex;gap:7px;}
+.pdf-close{background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:4px 8px;border-radius:6px;line-height:1;}
+.pdf-close:hover{background:var(--surface);}
+
+/* ── PDF DOC (A4/A5/A6 optimised) ── */
+.pdf-doc{padding:32px 40px;font-family:'DM Sans',sans-serif;color:#1C1B18;font-size:12px;}
+.pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
+.pdf-brand-name{font-family:'DM Serif Display',serif;font-size:22px;color:#1C1B18;}
+.pdf-brand-sub{font-size:10px;color:#78766E;margin-top:2px;line-height:1.5;}
+.pdf-inv-box{text-align:right;}
+.pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#78766E;}
+.pdf-inv-box .num{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#C8501F;margin:2px 0;}
+.pdf-inv-box .dt{font-size:10px;color:#78766E;}
+.pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;padding:13px 15px;background:#F3F1EC;border-radius:9px;}
+.pm-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}
+.pm-val{font-size:12px;font-weight:700;line-height:1.4;}
+.pm-sub{font-size:11px;color:#78766E;margin-top:1px;line-height:1.4;}
+.pdf-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;}
+.pdf-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;padding:6px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
+.pdf-tbl th.r{text-align:right;}
+.pdf-tbl td{padding:6px 8px;border-bottom:1px solid #EFEEE9;font-size:11px;vertical-align:top;}
+.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;font-size:11px;}
+.pdf-ret-pill{font-size:8px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;vertical-align:middle;}
+.pdf-neg{color:#B91C1C;}
+.pdf-tots{display:flex;justify-content:flex-end;margin-bottom:14px;}
+.pdf-tots-inner{width:180px;}
+.ptr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;}
+.ptr.dim{color:#78766E;}.ptr.ret{color:#B91C1C;}
+.ptr.grand{font-size:14px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
+.ptr .m{font-family:'DM Mono',monospace;}
+.pdf-notes{margin-top:16px;padding-top:13px;border-top:1px solid #E0DED8;}
+.pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:4px;}
+.pdf-notes .val{font-size:11px;color:#555;line-height:1.6;}
+.pdf-footer{margin-top:24px;padding-top:11px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#ABA9A1;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:16px;right:16px;background:var(--ink);color:#fff;padding:8px 15px;border-radius:9px;font-size:12px;font-weight:600;z-index:999;opacity:0;transform:translateY(5px);transition:all .18s;pointer-events:none;max-width:280px;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ── MOBILE TWEAKS ── */
+@media(max-width:600px){
+  .meta-grid{grid-template-columns:1fr;}
+  .mf.full{grid-column:auto;}
+  .editor-layout .card-body{padding:8px 10px;}
+  .line-tbl th,.line-tbl td{padding:2px 1px;}
+  .li{font-size:11px;padding:3px 4px;}
+  .lt{font-size:11px;padding:4px 2px;}
+  #editor-right{order:2;}
+  #editor-left{order:1;}
+}
+.mono,.inv-amount,.lt,.tot-row .mono,.ptr .m{font-feature-settings:"tnum";}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sb-overlay" id="sb-overlay" onclick="closeMobMenu()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <div class="sb-logo">Bee Events</div>
+    <div class="sb-sub">Invoice System</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Main</div>
+    <button class="nb active" id="nav-home" onclick="gotoHome();closeMobMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      All Invoices
+    </button>
+    <button class="nb" id="nav-new" onclick="newInvoice();closeMobMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      + New Invoice
+    </button>
+    <button class="nb" id="nav-quotation" onclick="newQuotation();closeMobMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      + New Quotation
+    </button>
+    <button class="nb" id="nav-quotations" style="display:none" onclick="gotoQuotations();closeMobMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      Quotations
+    </button>
+    <div class="sb-div"></div>
+    <div class="sb-sec">Advanced</div>
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;border-radius:7px;transition:background .13s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">
+      <input type="checkbox" id="s-dual" onchange="saveSetting('dual',this.checked)" style="width:15px;height:15px;accent-color:#4ade80;cursor:pointer;flex-shrink:0;">
+      <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,.65);line-height:1.3;">Enable Dual-Company Invoicing (Bee Events + SWITS)</span>
+    </label>
+    <button class="nb" id="nav-settings" onclick="gotoSettings();closeMobMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- MOBILE TOPBAR -->
+  <div class="mob-topbar">
+    <div class="mob-logo">Bee Events Invoices</div>
+    <button class="mob-menu" onclick="openMobMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- DESKTOP TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="topbar-title">All Invoices</div>
+    </div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ HOME PANEL ══ -->
+    <div class="panel active" id="panel-home">
+      <div id="dual-banner" style="display:none;background:linear-gradient(90deg,var(--green-lt),#d1fae5);border:1.5px solid rgba(22,122,88,.3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--green);">&#x26A1; Dual-company invoicing is ON — invoices will auto-split into Bee Events (Cotton Candy) + SWITS (all other items)</div>
+
+      <!-- Section tabs -->
+      <div class="sec-tabs">
+        <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Pending Generation <span id="pending-badge" style="display:inline-block;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
+        <button class="sec-tab" id="tab-quotations" onclick="switchTab('quotations')">Quotations</button>
+        <button class="sec-tab" id="tab-completed" onclick="switchTab('completed')">Completed</button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <input type="text" id="filter-name" placeholder="Search customer…" oninput="renderHome()">
+        <select id="filter-month" onchange="renderHome()">
+          <option value="">All months</option>
+          <option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option>
+          <option>May</option><option>Jun</option><option>Jul</option><option>Aug</option>
+          <option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option>
+        </select>
+        <select id="filter-year" onchange="renderHome()">
+          <option value="">All years</option>
+          <option>2025</option><option>2026</option><option>2027</option>
+        </select>
+      </div>
+
+      <div id="home-body"></div>
+    </div>
+
+    <!-- ══ EDITOR PANEL ══ -->
+    <div class="panel" id="panel-editor">
+      <div class="editor-layout">
+
+        <!-- LEFT -->
+        <div id="editor-left">
+
+          <!-- Invoice details -->
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-title">Invoice Details</span>
+              <span id="num-display" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--accent-dk);opacity:.6;font-style:italic;">Draft</span>
+            </div>
+            <div class="card-body">
+              <div class="meta-grid">
+                <div class="mf full">
+                  <label>Customer Name</label>
+                  <input type="text" id="f-cust-name" list="cust-list" placeholder="Type or select customer…" oninput="onCustNameInput()">
+                  <datalist id="cust-list">
+                    <option value="Nelly Retro">
+                    <option value="Hong Yi Hao">
+                    <option value="Walson Food Distributor Pte Ltd">
+                  </datalist>
+                </div>
+                <div class="mf">
+                  <label>Company</label>
+                  <select id="f-company" onchange="onCompanyChange()">
+                    <option value="bee">Bee Events</option>
+                    <option value="swits">SWITS</option>
+                  </select>
+                </div>
+                <div class="mf">
+                  <label>Invoice Date</label>
+                  <input type="date" id="f-date">
+                </div>
+                <div class="mf">
+                  <label>Payment</label>
+                  <select id="f-pay">
+                    <option>Cash on Delivery</option>
+                    <option>PayNow</option>
+                  </select>
+                </div>
+                <div class="mf full">
+                  <label>Delivery / Billing Address</label>
+                  <textarea id="f-addr" placeholder="Block, street, unit number" style="min-height:52px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}" ></textarea>
+                </div>
+                <div class="mf">
+                  <label>Order Reference</label>
+                  <input type="text" id="f-ref" placeholder="e.g. ORD-NELLY-001">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Line items -->
+          <div class="card">
+            <div class="card-hd">
+              <span class="card-title">Items</span>
+              <div class="line-hd-btns">
+                <div id="item-dropdowns">
+                <select class="qa-select" id="qa-item" style="display:inline-block;" onchange="quickAdd(false)">
+                  <option value="">+ Add item…</option>
+                  <optgroup label="Airheads Bars">
+                    <option value="a1|piece">Airheads Bars — Piece</option>
+                    <option value="a1|box">Airheads Bars — Box</option>
+                  </optgroup>
+                  <optgroup label="Airheads Bites">
+                    <option value="a2|piece">Airheads Bites — Piece</option>
+                    <option value="a2|box">Airheads Bites — Box</option>
+                  </optgroup>
+                  <optgroup label="Nerds Grape &amp; Strawberry">
+                    <option value="nb1|piece">Nerds G&amp;S — Piece</option>
+                    <option value="nb1|box">Nerds G&amp;S — Box</option>
+                  </optgroup>
+                  <optgroup label="Nerds Rope Rainbow">
+                    <option value="nb2|piece">Nerds Rope — Piece</option>
+                    <option value="nb2|box">Nerds Rope — Box</option>
+                  </optgroup>
+                  <optgroup label="Cotton Candy">
+                    <option value="cc|piece">Cotton Candy — Piece</option>
+                    <option value="cc|box">Cotton Candy — Box</option>
+                  </optgroup>
+                </select>
+                <!-- Quick add return dropdown -->
+                <select class="qa-select" id="qa-ret" style="display:inline-block;" onchange="quickAdd(true)" style="border-color:rgba(185,28,28,.3);color:var(--red);">
+                  <option value="">− Return…</option>
+                  <optgroup label="Airheads Bars">
+                    <option value="a1|piece">Airheads Bars — Piece</option>
+                    <option value="a1|box">Airheads Bars — Box</option>
+                  </optgroup>
+                  <optgroup label="Airheads Bites">
+                    <option value="a2|piece">Airheads Bites — Piece</option>
+                    <option value="a2|box">Airheads Bites — Box</option>
+                  </optgroup>
+                  <optgroup label="Nerds Grape &amp; Strawberry">
+                    <option value="nb1|piece">Nerds G&amp;S — Piece</option>
+                    <option value="nb1|box">Nerds G&amp;S — Box</option>
+                  </optgroup>
+                  <optgroup label="Nerds Rope Rainbow">
+                    <option value="nb2|piece">Nerds Rope — Piece</option>
+                    <option value="nb2|box">Nerds Rope — Box</option>
+                  </optgroup>
+                  <optgroup label="Cotton Candy">
+                    <option value="cc|piece">Cotton Candy — Piece</option>
+                    <option value="cc|box">Cotton Candy — Box</option>
+                  </optgroup>
+                </select>
+                </div><!-- /item-dropdowns -->
+                <button class="btn btn-ghost btn-sm" id="btn-custom-item" onclick="addCustomLine(false)">+ Custom</button>
+              </div>
+            </div>
+            <div class="card-body" style="padding:8px 10px;">
+              <table class="line-tbl">
+                <colgroup><col style="width:auto;min-width:80px"><col style="width:44px"><col style="width:58px"><col style="width:58px"><col style="width:20px"></colgroup>
+                <thead><tr><th>Description</th><th style="text-align:center">Qty</th><th class="r">Unit $</th><th class="r">Total</th><th></th></tr></thead>
+                <tbody id="line-body"></tbody>
+              </table>
+              <div id="totals-block"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT / ACTION -->
+        <div id="editor-right">
+          <div class="card">
+            <div class="card-hd"><span class="card-title">Actions</span></div>
+            <div class="card-body">
+              <div class="action-col">
+                <!-- CONFIRM & GENERATE -->
+                <button class="confirm-btn" id="confirm-btn" onclick="confirmInvoice()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Confirm & Generate Invoice
+                </button>
+                <div style="height:4px"></div>
+                <button class="btn btn-accent btn-lg" onclick="previewPDF()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Preview PDF
+                </button>
+                <button class="btn btn-ghost" onclick="doPrint()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  Print
+                </button>
+                <button class="btn btn-ghost" onclick="downloadPDF()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download PDF
+                </button>
+                
+                <button class="btn btn-red" id="btn-del" style="display:none;" onclick="delInvoice()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                  Delete Invoice
+                </button>
+              </div>
+            </div>
+          </div>
+
+          
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS PANEL ══ -->
+    <div class="panel" id="panel-settings">
+      <div class="card" style="max-width:680px;">
+        <div class="card-hd"><span class="card-title">Company Details</span></div>
+        <div class="card-body">
+          <div class="settings-grid">
+            <div class="mf full"><label>Company Name</label><input type="text" id="s-name" placeholder="Bee Events"></div>
+            <div class="mf full"><label>Tagline / Description</label><input type="text" id="s-desc" placeholder="Classic &amp; Trending Snacks"></div>
+            <div class="mf"><label>Phone / WhatsApp</label><input type="text" id="s-phone" placeholder="+65 8164 8864"></div>
+            <div class="mf"><label>Email</label><input type="text" id="s-email" placeholder="b33events.sg@gmail.com"></div>
+            <div class="mf full"><label>Address (optional)</label><input type="text" id="s-addr" placeholder="Singapore"></div>
+            <div class="mf"><label>GST / Reg No. (optional)</label><input type="text" id="s-gst" placeholder="Leave blank if N/A"></div>
+            <div class="mf"><label>Website (optional)</label><input type="text" id="s-web" placeholder="www.beeevents.sg"></div>
+            <div class="mf full" style="display:flex;align-items:center;gap:14px;background:var(--surface2);padding:10px 12px;border-radius:8px;flex-wrap:wrap;margin-top:4px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);text-transform:none;letter-spacing:0;">
+                <input type="checkbox" id="s-gst-on" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;" onchange="syncGSTDisplay('bee')">
+                Apply GST to invoices (Bee Events)
+              </label>
+              <div id="s-gst-pct-wrap" style="display:flex;align-items:center;gap:6px;">
+                <input type="number" id="s-gst-pct" min="0" max="100" step="0.1" value="9" style="width:64px;font-size:13px;padding:4px 7px;border:1.5px solid var(--border-md);border-radius:7px;font-family:inherit;" placeholder="9">
+                <span style="font-size:12px;color:var(--muted);">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:680px;">
+        <div class="card-hd"><span class="card-title">Payment Terms &amp; Notes</span><span style="font-size:11px;color:var(--muted);">Auto-applied to all invoices</span></div>
+        <div class="card-body">
+          <div class="mf full">
+            <label>Notes / Terms (appears on every invoice)</label>
+            <textarea id="s-notes" placeholder="e.g. Payment due within 7 days.&#10;Thank you for your business!&#10;PayNow: 81648864"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:680px;">
+        <div class="card-hd"><span class="card-title">SWITS — Company 2 Details</span><span style="font-size:11px;color:var(--muted);">Used when dual-company is enabled</span></div>
+        <div class="card-body">
+          <div class="settings-grid">
+            <div class="mf full"><label>Company Name</label><input type="text" id="s2-name" placeholder="SWITS"></div>
+            <div class="mf full"><label>Tagline / Description</label><input type="text" id="s2-desc" placeholder="Snacks &amp; Confectionery"></div>
+            <div class="mf"><label>Phone / WhatsApp</label><input type="text" id="s2-phone" placeholder="+65 XXXX XXXX"></div>
+            <div class="mf"><label>Email</label><input type="text" id="s2-email" placeholder="swits@email.com"></div>
+            <div class="mf full"><label>Address (optional)</label><input type="text" id="s2-addr" placeholder="Singapore"></div>
+            <div class="mf"><label>GST / Reg No. (optional)</label><input type="text" id="s2-gst" placeholder=""></div>
+            <div class="mf full" style="display:flex;align-items:center;gap:14px;background:var(--surface2);padding:10px 12px;border-radius:8px;flex-wrap:wrap;margin-top:4px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);text-transform:none;letter-spacing:0;">
+                <input type="checkbox" id="s2-gst-on" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;" onchange="syncGSTDisplay('swits')">
+                Apply GST to invoices (SWITS)
+              </label>
+              <div id="s2-gst-pct-wrap" style="display:flex;align-items:center;gap:6px;">
+                <input type="number" id="s2-gst-pct" min="0" max="100" step="0.1" value="9" style="width:64px;font-size:13px;padding:4px 7px;border:1.5px solid var(--border-md);border-radius:7px;font-family:inherit;" placeholder="9">
+                <span style="font-size:12px;color:var(--muted);">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" onclick="saveSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Settings
+      </button>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- PDF OVERLAY -->
+<div class="pdf-ov" id="pdf-ov">
+  <div class="pdf-modal">
+    <div class="pdf-bar">
+      <div class="pdf-bar-title" id="pdf-bar-title">Preview</div>
+      <div class="pdf-bar-btns">
+        <button class="btn btn-accent btn-sm" onclick="downloadPDF()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="doPrint()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+        <button class="pdf-close" onclick="closePDF()">&#x2715;</button>
+      </div>
+    </div>
+    <div id="pdf-area"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+
+// ══ REAL STORE DATA ══
+var KNOWN_CUSTOMERS = {
+  'Nelly Retro':                   {tier:'retail',   addr:'Causeway Point, Singapore', customPrices:[]},
+  'Hong Yi Hao':                   {tier:'distributor', addr:'rrrrrrr',               customPrices:[]},
+  'Walson Food Distributor Pte Ltd':{tier:'distributor', addr:'T-Space, 1 Tampines North Dr 1 #06-27, (S)528559',
+    customPrices:[{pid:'cc',unit:'box',price:34.5}]}
+};
+var PRODS = {
+  a1: {name:'Airheads Bars',           ppc:36, w:'37g',   r:2.50, d:2.00, bR:90.00,  bD:72.00},
+  a2: {name:'Airheads Bites',          ppc:24, w:'57g',   r:3.00, d:2.40, bR:72.00,  bD:57.60},
+  nb1:{name:'Nerds Grape & Strawberry',ppc:36, w:'46.7g', r:2.80, d:2.20, bR:100.80, bD:79.20},
+  nb2:{name:'Nerds Rope Rainbow',      ppc:24, w:'26g',   r:3.20, d:2.60, bR:76.80,  bD:62.40},
+  cc: {name:'Cotton Candy',            ppc:15, w:'38g',   r:1.80, d:1.70, bR:27.00,  bD:25.50}
+};
+
+var SAMPLE_PENDING = [];
+
+// ══ STATE ══
+var DB = {
+  invoices:    JSON.parse(localStorage.getItem('beinv-invoices')    || '[]'),
+  quotations:  JSON.parse(localStorage.getItem('beinv-quotations')  || '[]'),
+  pending:     JSON.parse(localStorage.getItem('beinv-pending')     || '[]'),
+  counter:     parseInt(localStorage.getItem('beinv-counter')       || '0'),
+  quoCounter:  parseInt(localStorage.getItem('beinv-quo-counter')   || '0'),
+  settings:    JSON.parse(localStorage.getItem('beinv-settings') || JSON.stringify({
+    name:'Bee Events', desc:'Classic & Trending Snacks', phone:'+65 8164 8864',
+    email:'b33events.sg@gmail.com', addr:'Singapore', gst:'', web:'',
+    notes:'Payment due within 7 days.\nThank you for your business!\nPayNow: 81648864',
+    dual:false
+  }))
+};
+// Ensure dual is always boolean
+if(DB.settings.dual===undefined||DB.settings.dual===null)DB.settings.dual=false;
+if(typeof DB.settings.dual==='string')DB.settings.dual=(DB.settings.dual==='true');
+// Safety: dual must be explicitly === true, not truthy string or other value
+if(DB.settings.dual!==true)DB.settings.dual=false;
+var current = null;
+var activeTab = 'pending';
+
+function persist() {
+  localStorage.setItem('beinv-invoices',  JSON.stringify(DB.invoices));
+  localStorage.setItem('beinv-pending',   JSON.stringify(DB.pending));
+  localStorage.setItem('beinv-counter',   String(DB.counter));
+  localStorage.setItem('beinv-settings',  JSON.stringify(DB.settings));
+  localStorage.setItem('beinv-quo-counter', String(DB.quoCounter));
+  localStorage.setItem('beinv-quotations',  JSON.stringify(DB.quotations));
+  updateBadge();
+}
+function nextNum() { DB.counter++; persist(); return 'INV-'+String(DB.counter).padStart(4,'0'); }
+function updateBadge() {
+  var b = document.getElementById('pending-badge');
+  var n = DB.pending.length;
+  b.textContent = n; b.style.display = n ? '' : 'none';
+}
+
+// ══ UTILS ══
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+function fmtDate(d){if(!d)return'';try{var p=d.split('-');return p[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]+' '+p[0];}catch(e){return d;}}
+function toast(m,dur){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},dur||2400);}
+function sub(lines){return lines.filter(function(l){return !l.ret;}).reduce(function(s,l){return s+l.q*l.p;},0);}
+function rets(lines){return lines.filter(function(l){return l.ret;}).reduce(function(s,l){return s+l.q*l.p;},0);}
+function grand(lines){return lines.reduce(function(s,l){return s+l.q*(l.ret?-1:1)*l.p;},0);}
+
+// ══ MOBILE MENU ══
+function openMobMenu(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-overlay').classList.add('show');}
+function closeMobMenu(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('show');}
+
+// ══ NAV ══
+function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});document.getElementById(id).classList.add('active');}
+function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
+function setTopbar(title,html){document.getElementById('topbar-title').textContent=title;document.getElementById('topbar-actions').innerHTML=html;}
+var BACK_BTN='<button class="btn btn-ghost" onclick="gotoHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>';
+
+function gotoHome(){
+  setNav('nav-home');showPanel('panel-home');
+  setTopbar('All Invoices','');
+  renderHome();
+}
+function gotoQuotations(){
+  setNav('nav-quotations');showPanel('panel-home');
+  setTopbar('Quotations','<button class="btn btn-primary" onclick="newQuotation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg> + New Quotation</button>');
+  switchTab('quotations');
+}
+function gotoSettings(){
+  setNav('nav-settings');showPanel('panel-settings');
+  setTopbar('Settings',BACK_BTN);
+  loadSettingsForm();
+}
+
+// ══ HOME / FILTER ══
+function switchTab(tab){
+  activeTab=tab;
+  document.getElementById('tab-pending').classList.toggle('active',tab==='pending');
+  document.getElementById('tab-completed').classList.toggle('active',tab==='completed');
+  var qt=document.getElementById('tab-quotations');if(qt)qt.classList.toggle('active',tab==='quotations');
+  renderHome();
+}
+
+function matchesFilter(name,date){
+  var nm=(document.getElementById('filter-name').value||'').toLowerCase();
+  var mo=document.getElementById('filter-month').value;
+  var yr=document.getElementById('filter-year').value;
+  if(nm&&!(name||'').toLowerCase().includes(nm))return false;
+  if(mo&&date){var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var d=new Date(date);if(months[d.getMonth()]!==mo)return false;}
+  if(yr&&date&&!date.startsWith(yr))return false;
+  return true;
+}
+
+function renderHome(){
+  var db=document.getElementById('dual-banner');if(db)db.style.display=DB.settings.dual?'block':'none';
+  var el=document.getElementById('home-body');
+  if(activeTab==='pending'){
+    var list=DB.pending.filter(function(o){return matchesFilter(o.custName,o.date);});
+    if(!list.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg><p>No pending orders.<br>New WhatsApp orders will appear here.</p></div>';return;}
+    var html=list.map(function(o){
+      var tot=o.items.reduce(function(s,i){return s+i.qty*i.price;},0);
+      var meta=esc(o.items.length)+' item'+(o.items.length>1?'s':'')+' &nbsp;&middot;&nbsp; '+esc(o.delivery)+' &nbsp;&middot;&nbsp; '+esc(fmtDate(o.date))+(o.outlet?' &nbsp;&middot;&nbsp; '+esc(o.outlet):'');
+      return '<div class="order-card">'
+        +'<div class="oc-info"><div class="oc-ref">'+esc(o.id)+'</div><div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div><div class="oc-meta">'+meta+'</div></div>'
+        +'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'
+        +'<div class="oc-btns"><button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+esc(o.id)+'\')">Generate Invoice &#x2192;</button></div>'
+        +'</div>';
+    }).join('');
+    el.innerHTML='<div class="order-list">'+html+'</div>';
+  } else if(activeTab==='quotations'){
+    var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date);});
+    if(!qlist.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>No quotations yet.<br>Create one from the sidebar.</p></div>';return;}
+    el.innerHTML=qlist.slice().reverse().map(function(q){return renderQuoCard(q);}).join('');
+    return;
+  } else {
+    var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date);});
+    if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No completed invoices yet.</p></div>';return;}
+    el.innerHTML=list2.map(function(inv){return renderInvCard(inv);}).join('');
+  }
+}
+
+function renderInvCard(inv){
+  var g=grand(inv.lines);
+  var sb=sub(inv.lines),rt=rets(inv.lines);
+  var rows=inv.lines.map(function(l){
+    var t=l.q*(l.ret?-1:1)*l.p;
+    return '<tr><td>'+(l.ret?'<span class="qv-ret">Return</span>':'')+esc(l.desc)+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+  }).join('');
+  var tots='';
+  if(rt<0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+sb.toFixed(2)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+Math.abs(rt).toFixed(2)+'</span></div>';}
+  var gstRateCard=getGSTRate(inv);
+  if(gstRateCard){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
+  else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
+  return '<div class="inv-card-item">'
+    +'<div class="inv-card-header">'
+      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'
+        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'
+        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' — '+esc(inv.outlet):'')+'</div>'
+        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' &nbsp;&middot;&nbsp; '+esc(inv.ref||'No ref')+'</div>'
+      +'</div>'
+      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'
+      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
+      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'
+      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'
+    +'</div>'
+    +'</div>'
+    +'<div class="inv-card-body" id="ic-'+inv.id+'">'
+      +'<table class="qv-table"><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'
+      +'<div class="inv-card-actions">'
+        +'<button class="btn btn-ghost btn-sm" onclick="downloadInv(\''+inv.id+'\');event.stopPropagation()">Download PDF</button>'
+
+      +'</div>'
+    +'</div>'
+    +'</div>';
+}
+
+function toggleCard(id){
+  var body=document.getElementById(id);
+  var chev=document.getElementById('chev-'+id);
+  if(!body)return;
+  var open=body.classList.toggle('open');
+  if(chev)chev.classList.toggle('open',open);
+}
+
+// ══ NEW / GENERATE ══
+function newInvoice(){
+  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',date:new Date().toISOString().split('T')[0],ref:'',pay:'Cash on Delivery',lines:[],confirmed:false};
+  loadEditor();
+  document.getElementById('btn-del').style.display='none';
+  setNav('nav-new');showPanel('panel-editor');
+  setTopbar('+ New Invoice',BACK_BTN);
+  renderCombineList();
+  setItemDropdownsVisible(true);
+}
+
+function generateFromOrder(orderId){
+  var o=DB.pending.find(function(x){return x.id===orderId;});
+  if(!o)return;
+  current={
+    id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
+    date:o.date,ref:o.id,pay:'Cash on Delivery',
+    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,desc:it.desc,q:it.qty,p:it.price,ret:false};}),
+    confirmed:false,_sourceOrderId:o.id
+  };
+  loadEditor();
+  document.getElementById('btn-del').style.display='none';
+  setNav('nav-new');showPanel('panel-editor');
+  setTopbar('Generate Invoice — '+o.id,BACK_BTN);
+  renderCombineList();
+  setItemDropdownsVisible(true);
+}
+
+function loadEditor(){
+  document.getElementById('num-display').textContent = current.num ? current.num : 'Draft';
+  document.getElementById('num-display').style.opacity = current.num ? '1' : '0.6';
+  document.getElementById('f-cust-name').value = current.custName||'';
+  var fco=document.getElementById('f-company');if(fco)fco.value=current.company||'bee';
+  document.getElementById('f-date').value = current.date||'';
+  document.getElementById('f-addr').value = current.addr||'';
+  document.getElementById('f-ref').value = current.ref||'';
+  document.getElementById('f-pay').value = current.pay||'Cash on Delivery';
+  renderLines();
+}
+
+function onCompanyChange(){
+  var fco=document.getElementById("f-company");
+  if(fco)current.company=fco.value;
+}
+function onCustNameInput(){
+  var name=document.getElementById('f-cust-name').value.trim();
+  var cust=KNOWN_CUSTOMERS[name];
+  if(cust&&!current.addr){document.getElementById('f-addr').value=cust.addr||'';}
+  current.custName=name;
+}
+
+// ══ COMBINE ORDERS ══
+function renderCombineList(){
+  var sel=document.getElementById('combine-order-sel');
+  if(!sel)return;
+  var cid=current._sourceOrderId||'';
+  var opts=DB.pending.filter(function(o){return o.id!==cid;}).map(function(o){
+    return '<option value="'+esc(o.id)+'">'+esc(o.id)+' — '+esc(o.custName)+(o.outlet?' ('+esc(o.outlet)+')':'')+'</option>';
+  });
+  sel.innerHTML='<option value="">— Select order to merge —</option>'+opts.join('');
+}
+
+function mergeOrder(){
+  var id=document.getElementById('combine-order-sel').value;if(!id)return;
+  var o=DB.pending.find(function(x){return x.id===id;});if(!o)return;
+  o.items.forEach(function(it,i){
+    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,ret:false});
+  });
+  if(!current._mergedOrders)current._mergedOrders=[];
+  current._mergedOrders.push(id);
+  renderLines();renderCombineList();
+  toast('Merged '+id);
+}
+
+// ══ LINE ITEMS ══
+function quickAdd(isRet){
+  var selId=isRet?'qa-ret':'qa-item';
+  var val=document.getElementById(selId).value;
+  if(!val){return;}
+  var parts=val.split('|'),pid=parts[0],isBox=parts[1]==='box';
+  var prod=PRODS[pid];if(!prod)return;
+  var name=current.custName;
+  var cust=KNOWN_CUSTOMERS[name];
+  var isDist=cust&&cust.tier==='distributor';
+  var price;
+  if(pid==='cc'&&isBox&&cust&&cust.customPrices.length){
+    var cp=cust.customPrices.find(function(x){return x.pid==='cc'&&x.unit==='box';});
+    price=cp?cp.price:(isDist?prod.bD:prod.bR);
+  } else {
+    price=isBox?(isDist?prod.bD:prod.bR):(isDist?prod.d:prod.r);
+  }
+  var desc=prod.name+(isBox?' — Box × '+prod.ppc+'pcs × '+prod.w:' — Piece × '+prod.w);
+  current.lines.push({id:'l_'+Date.now(),desc:desc,q:1,p:price,ret:isRet});
+  renderLines();
+  document.getElementById(selId).value='';
+}
+
+function addCustomLine(isRet){
+  current.lines.push({id:'l_'+Date.now(),desc:isRet?'Return — ':'',q:1,p:0,ret:isRet});
+  renderLines();
+}
+
+function removeLine(lid){current.lines=current.lines.filter(function(l){return l.id!==lid;});renderLines();}
+
+function renderLines(){
+  var tbody=document.getElementById('line-body');
+  tbody.innerHTML=current.lines.map(function(ln){
+    var t=ln.q*(ln.ret?-1:1)*ln.p;
+    return '<tr data-lid="'+ln.id+'">'
+      +'<td style="min-width:120px;">'+(ln.ret?'<span class="ret-badge">Return</span>':'')
+        +'<textarea class="li" rows="2" placeholder="Description&#10;(Shift+Enter for new line)" oninput="upF(\''+ln.id+'\',\'desc\',this.value)" style="resize:vertical;min-height:36px;'+(ln.ret?'color:var(--red)':'')+'">'+esc(ln.desc)+'</textarea>'
+      +'</td>'
+      +'<td><input class="li qty" type="number" min="0" value="'+Math.abs(ln.q)+'" oninput="upF(\''+ln.id+'\',\'q\',this.value)"></td>'
+      +'<td><input class="li price" type="number" min="0" step="0.01" value="'+ln.p.toFixed(2)+'" oninput="upF(\''+ln.id+'\',\'p\',this.value)"></td>'
+      +'<td class="lt'+(t<0?' neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td>'
+      +'<td><button class="lrm" onclick="removeLine(\''+ln.id+'\')">&#x2715;</button></td>'
+      +'</tr>';
+  }).join('');
+  renderTotals();
+}
+
+function upF(lid,field,val){
+  var ln=current.lines.find(function(l){return l.id===lid;});if(!ln)return;
+  if(field==='desc'){ln.desc=val;return;}
+  if(field==='q')ln.q=Math.abs(parseFloat(val)||0);
+  if(field==='p')ln.p=Math.abs(parseFloat(val)||0);
+  var row=document.querySelector('[data-lid="'+lid+'"]');
+  if(row){var lt=row.querySelector('.lt');var t=ln.q*(ln.ret?-1:1)*ln.p;if(lt){lt.className='lt'+(t<0?' neg':'');lt.textContent=(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2);}}
+  renderTotals();
+}
+
+function renderTotals(){
+  var s=sub(current.lines),r=rets(current.lines),g=s+r;
+  var html='<div class="totals-block">';
+  if(r<0){html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div><div class="tot-row ret"><span>Returns</span><span class="mono">&#8722;$'+Math.abs(r).toFixed(2)+'</span></div>';}
+  var gstRate=getGSTRate(current);
+  if(gstRate){
+    var gstAmt=g*(gstRate/100);
+    html+='<div class="tot-row dim"><span>Before GST</span><span class="mono">$'+g.toFixed(2)+'</span></div>';
+    html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+gstAmt.toFixed(2)+'</span></div>';
+    html+='<div class="tot-row grand"><span>Total (incl. GST)</span><span class="mono">$'+(g+gstAmt).toFixed(2)+'</span></div>';
+  } else {
+    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+g.toFixed(2)+'</span></div>';
+  }
+  html+='</div>';
+  document.getElementById('totals-block').innerHTML=html;
+}
+
+// ══ CONFIRM & GENERATE ══
+function readEditor(){
+  if(!current)return;
+  current.custName=document.getElementById('f-cust-name').value.trim();
+  var fco2=document.getElementById('f-company');if(fco2)current.company=fco2.value;
+  current.addr=document.getElementById('f-addr').value.trim();
+  current.outlet='';
+  current.date=document.getElementById('f-date').value;
+  current.ref=document.getElementById('f-ref').value.trim();
+  current.pay=document.getElementById('f-pay').value;
+}
+
+function confirmInvoice(){
+  if(current&&current.isQuotation){confirmQuotation();return;}
+  readEditor();
+  if(!current.custName){toast('Please enter a customer name.');return;}
+  if(!current.lines.length){toast('Please add at least one item.');return;}
+
+  // Helper: remove source orders from pending
+  function removePending(){
+    if(current._sourceOrderId)DB.pending=DB.pending.filter(function(o){return o.id!==current._sourceOrderId;});
+    if(current._mergedOrders)current._mergedOrders.forEach(function(mid){DB.pending=DB.pending.filter(function(o){return o.id!==mid;});});
+  }
+
+  if(DB.settings.dual===true){
+    // Dual-company split: Bee Events = Cotton Candy, SWITS = everything else
+    var beelines=current.lines.filter(function(l){return l.desc.toLowerCase().includes('cotton candy');});
+    var swlines=current.lines.filter(function(l){return !l.desc.toLowerCase().includes('cotton candy');});
+    if(!beelines.length&&!swlines.length){toast('No items to invoice.');return;}
+    var splitNums=[];
+    if(beelines.length){
+      var beeinv=JSON.parse(JSON.stringify(current));
+      beeinv.id='inv_'+Date.now()+'_be';
+      beeinv.num=nextNum();
+      beeinv.lines=beelines;
+      beeinv.company='bee';
+      beeinv.confirmed=true;
+      DB.invoices.push(beeinv);
+      splitNums.push(beeinv.num+' (Bee Events)');
+    }
+    if(swlines.length){
+      var swinv=JSON.parse(JSON.stringify(current));
+      swinv.id='inv_'+Date.now()+'_sw';
+      swinv.num=nextNum();
+      swinv.lines=swlines;
+      swinv.company='swits';
+      swinv.confirmed=true;
+      DB.invoices.push(swinv);
+      splitNums.push(swinv.num+' (SWITS)');
+    }
+    removePending();
+    persist();
+    toast('\u2713 '+splitNums.join(' + '),4000);
+    gotoHome();switchTab('completed');
+    return;
+  }
+
+  // Single company
+  if(!current.num)current.num=nextNum();
+  var inv=JSON.parse(JSON.stringify(current));
+  inv.confirmed=true;
+  var existing=DB.invoices.findIndex(function(i){return i.id===inv.id;});
+  if(existing>=0)DB.invoices[existing]=inv;else DB.invoices.push(inv);
+  removePending();
+  persist();
+  toast('\u2713 '+current.num+' confirmed!',3000);
+  gotoHome();
+  switchTab('completed');
+}
+
+// ══ EDIT COMPLETED ══
+function editInvoice(id){
+  current=JSON.parse(JSON.stringify(DB.invoices.find(function(i){return i.id===id;})));
+  loadEditor();
+  document.getElementById('btn-del').style.display='';
+  document.getElementById('num-display').textContent=current.num;
+  document.getElementById('num-display').style.opacity='1';
+  setNav('nav-new');showPanel('panel-editor');
+  setTopbar('Edit — '+current.num,BACK_BTN);
+  renderCombineList();
+  setItemDropdownsVisible(true);
+}
+
+function delInvoice(){
+  if(!confirm('Delete '+current.num+'?'))return;
+  DB.invoices=DB.invoices.filter(function(i){return i.id!==current.id;});
+  persist();
+  if(current.isQuotation){gotoQuotations();}else{gotoHome();}
+  toast('Deleted.');
+}
+
+// ══ PDF ══
+function getPDFCSS(){
+  return '*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:"DM Sans",sans-serif;color:#1C1B18;background:#fff;}'
+    +'.pdf-doc{padding:30px 38px;}'
+    +'.pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}'
+    +'.pdf-brand-name{font-family:"DM Serif Display",serif;font-size:21px;}'
+    +'.pdf-brand-sub{font-size:10px;color:#78766E;margin-top:2px;line-height:1.5;}'
+    +'.pdf-inv-box{text-align:right;}.pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;}'
+    +'.pdf-inv-box .num{font-size:17px;font-weight:700;font-family:"DM Mono",monospace;color:#C8501F;margin:2px 0;}'
+    +'.pdf-inv-box .dt{font-size:10px;color:#78766E;}'
+    +'.pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;padding:12px 14px;background:#F3F1EC;border-radius:8px;}'
+    +'.pm-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}'
+    +'.pm-val{font-size:12px;font-weight:700;line-height:1.4;}'
+    +'.pm-sub{font-size:11px;color:#78766E;margin-top:1px;}'
+    +'.pdf-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;}'
+    +'.pdf-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#78766E;padding:6px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}'
+    +'.pdf-tbl th.r{text-align:right;}.pdf-tbl td{padding:6px 8px;border-bottom:1px solid #EFEEE9;font-size:11px;}'
+    +'.pdf-tbl td.r{text-align:right;font-family:"DM Mono",monospace;font-weight:600;}'
+    +'.pdf-ret-pill{font-size:8px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;}'
+    +'.pdf-neg{color:#B91C1C;}'
+    +'.pdf-tots{display:flex;justify-content:flex-end;margin-bottom:12px;}.pdf-tots-inner{width:170px;}'
+    +'.ptr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;}'
+    +'.ptr.dim{color:#78766E;}.ptr.ret{color:#B91C1C;}'
+    +'.ptr.grand{font-size:13px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}'
+    +'.ptr .m{font-family:"DM Mono",monospace;}'
+    +'.pdf-notes{margin-top:16px;padding-top:12px;border-top:1px solid #E0DED8;}'
+    +'.pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#78766E;font-weight:700;margin-bottom:4px;}'
+    +'.pdf-notes .val{font-size:11px;color:#555;line-height:1.6;}'
+    +'.pdf-footer{margin-top:22px;padding-top:10px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#ABA9A1;}'
+    +'@media print{@page{size:A4;margin:12mm;}}'
+    +'@media print and (max-width:148mm){@page{size:A5;margin:8mm;}}'
+    +'@media print and (max-width:105mm){@page{size:A6;margin:6mm;}}';
+}
+
+function buildPDF(inv){
+  var s=sub(inv.lines),r=rets(inv.lines),g=s+r;
+  var cfg=DB.settings;
+  var useCo2=inv.company==='swits'&&cfg.dual;
+  var companyName=useCo2?(cfg.co2name||'SWITS'):(cfg.name||'Bee Events');
+  var brandSub2=useCo2?[cfg.co2desc,cfg.co2phone,cfg.co2email,cfg.co2addr].filter(Boolean).join(' &middot; '):[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join(' &middot; ');
+  var docLabel=inv.isQuotation?'Quotation':'Invoice';
+  var quoRefLine=inv.quoRef?'<div class="pm-sub">From Quotation: '+esc(inv.quoRef)+'</div>':'';
+  var rows=inv.lines.map(function(l){
+    var t=l.q*(l.ret?-1:1)*l.p;
+    return '<tr><td>'+(l.ret?'<span class="pdf-ret-pill">Return</span>':'')+esc(l.desc)+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+  }).join('');
+  var tots='';
+  if(r<0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+Math.abs(r).toFixed(2)+'</span></div>';}
+  var gstRatePDF=getGSTRate(inv);
+  var grandTotal=g;
+  if(gstRatePDF){
+    var gstAmtPDF=g*(gstRatePDF/100);
+    grandTotal=g+gstAmtPDF;
+    tots+='<div class="ptr dim"><span>Before GST</span><span class="m">$'+g.toFixed(2)+'</span></div>';
+    tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF.toFixed(2)+'</span></div>';
+    tots+='<div class="ptr grand"><span>Total (incl. GST)</span><span class="m">$'+grandTotal.toFixed(2)+'</span></div>';
+  } else {
+    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';
+  }
+  var brandSub=[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');
+  return '<div class="pdf-doc">'
+    +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub+'</div></div>'
+      +'<div class="pdf-inv-box"><div class="lbl">Invoice</div><div class="num">'+esc(inv.num)+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
+    +'<div class="pdf-meta">'
+      +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
+      +'<div><div class="pm-lbl">Reference</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
+    +'</div>'
+    +'<table class="pdf-tbl"><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
+    +((cfg.notes||inv.notes)?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+esc(cfg.notes||inv.notes||'').replace(/\n/g,'<br>')+'</div></div>':'')
+    +'<div class="pdf-footer">'+esc(companyName)+(cfg.web?' &nbsp;&middot;&nbsp; '+esc(cfg.web):'')+(cfg.gst?' &nbsp;&middot;&nbsp; '+esc(cfg.gst):'')+'</div>'
+    +'</div>';
+}
+
+function previewPDF(){if(!current){toast('No invoice open.');return;}readEditor();openPDF(current);}
+function previewInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv)openPDF(inv);}
+function openPDF(inv){
+  document.getElementById('pdf-area').innerHTML=buildPDF(inv);
+  document.getElementById('pdf-bar-title').textContent=(inv.num||'Draft')+' — Preview';
+  document.getElementById('pdf-ov').classList.add('open');
+}
+function closePDF(){document.getElementById('pdf-ov').classList.remove('open');}
+
+function buildInvHTML(inv){
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(inv.num||'Invoice')+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=DM+Mono:wght@400;600&display=swap" rel="stylesheet">'
+    +'<style>'+getPDFCSS()+'</style></head><body>'+buildPDF(inv)+'</body></html>';
+}
+function doPrintInv(inv){
+  var w=window.open('','_blank');
+  if(!w){toast('Please allow popups to download PDF.');return;}
+  w.document.write(buildInvHTML(inv));
+  w.document.close();w.focus();setTimeout(function(){w.print();},700);
+}
+function downloadInvFile(inv){
+  var docType=inv.isQuotation?'Quotation':'Invoice';
+  var filename=(inv.num||docType)+'.pdf';
+  var w=window.open('','_blank');
+  if(!w){toast('Please allow popups to download PDF.');return;}
+  // Build HTML with auto-print on load so browser opens print dialog (Save as PDF)
+  var content='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+filename+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=DM+Mono:wght@400;600&display=swap" rel="stylesheet">'
+    +'<style>'+getPDFCSS()+'</style>'
+    +'</head><body>'+buildPDF(inv)
+    +'<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}<\/script>'
+    +'</body></html>';
+  w.document.write(content);
+  w.document.close();
+  toast('Print dialog opening — choose "Save as PDF" to download.');
+}
+function doPrint(){if(!current){toast('No invoice open.');return;}readEditor();doPrintInv(current);}
+function downloadPDF(){if(!current){toast('No invoice open.');return;}readEditor();realDownloadPDF(current);}
+function downloadInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv)realDownloadPDF(inv);}
+
+// ── TRUE PDF DOWNLOAD — iframe print-to-PDF ──
+function realDownloadPDF(inv){
+  var docType=inv.isQuotation?'Quotation':'Invoice';
+  var filename=(inv.num||docType)+'.pdf';
+  // Build a full self-contained HTML page
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+filename+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=DM+Mono:wght@400;600&display=swap" rel="stylesheet">'
+    +'<style>'
+    +getPDFCSS()
+    +'body{background:#fff;}'
+    +'@media print{'
+    +'  @page{size:A4;margin:0;}'
+    +'  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
+    +'}'
+    +'</style>'
+    +'</head><body>'
+    +buildPDF(inv)
+    +'<script>'
+    +'window.onload=function(){'
+    +'  setTimeout(function(){'
+    +'    window.print();'
+    +'    setTimeout(function(){window.close();},500);'
+    +'  },800);'
+    +'};'
+    +'<\/script>'
+    +'</body></html>';
+
+  var blob=new Blob([html],{type:'text/html'});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,'_blank');
+  if(!w){
+    // popup blocked — fallback: open inline print
+    toast('Allow popups to download PDF, then try again.');
+    return;
+  }
+  toast('Opening print dialog — choose "Save as PDF"');
+  // Revoke blob URL after a delay
+  setTimeout(function(){URL.revokeObjectURL(url);},30000);
+}
+
+// ══ HELPERS ══
+function setItemDropdownsVisible(show){
+  var el=document.getElementById('item-dropdowns');
+  if(el)el.style.display=show?'':'none';
+}
+
+function getGSTRate(inv){
+  // Returns GST multiplier (e.g. 1.09) or 1 if GST not enabled for this invoice
+  var cfg=DB.settings;
+  var isSwits=(inv&&inv.company==='swits'&&cfg.dual);
+  if(isSwits){
+    if(!cfg.co2GstOn)return null;
+    var pct=parseFloat(cfg.co2GstPct)||9;
+    return pct;
+  } else {
+    if(!cfg.gstOn)return null;
+    var pct2=parseFloat(cfg.gstPct)||9;
+    return pct2;
+  }
+}
+
+function syncGSTDisplay(co){
+  // just to keep toggles in sync – actual save happens in saveSettings
+}
+
+// ══ SETTINGS ══
+function loadSettingsForm(){
+  var c=DB.settings;
+  document.getElementById('s-name').value=c.name||'';
+  document.getElementById('s-desc').value=c.desc||'';
+  document.getElementById('s-phone').value=c.phone||'';
+  document.getElementById('s-email').value=c.email||'';
+  document.getElementById('s-addr').value=c.addr||'';
+  document.getElementById('s-gst').value=c.gst||'';
+  document.getElementById('s-web').value=c.web||'';
+  document.getElementById('s-notes').value=c.notes||'';
+  document.getElementById('s-dual').checked=!!c.dual;
+  var fn=['s2-name','s2-desc','s2-phone','s2-email','s2-addr','s2-gst'];
+  var fk=['co2name','co2desc','co2phone','co2email','co2addr','co2gst'];
+  fn.forEach(function(id,i){var el=document.getElementById(id);if(el)el.value=c[fk[i]]||'';});
+  // GST toggles
+  var gstOn=document.getElementById('s-gst-on');if(gstOn)gstOn.checked=!!c.gstOn;
+  var gstPct=document.getElementById('s-gst-pct');if(gstPct)gstPct.value=c.gstPct||9;
+  var g2On=document.getElementById('s2-gst-on');if(g2On)g2On.checked=!!c.co2GstOn;
+  var g2Pct=document.getElementById('s2-gst-pct');if(g2Pct)g2Pct.value=c.co2GstPct||9;
+}
+function saveSetting(key,val){
+  DB.settings[key]=val;
+  persist();
+  if(key==='dual'){
+    var db=document.getElementById('dual-banner');
+    if(db)db.style.display=val?'block':'none';
+  }
+}
+function saveSettings(){
+  DB.settings.name=document.getElementById('s-name').value.trim();
+  DB.settings.desc=document.getElementById('s-desc').value.trim();
+  DB.settings.phone=document.getElementById('s-phone').value.trim();
+  DB.settings.email=document.getElementById('s-email').value.trim();
+  DB.settings.addr=document.getElementById('s-addr').value.trim();
+  DB.settings.gst=document.getElementById('s-gst').value.trim();
+  DB.settings.web=document.getElementById('s-web').value.trim();
+  DB.settings.notes=document.getElementById('s-notes').value.trim();
+  DB.settings.dual=document.getElementById('s-dual').checked;
+  var fn2=['s2-name','s2-desc','s2-phone','s2-email','s2-addr','s2-gst'];
+  var fk2=['co2name','co2desc','co2phone','co2email','co2addr','co2gst'];
+  fn2.forEach(function(id,i){var el=document.getElementById(id);if(el)DB.settings[fk2[i]]=el.value.trim();});
+  // GST toggles
+  var gstOnEl=document.getElementById('s-gst-on');DB.settings.gstOn=gstOnEl?gstOnEl.checked:false;
+  var gstPctEl=document.getElementById('s-gst-pct');DB.settings.gstPct=gstPctEl?parseFloat(gstPctEl.value)||9:9;
+  var g2OnEl=document.getElementById('s2-gst-on');DB.settings.co2GstOn=g2OnEl?g2OnEl.checked:false;
+  var g2PctEl=document.getElementById('s2-gst-pct');DB.settings.co2GstPct=g2PctEl?parseFloat(g2PctEl.value)||9:9;
+  persist();
+  toast('&#x2713; Settings saved!');
+}
+
+var _pdfInv=null;
+function shareEmail(){readEditor();_pdfInv=current;doEmail(current);}
+function shareWhatsApp(){readEditor();_pdfInv=current;doWA(current);}
+function emailInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv){_pdfInv=inv;doEmail(inv);}}
+function waInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv){_pdfInv=inv;doWA(inv);}}
+function shareEmailFromModal(){if(_pdfInv)doEmail(_pdfInv);}
+function shareWAFromModal(){if(_pdfInv)doWA(_pdfInv);}
+function doEmail(inv){
+  var to=DB.settings.sendEmail||"b33events.sg@gmail.com";
+  if(!to){to=prompt("Send to email:","b33events.sg@gmail.com");}if(!to)to="b33events.sg@gmail.com";
+  if(!to)return;
+  var s=encodeURIComponent((inv.num||"Invoice")+" from Bee Events");
+  var parts=["Hi,","","Invoice "+(inv.num||"")+" details:","Customer: "+(inv.custName||""),"Date: "+fmtDate(inv.date),"Total: $"+grand(inv.lines).toFixed(2),"Payment: "+(inv.pay||""),"","[Please attach the PDF file that just downloaded]","","Thank you,","Bee Events","Tel: "+(DB.settings.phone||"+65 8164 8864")];
+  var b=encodeURIComponent(parts.join("\n"));
+  window.open("mailto:"+encodeURIComponent(to)+"?subject="+s+"&body="+b,"_blank");
+  // Download the invoice file first, then open email
+  downloadInvFile(inv);
+  setTimeout(function(){
+    toast('PDF downloaded ✓ Now attach it to your email!');
+  },800);
+}
+function doWA(inv){
+  var raw=DB.settings.sendWA||"6581648864";
+  var waNum=raw.replace(/[^0-9]/g,"");
+  if(!waNum)waNum="6581648864";
+  var g=grand(inv.lines);
+  var outlet=inv.outlet?" ("+inv.outlet+")":"";
+  var parts=["Invoice "+(inv.num||"")+" from *Bee Events*","","Customer: *"+(inv.custName||"")+outlet+"*","Date: "+fmtDate(inv.date),"Total: *$"+g.toFixed(2)+"*","Payment: "+(inv.pay||""),"","[Please attach the PDF file that just downloaded]","","Thank you! Bee Events"];
+  var msg=parts.join("\n");
+  // Download the invoice file first, then open WhatsApp
+  downloadInvFile(inv);
+  setTimeout(function(){
+    window.open("https://wa.me/"+waNum+"?text="+encodeURIComponent(msg),"_blank");
+    toast('PDF downloaded ✓ Attach it in WhatsApp!');
+  },600);
+}
+// -- QUOTATION --
+function nextQuoNum(){DB.quoCounter++;persist();return "QUO-"+String(DB.quoCounter).padStart(4,"0");}
+function newQuotation(){
+  current={id:"quo_"+Date.now(),num:null,isQuotation:true,company:"bee",custName:"",addr:"",outlet:"",
+    date:new Date().toISOString().split("T")[0],ref:"",pay:"",lines:[],confirmed:false};
+  loadEditor();
+  document.getElementById("btn-del").style.display="none";
+  setNav("nav-quotation");showPanel("panel-editor");
+  setTopbar("+ New Quotation",BACK_BTN);
+  renderCombineList();
+  setItemDropdownsVisible(false);
+}
+function confirmQuotation(){
+  readEditor();
+  if(!current.custName){toast("Please enter a customer name.");return;}
+  if(!current.lines.length){toast("Please add at least one item.");return;}
+  if(!current.num)current.num=nextQuoNum();
+  var quo=JSON.parse(JSON.stringify(current));
+  var idx=DB.quotations.findIndex(function(i){return i.id===quo.id;});
+  if(idx>=0)DB.quotations[idx]=quo;else DB.quotations.push(quo);
+  persist();
+  toast("✓ "+current.num+" saved!",3000);
+  document.getElementById("num-display").textContent=current.num;
+  document.getElementById("num-display").style.opacity="1";
+  document.getElementById("confirm-btn").textContent="✓ Update Quotation";
+  updateBadge();
+  gotoQuotations();
+}
+function renderQuoCard(quo){
+  var g=grand(quo.lines);
+  var rows=quo.lines.map(function(l){
+    var t=l.q*(l.ret?-1:1)*l.p;
+    var cls=t<0?" qv-neg":"";
+    var neg=t<0?"&#8722;":"";
+    return "<tr><td>"+esc(l.desc)+"</td><td class=\"r\">"+l.q+"</td><td class=\"r\">$"+l.p.toFixed(2)+"</td><td class=\"r"+cls+"\">"+neg+"$"+Math.abs(t).toFixed(2)+"</td></tr>";
+  }).join("");
+  var tots="<div class=\"qvt grand\"><span>Total</span><span class=\"m\">$"+g.toFixed(2)+"</span></div>";
+  var qid=quo.id;
+  var h="";
+  h+='<div class="inv-card-item">';
+  h+='<div class="inv-card-header">';
+  h+='<div onclick="toggleCard(\'qc-'+qid+'\')" style="flex:1;min-width:0;cursor:pointer;">';
+  h+='<div class="inv-card-num"><span style="font-size:9px;font-weight:700;background:#E8F2FB;color:#1A4F7A;padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>'+esc(quo.num)+'</div>';
+  h+='<div class="inv-card-name">'+esc(quo.custName)+'</div>';
+  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+' &middot; '+esc(quo.ref||"No ref")+'</div>';
+  h+='</div>';
+  h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
+  h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
+  h+='<button class="btn btn-accent btn-sm" onclick="editQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">Edit</button>';
+  h+='<button class="btn btn-ghost btn-sm" onclick="previewQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">PDF</button>';
+  h+='<svg onclick="toggleCard(\'qc-'+qid+'\')" class="inv-card-chevron" id="chev-qc-'+qid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;"><polyline points="6 9 12 15 18 9"/></svg>';
+  h+='</div></div>';
+  h+='<div class="inv-card-body" id="qc-'+qid+'">';
+  h+='<table class="qv-table"><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  h+='<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>';
+  h+='<div class="inv-card-actions">';
+  h+='<button class="btn btn-ghost btn-sm" onclick="previewQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">Preview PDF</button>';
+  h+='<button class="btn btn-ghost btn-sm" onclick="downloadQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">Download PDF</button>';
+
+  h+='<button class="btn btn-sm" onclick="generateInvoiceFromQuo(\''+ qid +'\')" style="background:var(--green-lt);color:var(--green);border:1.5px solid rgba(22,122,88,.2);padding:4px 8px;font-size:11px;font-weight:600;">Generate Invoice &#x2192;</button>';
+  h+='<button class="btn btn-red btn-sm" onclick="delQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">Delete</button>';
+  h+='</div></div></div>';
+  return h;
+}
+function previewQuo(id){var q=(DB.quotations||[]).find(function(x){return x.id===id;});if(q)openPDF(q);}
+function downloadQuo(id){var q=(DB.quotations||[]).find(function(x){return x.id===id;});if(q)realDownloadPDF(q);}
+function editQuo(id){
+  var q=(DB.quotations||[]).find(function(x){return x.id===id;});
+  if(!q)return;
+  current=JSON.parse(JSON.stringify(q));
+  loadEditor();
+  document.getElementById("btn-del").style.display="";
+  setNav("nav-quotation");showPanel("panel-editor");
+  setTopbar("Edit — "+current.num,BACK_BTN);
+  renderCombineList();
+  setItemDropdownsVisible(false);
+}
+function generateInvoiceFromQuo(quoId){
+  var q=(DB.quotations||[]).find(function(x){return x.id===quoId;});
+  if(!q)return;
+  var inv=JSON.parse(JSON.stringify(q));
+  inv.id="inv_"+Date.now();
+  inv.num=nextNum();
+  inv.isQuotation=false;
+  inv.quoRef=q.num;
+  if(!inv.ref)inv.ref=q.num;
+  inv.pay=inv.pay||"Cash on Delivery";
+  DB.quotations=DB.quotations.filter(function(x){return x.id!==quoId;});
+  DB.invoices.push(inv);
+  persist();
+  toast("✓ Invoice "+inv.num+" generated from "+q.num,3000);
+  gotoHome();switchTab("completed");
+}
+function delQuo(id){
+  if(!confirm("Delete this quotation?"))return;
+  DB.quotations=DB.quotations.filter(function(x){return x.id!==id;});
+  persist();renderHome();toast("Deleted.");
+}
+function emailQuo(id){var q=(DB.quotations||[]).find(function(x){return x.id===id;});if(q){_pdfInv=q;doEmail(q);}}
+function waQuo(id){var q=(DB.quotations||[]).find(function(x){return x.id===id;});if(q){_pdfInv=q;doWA(q);}}
+// -- INIT --
+document.getElementById("pdf-ov").addEventListener("click",function(e){if(e.target===this)closePDF();});
+// Sync sidebar dual checkbox to stored setting
+(function(){
+  var cb=document.getElementById('s-dual');
+  if(cb)cb.checked=!!DB.settings.dual;
+})();
+updateBadge();
+renderHome();
+</script>
+</body>
+</html>
