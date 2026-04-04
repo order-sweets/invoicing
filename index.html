@@ -38,7 +38,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 }
 
 /* ── SIDEBAR ── */
-.sb-header{padding:0;}
+.sb-header{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.08);}
 .sb-logo{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:-.01em;}
 .sb-sub{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
 .sb-nav{padding:10px 8px;flex:1;overflow-y:auto;}
@@ -103,7 +103,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .oc-ref{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent-dk);margin-bottom:1px;}
 .oc-name{font-size:12px;font-weight:700;margin-bottom:1px;}
 .oc-meta{font-size:11px;color:var(--muted);line-height:1.4;}
-.oc-amount{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;text-align:right;flex-shrink:0;}
+.oc-amount{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;text-align:right;flex-shrink:0;}
 .oc-btns{display:flex;gap:6px;flex-shrink:0;}
 @media(max-width:600px){.order-card{flex-wrap:wrap;}.oc-btns{width:100%;}.oc-btns .btn{flex:1;justify-content:center;}}
 
@@ -215,34 +215,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .pdf-close:hover{background:var(--surface);}
 
 /* ── PDF DOC (A4/A5/A6 optimised) ── */
-.pdf-doc{padding:32px 40px;font-family:'DM Sans',sans-serif;color:#1C1B18;font-size:14px;}
+.pdf-doc{padding:32px 40px;font-family:'DM Sans',sans-serif;color:#1C1B18;font-size:12px;}
 .pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
-.pdf-brand-name{font-family:'DM Serif Display',serif;font-size:28px;color:#1C1B18;}
-.pdf-brand-sub{font-size:12px;color:#78766E;margin-top:4px;line-height:1.7;}
+.pdf-brand-name{font-family:'DM Serif Display',serif;font-size:22px;color:#1C1B18;}
+.pdf-brand-sub{font-size:10px;color:#78766E;margin-top:2px;line-height:1.5;}
 .pdf-inv-box{text-align:right;}
 .pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#78766E;}
-.pdf-inv-box .num{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:#C8501F;margin:2px 0;}
+.pdf-inv-box .num{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#C8501F;margin:2px 0;}
 .pdf-inv-box .dt{font-size:10px;color:#78766E;}
 .pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;padding:13px 15px;background:#F3F1EC;border-radius:9px;}
-.pm-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}
-.pm-val{font-size:14px;font-weight:700;line-height:1.4;}
+.pm-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}
+.pm-val{font-size:12px;font-weight:700;line-height:1.4;}
 .pm-sub{font-size:11px;color:#78766E;margin-top:1px;line-height:1.4;}
 .pdf-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;}
-.pdf-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;padding:8px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
+.pdf-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;padding:6px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
 .pdf-tbl th.r{text-align:right;}
-.pdf-tbl td{padding:8px 8px;border-bottom:1px solid #EFEEE9;font-size:13px;vertical-align:top;}
-.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;font-size:13px;}
+.pdf-tbl td{padding:6px 8px;border-bottom:1px solid #EFEEE9;font-size:11px;vertical-align:top;}
+.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;font-size:11px;}
 .pdf-ret-pill{font-size:8px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;vertical-align:middle;}
 .pdf-neg{color:#B91C1C;}
 .pdf-tots{display:flex;justify-content:flex-end;margin-bottom:14px;}
 .pdf-tots-inner{width:180px;}
-.ptr{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+.ptr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;}
 .ptr.dim{color:#78766E;}.ptr.ret{color:#B91C1C;}
-.ptr.grand{font-size:16px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
+.ptr.grand{font-size:14px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
 .ptr .m{font-family:'DM Mono',monospace;}
 .pdf-notes{margin-top:16px;padding-top:13px;border-top:1px solid #E0DED8;}
 .pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:4px;}
-.pdf-notes .val{font-size:13px;color:#555;line-height:1.6;}
+.pdf-notes .val{font-size:11px;color:#555;line-height:1.6;}
 .pdf-footer{margin-top:24px;padding-top:11px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#ABA9A1;}
 
 /* ── TOAST ── */
@@ -270,14 +270,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-  <div class="sb-header" style="display:block;padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.08);">
+  <div class="sb-header">
     <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.12em;text-transform:uppercase;">Settings</div>
+    <div class="sb-logo">Bee Events &amp; SWITS</div>
+    <div class="sb-sub">Invoicing System</div>
   </div>
   <nav class="sb-nav">
+
+
     <button class="nb" id="nav-quotations" style="display:none" onclick="gotoQuotations();closeMobMenu()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
       Quotations
     </button>
+    <div class="sb-div"></div>
     <label style="display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;border-radius:7px;transition:background .13s;" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background=''">
       <input type="checkbox" id="s-dual" onchange="saveSetting('dual',this.checked)" style="width:15px;height:15px;accent-color:#4ade80;cursor:pointer;flex-shrink:0;">
       <span style="font-size:11px;font-weight:500;color:rgba(255,255,255,.65);line-height:1.3;">Enable Dual-Company Invoicing (Bee Events + SWITS)</span>
@@ -298,7 +303,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
   <!-- MOBILE TOPBAR -->
   <div class="mob-topbar" style="flex-direction:column;align-items:flex-start;gap:3px;padding:8px 16px;">
-    <div style="font-family:'DM Serif Display',serif;font-size:14px;color:#fff;"><span style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;opacity:.55;">Bee Events &amp; SWITS</span></div>
+    <div><span style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;color:#fff;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;opacity:.55;color:#fff;">Bee Events &amp; SWITS</span></div>
     <div style="display:flex;align-items:center;gap:8px;width:100%;">
       <div id="mob-topbar-actions" style="display:flex;gap:6px;flex:1;"></div>
       <button class="mob-menu" onclick="openMobMenu()" style="flex-shrink:0;padding:2px;">
@@ -308,19 +313,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
   </div>
 
   <!-- DESKTOP TOPBAR -->
-  <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:4px;">
-    <div style="font-family:'DM Serif Display',serif;font-size:15px;color:#fff;letter-spacing:-.01em;"><span style="font-family:'DM Sans',sans-serif;font-size:19px;font-weight:600;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;opacity:.55;">Bee Events &amp; SWITS</span></div>
-    <div class="topbar-left" style="flex:1;width:100%;display:flex;align-items:center;justify-content:space-between;">
+  <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:3px;">
+    <div><span style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;color:#fff;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;opacity:.55;color:#fff;">Bee Events &amp; SWITS</span></div>
+    <div class="topbar-left" style="flex:1;">
       <div class="topbar-actions" id="topbar-actions" style="justify-content:flex-start;"></div>
-      <div class="topbar-title" id="topbar-title" style="display:none;color:#fff;"></div>
     </div>
+    <div class="topbar-title" id="topbar-title" style="display:none;color:#fff;"></div>
   </div>
 
   <div class="content">
 
     <!-- ══ HOME PANEL ══ -->
     <div class="panel active" id="panel-home">
-      <div id="dual-banner" style="display:none;background:#EEF2FF;border:1.5px solid rgba(79,70,229,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#3730A3;">&#x26A1; Dual-company invoicing is ON — invoices will auto-split into Bee Events (Cotton Candy) + SWITS (all other items)</div>
+      <div id="dual-banner" style="display:none;background:linear-gradient(90deg,var(--green-lt),#d1fae5);border:1.5px solid rgba(22,122,88,.3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--green);">&#x26A1; Dual-company invoicing is ON — invoices will auto-split into Bee Events (Cotton Candy) + SWITS (all other items)</div>
 
       <!-- Section tabs -->
       <div class="sec-tabs">
@@ -572,7 +577,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       <button class="btn btn-primary btn-lg" onclick="saveSettings()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Profiles
+        Save Settings
       </button>
     </div>
 
@@ -653,8 +658,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 
 // ══ REAL STORE DATA ══
-var KNOWN_CUSTOMERS = {};
-var PRODS = {};
+var KNOWN_CUSTOMERS = {
+  'Nelly Retro':                   {tier:'retail',   addr:'Causeway Point, Singapore', customPrices:[]},
+  'Hong Yi Hao':                   {tier:'distributor', addr:'rrrrrrr',               customPrices:[]},
+  'Walson Food Distributor Pte Ltd':{tier:'distributor', addr:'T-Space, 1 Tampines North Dr 1 #06-27, (S)528559',
+    customPrices:[{pid:'cc',unit:'box',price:34.5}]}
+};
+var PRODS = {
+  a1: {name:'Airheads Bars',           ppc:36, w:'37g',   r:2.50, d:2.00, bR:90.00,  bD:72.00},
+  a2: {name:'Airheads Bites',          ppc:24, w:'57g',   r:3.00, d:2.40, bR:72.00,  bD:57.60},
+  nb1:{name:'Nerds Grape & Strawberry',ppc:36, w:'46.7g', r:2.80, d:2.20, bR:100.80, bD:79.20},
+  nb2:{name:'Nerds Rope Rainbow',      ppc:24, w:'26g',   r:3.20, d:2.60, bR:76.80,  bD:62.40},
+  cc: {name:'Cotton Candy',            ppc:15, w:'38g',   r:1.80, d:1.70, bR:27.00,  bD:25.50}
+};
 
 var SAMPLE_PENDING = [];
 
@@ -693,7 +709,7 @@ function updateBadge() {
   b.textContent = n; b.style.display = n ? '' : 'none';
 }
 
-// ── Quotation card button delegation ──
+// ── Quotation card delegation ──
 document.addEventListener('click',function(e){
   var tog=e.target.closest('.qbtn-toggle');
   if(tog){toggleCard(tog.getAttribute('data-card'));return;}
@@ -707,48 +723,6 @@ document.addEventListener('click',function(e){
   else if(e.target.closest('.qbtn-gen')){generateInvoiceFromQuo(qid);}
 });
 
-// ══ STOCK DEDUCTION ══
-// Called when invoice is confirmed — deducts stock from snack-inv-v5 (shared with store)
-function deductStockForInvoice(lines){
-  var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
-  var prods=JSON.parse(localStorage.getItem('snack-products-v5')||'null');
-  // Build a flat product list from store's localStorage
-  var allProds=[];
-  if(prods){
-    if(prods.newArrivals)allProds=allProds.concat(prods.newArrivals);
-    if(prods.hotSale)allProds=allProds.concat(prods.hotSale);
-    if(prods.brands)prods.brands.forEach(function(b){allProds=allProds.concat(b.products||[]);});
-  }
-  lines.forEach(function(l){
-    if(l.ret)return; // returns add back, don't deduct
-    // Match line description to product name
-    var matched=allProds.find(function(p){
-      var descLower=(l.desc||'').toLowerCase();
-      return descLower.indexOf((p.name||'').toLowerCase())===0||(p.name||'').toLowerCase().indexOf(descLower)===0||descLower===((p.name||'').toLowerCase());
-    });
-    if(!matched)return;
-    var pid=matched.id;
-    var ppc=matched.ppc||1;
-    var currentStock=parseInt(inv[pid]||matched.stockPieces||0,10);
-    // Determine pieces to deduct based on line desc (Box vs Piece)
-    var piecesToDeduct=l.q; // default: pieces
-    if((l.desc||'').toLowerCase().indexOf('box')!==-1||l.q===Math.round(l.q/ppc)*ppc===false){
-      // If ordered in boxes, convert
-      if(ppc>1 && l.q<ppc) piecesToDeduct=l.q*ppc; // ordered N boxes
-    }
-    inv[pid]=Math.max(0,currentStock-piecesToDeduct);
-  });
-  localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
-}
-
-window.deletePendingOrder=function(oid){
-  if(!confirm('Remove this order from Pending?'))return;
-  DB.pending=DB.pending.filter(function(o){return o.id!==oid;});
-  var storeOrders=JSON.parse(localStorage.getItem('snack-orders-v1')||'[]');
-  storeOrders=storeOrders.map(function(o){return o.id===oid?Object.assign({},o,{status:'done'}):o;});
-  localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
-  persist();renderHome();
-};
 window.toggleOrderCard=function(id){
   var body=document.getElementById(id);
   var oid=id.replace('oc-','');
@@ -757,6 +731,14 @@ window.toggleOrderCard=function(id){
   var open=body.style.display==='none'||body.style.display==='';
   body.style.display=open?'block':'none';
   if(chev)chev.style.transform=open?'rotate(180deg)':'';
+};
+window.deletePendingOrder=function(oid){
+  if(!confirm('Remove this order from Pending?'))return;
+  DB.pending=DB.pending.filter(function(o){return o.id!==oid;});
+  var storeOrders=JSON.parse(localStorage.getItem('snack-orders-v1')||'[]');
+  storeOrders=storeOrders.map(function(o){return o.id===oid?Object.assign({},o,{status:'done'}):o;});
+  localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
+  persist();renderHome();
 };
 
 // ══ UTILS ══
@@ -769,26 +751,19 @@ function grand(lines){return lines.reduce(function(s,l){return s+l.q*(l.ret?-1:1
 
 // ══ MOBILE MENU ══
 function openMobMenu(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-overlay').classList.add('show');}
-function closeMobMenu(){var s=document.getElementById('sidebar');if(s)s.classList.remove('open');var o=document.getElementById('sb-overlay');if(o)o.classList.remove('show');}
+function closeMobMenu(){var _s=document.getElementById('sidebar');if(_s)_s.classList.remove('open');var _o=document.getElementById('sb-overlay');if(_o)_o.classList.remove('show');}
 
 // ══ NAV ══
-function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});var el=document.getElementById(id);if(el)el.classList.add('active');}
+function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});var _ne=document.getElementById(id);if(_ne)_ne.classList.add('active');}
 function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
-function setTopbar(title,html){
-  var tt=document.getElementById('topbar-title');
-  if(tt){tt.textContent=title;tt.style.display=title?'':'none';}
-  var ta=document.getElementById('topbar-actions');
-  if(ta)ta.innerHTML=html;
-  var mob=document.getElementById('mob-topbar-actions');
-  if(mob)mob.innerHTML=html;
-}
+function setTopbar(title,html){var tt=document.getElementById('topbar-title');if(tt){tt.textContent=title;tt.style.display=title?'':'none';}var ta=document.getElementById('topbar-actions');if(ta)ta.innerHTML=html;var mob=document.getElementById('mob-topbar-actions');if(mob)mob.innerHTML=html;}
 var HOME_BTNS=(function(){
-  var s='background:#fff;color:#C8501F;border:1.5px solid #C8501F;';
+  var s='background:#C8501F;color:#fff;border:none;';
   var ico='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
   return '<button class="btn" style="'+s+'" onclick="newInvoice();closeMobMenu()">'+ico+' + New Invoice</button>'
        +'<button class="btn" style="'+s+'" onclick="newQuotation();closeMobMenu()">'+ico+' + New Quotation</button>';
 })();
-var BACK_BTN='<button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="gotoHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>';
+var BACK_BTN='<button class="btn btn-ghost" onclick="gotoHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>';
 
 function gotoHome(){
   showPanel('panel-home');
@@ -831,15 +806,7 @@ function renderHome(){
   if(activeTab==='pending'){
     var list=DB.pending.filter(function(o){return matchesFilter(o.custName,o.date,o.id);});
     if(!list.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg><p>No pending orders.<br>New WhatsApp orders will appear here.</p></div>';return;}
-    var html=list.map(function(o){
-      var tot=o.items.reduce(function(s,i){return s+i.qty*i.price;},0);
-      var meta=esc(o.items.length)+' item'+(o.items.length>1?'s':'')+' &nbsp;&middot;&nbsp; '+esc(fmtDate(o.date))+(o.outlet?' &nbsp;&middot;&nbsp; '+esc(o.outlet):'');
-      var oid=o.id;
-      var itemRows=(o.items||[]).map(function(it){var t=(it.qty*it.price).toFixed(2);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+Number(it.price).toFixed(2)+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');
-      var notes=o.notes?'<div style="margin-top:8px;padding:8px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--muted);"><strong>Notes:</strong> '+esc(o.notes)+'</div>':'';
-      var addr=o.addr?'<div style="margin-top:6px;font-size:12px;color:var(--muted);">📍 '+esc(o.addr)+'</div>':'';
-      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:0 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'<div style="margin-top:12px;display:flex;gap:8px;">'+'<button class="btn btn-accent" style="flex:1;justify-content:center;" onclick="generateFromOrder(\''+oid+'\')" >Generate Invoice &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete order" style="padding:0 10px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button></div></div></div>';
-    }).join('');
+    var html=list.map(function(o){var tot=o.items.reduce(function(s,i){return s+i.qty*i.price;},0);var meta=esc(o.items.length)+' item'+(o.items.length>1?'s':'')+' &nbsp;&middot;&nbsp; '+esc(fmtDate(o.date))+(o.outlet?' &nbsp;&middot;&nbsp; '+esc(o.outlet):'');var oid=o.id;var itemRows=(o.items||[]).map(function(it){var t=(it.qty*it.price).toFixed(2);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+Number(it.price).toFixed(2)+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');var addr=o.addr?'<div style="margin-top:6px;font-size:12px;color:var(--muted);">'+esc(o.addr)+'</div>':'';var notes=o.notes?'<div style="margin-top:6px;padding:6px 8px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--muted);"><strong>Notes:</strong> '+esc(o.notes)+'</div>':'';return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')" >'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div>'+'</div>'+'<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;" title="Generate Invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="13" x2="8" y2="13"/><line x1="12" y1="17" x2="8" y2="17"/></svg></button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div>'+'</div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><thead><tr>'+'<th style="padding:3px 6px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:3px 6px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:3px 6px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:3px 6px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'</div>'+'</div>';}).join('');
     el.innerHTML='<div class="order-list">'+html+'</div>';
   } else if(activeTab==='quotations'){
     var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
@@ -1077,7 +1044,6 @@ function confirmInvoice(){
     if(current._mergedOrders)ids=ids.concat(current._mergedOrders);
     ids.forEach(function(oid){
       DB.pending=DB.pending.filter(function(o){return o.id!==oid;});
-      // Also mark as done in store's order log
       var storeOrders=JSON.parse(localStorage.getItem('snack-orders-v1')||'[]');
       storeOrders=storeOrders.map(function(o){return o.id===oid?Object.assign({},o,{status:'done'}):o;});
       localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
@@ -1115,7 +1081,9 @@ function confirmInvoice(){
     if(swlines.length)deductStockForInvoice(swlines);
     persist();
     toast('\u2713 '+splitNums.join(' + '),4000);
-    gotoHome();switchTab('completed');
+    gotoHome();
+// Init mob topbar
+var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;switchTab('completed');
     return;
   }
 
@@ -1160,8 +1128,8 @@ function getPDFCSS(){
     +'body{font-family:"DM Sans",sans-serif;color:#1C1B18;background:#fff;}'
     +'.pdf-doc{padding:30px 38px;}'
     +'.pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}'
-    +'.pdf-brand-name{font-family:"DM Serif Display",serif;font-size:28px;}'
-    +'.pdf-brand-sub{font-size:12px;color:#78766E;margin-top:4px;line-height:1.7;}'
+    +'.pdf-brand-name{font-family:"DM Serif Display",serif;font-size:21px;}'
+    +'.pdf-brand-sub{font-size:10px;color:#78766E;margin-top:2px;line-height:1.5;}'
     +'.pdf-inv-box{text-align:right;}.pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;}'
     +'.pdf-inv-box .num{font-size:17px;font-weight:700;font-family:"DM Mono",monospace;color:#C8501F;margin:2px 0;}'
     +'.pdf-inv-box .dt{font-size:10px;color:#78766E;}'
@@ -1192,7 +1160,7 @@ function getPDFCSS(){
 function buildPDF(inv){
   var s=sub(inv.lines),r=rets(inv.lines),g=s+r;
   var cfg=DB.settings;
-  var useCo2=inv.company==='swits';
+  var useCo2=inv.company==='swits'&&cfg.dual;
   var companyName=useCo2?(cfg.co2name||'SWITS'):(cfg.name||'Bee Events');
   var brandSub2=useCo2?[cfg.co2desc,cfg.co2phone,cfg.co2email,cfg.co2addr].filter(Boolean).join('<br>'):[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join('<br>');
   var docLabel=inv.isQuotation?'Quotation':'Invoice';
@@ -1214,9 +1182,9 @@ function buildPDF(inv){
   } else {
     tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';
   }
-  return '<div class="pdf-doc">'
-    +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub2+'</div></div>'
-      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
+    return '<div class="pdf-doc">'
+    +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub+'</div></div>'
+      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;"></div><div class="num">'+esc(inv.num)+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
       +'<div><div class="pm-lbl">Order Number</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
@@ -1230,7 +1198,6 @@ function buildPDF(inv){
 function previewPDF(){if(!current){toast('No invoice open.');return;}readEditor();openPDF(current);}
 function previewInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv)openPDF(inv);}
 function openPDF(inv){
-  _pdfInv=inv;
   document.getElementById('pdf-area').innerHTML=buildPDF(inv);
   document.getElementById('pdf-bar-title').textContent=(inv.num||'Draft')+' — Preview';
   document.getElementById('pdf-ov').classList.add('open');
@@ -1274,49 +1241,47 @@ function realDownloadPDF(inv){
   var docType=inv.isQuotation?'Quotation':'Tax Invoice';
   var custSlug=(inv.custName||'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
   var filename=(custSlug?custSlug+'_':'')+(inv.num||docType)+'.pdf';
-
-  // Render invoice HTML into a hidden div, then capture with html2canvas
   var container=document.createElement('div');
   container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;';
   container.innerHTML='<style>'+getPDFCSS()+'</style><div id="_pdf_render">'+buildPDF(inv)+'</div>';
   document.body.appendChild(container);
-
   toast('Generating PDF…');
-
-  // Wait for fonts to load
   var renderEl=container.querySelector('#_pdf_render');
   setTimeout(function(){
-    html2canvas(renderEl,{
-      scale:2,
-      useCORS:true,
-      backgroundColor:'#ffffff',
-      width:794,
-      windowWidth:794,
-      logging:false
-    }).then(function(canvas){
+    html2canvas(renderEl,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
+    .then(function(canvas){
       document.body.removeChild(container);
       var imgData=canvas.toDataURL('image/jpeg',0.92);
       var {jsPDF}=window.jspdf;
       var pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-      var pdfW=pdf.internal.pageSize.getWidth();
-      var pdfH=pdf.internal.pageSize.getHeight();
-      var ratio=canvas.width/canvas.height;
-      var imgH=pdfW/ratio;
+      var pdfW=pdf.internal.pageSize.getWidth(),pdfH=pdf.internal.pageSize.getHeight();
+      var imgH=pdfW/(canvas.width/canvas.height);
       var y=0;
-      // Handle multi-page
-      while(y<imgH){
-        if(y>0)pdf.addPage();
-        pdf.addImage(imgData,'JPEG',0,-(y),pdfW,imgH);
-        y+=pdfH;
-      }
+      while(y<imgH){if(y>0)pdf.addPage();pdf.addImage(imgData,'JPEG',0,-y,pdfW,imgH);y+=pdfH;}
       pdf.save(filename);
-      toast('\u2713 '+filename+' downloaded!');
-    }).catch(function(err){
-      document.body.removeChild(container);
-      console.error(err);
-      toast('PDF generation failed — try again.');
-    });
+      toast('✓ '+filename+' downloaded!');
+    }).catch(function(err){document.body.removeChild(container);toast('PDF failed — try again.');});
   },600);
+}
+
+// ══ STOCK DEDUCTION ══
+function deductStockForInvoice(lines){
+  var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+  var prods=JSON.parse(localStorage.getItem('snack-products-v5')||'null');
+  var allProds=[];
+  if(prods){
+    if(prods.newArrivals)allProds=allProds.concat(prods.newArrivals);
+    if(prods.hotSale)allProds=allProds.concat(prods.hotSale);
+    if(prods.brands)prods.brands.forEach(function(b){allProds=allProds.concat(b.products||[]);});
+  }
+  lines.forEach(function(l){
+    if(l.ret)return;
+    var matched=allProds.find(function(p){return (l.desc||'').toLowerCase().indexOf((p.name||'').toLowerCase())===0;});
+    if(!matched)return;
+    var currentStock=parseInt(inv[matched.id]||matched.stockPieces||0,10);
+    inv[matched.id]=Math.max(0,currentStock-l.q);
+  });
+  localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
 }
 
 // ══ HELPERS ══
@@ -1326,9 +1291,7 @@ function setItemDropdownsVisible(show){
 }
 
 function getGSTRate(inv){
-  // Returns GST rate (%) or null if GST not enabled for this invoice
   var cfg=DB.settings;
-  // If company is explicitly set to swits on the invoice, use SWITS GST
   var isSwits=(inv&&inv.company==='swits');
   if(isSwits){
     if(!cfg.co2GstOn)return null;
@@ -1464,15 +1427,13 @@ function renderQuoCard(quo){
   var g=grand(quo.lines);
   var rows=quo.lines.map(function(l){
     var t=l.q*(l.ret?-1:1)*l.p;
-    var cls=t<0?" qv-neg":"";
-    var neg=t<0?"&#8722;":"";
+    var cls=t<0?" qv-neg":"";var neg=t<0?"&#8722;":"";
     return "<tr><td>"+esc(l.desc)+"</td><td class=\"r\">"+l.q+"</td><td class=\"r\">$"+l.p.toFixed(2)+"</td><td class=\"r"+cls+"\">"+neg+"$"+Math.abs(t).toFixed(2)+"</td></tr>";
   }).join("");
   var tots="<div class=\"qvt grand\"><span>Total</span><span class=\"m\">$"+g.toFixed(2)+"</span></div>";
   var qid=quo.id;
-  var TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
-  var h="";
-  h+='<div class="inv-card-item" data-qid="'+qid+'">';
+  var TRASH_S='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
+  var h='<div class="inv-card-item" data-qid="'+qid+'">';
   h+='<div class="inv-card-header">';
   h+='<div class="qbtn-toggle" data-card="qc-'+qid+'" style="flex:1;min-width:0;cursor:pointer;">';
   h+='<div class="inv-card-num"><span style="font-size:9px;font-weight:700;background:#E8F2FB;color:#1A4F7A;padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>'+esc(quo.num)+'</div>';
@@ -1482,7 +1443,7 @@ function renderQuoCard(quo){
   h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
   h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
   h+='<button class="btn btn-accent btn-sm qbtn-edit" style="padding:4px 8px;font-size:11px;">Edit</button>';
-  h+='<button class="btn btn-red btn-sm qbtn-del" style="padding:4px 8px;font-size:11px;" title="Delete">'+TRASH+'</button>';
+  h+='<button class="btn btn-red btn-sm qbtn-del" style="padding:4px 8px;font-size:11px;" title="Delete">'+TRASH_S+'</button>';
   h+='<button class="btn btn-ghost btn-sm qbtn-pdf" style="padding:4px 8px;font-size:11px;">PDF</button>';
   h+='<svg class="inv-card-chevron qbtn-toggle" data-card="qc-'+qid+'" id="chev-qc-'+qid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;"><polyline points="6 9 12 15 18 9"/></svg>';
   h+='</div></div>';
@@ -1715,7 +1676,6 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
 })();
 // Always land on home screen
 gotoHome();
-var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
 </body>
 </html>
