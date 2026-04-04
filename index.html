@@ -1143,7 +1143,7 @@ function getPDFCSS(){
 function buildPDF(inv){
   var s=sub(inv.lines),r=rets(inv.lines),g=s+r;
   var cfg=DB.settings;
-  var useCo2=inv.company==='swits'&&cfg.dual;
+  var useCo2=inv.company==='swits';
   var companyName=useCo2?(cfg.co2name||'SWITS'):(cfg.name||'Bee Events');
   var brandSub2=useCo2?[cfg.co2desc,cfg.co2phone,cfg.co2email,cfg.co2addr].filter(Boolean).join('<br>'):[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join('<br>');
   var docLabel=inv.isQuotation?'Quotation':'Invoice';
@@ -1165,9 +1165,8 @@ function buildPDF(inv){
   } else {
     tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';
   }
-  var brandSub=[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join('<br>');
   return '<div class="pdf-doc">'
-    +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub+'</div></div>'
+    +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub2+'</div></div>'
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
@@ -1176,7 +1175,6 @@ function buildPDF(inv){
     +'<table class="pdf-tbl"><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
     +((cfg.notes||inv.notes)?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+esc(cfg.notes||inv.notes||'').replace(/\n/g,'<br>')+'</div></div>':'')
-    +'<div class="pdf-footer">'+esc(companyName)+(cfg.web?' &nbsp;&middot;&nbsp; '+esc(cfg.web):'')+(cfg.gst?' &nbsp;&middot;&nbsp; '+esc(cfg.gst):'')+'</div>'
     +'</div>';
 }
 
