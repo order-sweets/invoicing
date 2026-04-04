@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Bee Events — Invoice System</title>
+<title>Bee Events &amp; SWITS Invoicing System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -214,34 +214,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .pdf-close:hover{background:var(--surface);}
 
 /* ── PDF DOC (A4/A5/A6 optimised) ── */
-.pdf-doc{padding:32px 40px;font-family:'DM Sans',sans-serif;color:#1C1B18;font-size:12px;}
+.pdf-doc{padding:32px 40px;font-family:'DM Sans',sans-serif;color:#1C1B18;font-size:13px;}
 .pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
-.pdf-brand-name{font-family:'DM Serif Display',serif;font-size:22px;color:#1C1B18;}
+.pdf-brand-name{font-family:'DM Serif Display',serif;font-size:26px;color:#1C1B18;}
 .pdf-brand-sub{font-size:10px;color:#78766E;margin-top:2px;line-height:1.5;}
 .pdf-inv-box{text-align:right;}
 .pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#78766E;}
-.pdf-inv-box .num{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#C8501F;margin:2px 0;}
+.pdf-inv-box .num{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:#C8501F;margin:2px 0;}
 .pdf-inv-box .dt{font-size:10px;color:#78766E;}
 .pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;padding:13px 15px;background:#F3F1EC;border-radius:9px;}
 .pm-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}
-.pm-val{font-size:12px;font-weight:700;line-height:1.4;}
+.pm-val{font-size:13px;font-weight:700;line-height:1.4;}
 .pm-sub{font-size:11px;color:#78766E;margin-top:1px;line-height:1.4;}
 .pdf-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;}
-.pdf-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;padding:6px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
+.pdf-tbl th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;padding:7px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
 .pdf-tbl th.r{text-align:right;}
-.pdf-tbl td{padding:6px 8px;border-bottom:1px solid #EFEEE9;font-size:11px;vertical-align:top;}
-.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;font-size:11px;}
+.pdf-tbl td{padding:7px 8px;border-bottom:1px solid #EFEEE9;font-size:12px;vertical-align:top;}
+.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;font-size:12px;}
 .pdf-ret-pill{font-size:8px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;vertical-align:middle;}
 .pdf-neg{color:#B91C1C;}
 .pdf-tots{display:flex;justify-content:flex-end;margin-bottom:14px;}
 .pdf-tots-inner{width:180px;}
-.ptr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;}
+.ptr{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
 .ptr.dim{color:#78766E;}.ptr.ret{color:#B91C1C;}
-.ptr.grand{font-size:14px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
+.ptr.grand{font-size:15px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
 .ptr .m{font-family:'DM Mono',monospace;}
 .pdf-notes{margin-top:16px;padding-top:13px;border-top:1px solid #E0DED8;}
 .pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:4px;}
-.pdf-notes .val{font-size:11px;color:#555;line-height:1.6;}
+.pdf-notes .val{font-size:12px;color:#555;line-height:1.6;}
 .pdf-footer{margin-top:24px;padding-top:11px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#ABA9A1;}
 
 /* ── TOAST ── */
@@ -270,8 +270,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sb-header">
-    <div class="sb-logo">Bee Events</div>
-    <div class="sb-sub">Invoice System</div>
+    <div class="sb-logo">Bee Events &amp; SWITS</div>
+    <div class="sb-sub">Invoicing System</div>
   </div>
   <nav class="sb-nav">
     <div class="sb-sec">Main</div>
@@ -313,7 +313,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
   <!-- MOBILE TOPBAR -->
   <div class="mob-topbar">
-    <div class="mob-logo">Bee Events Invoices</div>
+    <div class="mob-logo">Bee Events &amp; SWITS</div>
     <button class="mob-menu" onclick="openMobMenu()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
@@ -331,11 +331,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
     <!-- ══ HOME PANEL ══ -->
     <div class="panel active" id="panel-home">
-      <div id="dual-banner" style="display:none;background:linear-gradient(90deg,var(--green-lt),#d1fae5);border:1.5px solid rgba(22,122,88,.3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--green);">&#x26A1; Dual-company invoicing is ON — invoices will auto-split into Bee Events (Cotton Candy) + SWITS (all other items)</div>
+      <div id="dual-banner" style="display:none;background:#EEF2FF;border:1.5px solid rgba(79,70,229,.2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:600;color:#3730A3;">&#x26A1; Dual-company invoicing is ON — invoices will auto-split into Bee Events (Cotton Candy) + SWITS (all other items)</div>
 
       <!-- Section tabs -->
       <div class="sec-tabs">
-        <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Pending Generation <span id="pending-badge" style="display:inline-block;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
+        <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Pending Orders <span id="pending-badge" style="display:none;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
         <button class="sec-tab" id="tab-quotations" onclick="switchTab('quotations')">Quotations</button>
         <button class="sec-tab" id="tab-completed" onclick="switchTab('completed')">Completed</button>
       </div>
@@ -721,7 +721,7 @@ function updateBadge() {
 // ══ UTILS ══
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function fmtDate(d){if(!d)return'';try{var p=d.split('-');return p[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]+' '+p[0];}catch(e){return d;}}
-function toast(m,dur){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},dur||2400);}
+function toast(m,dur){var t=document.getElementById('toast');t.innerHTML=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},dur||2400);}
 function sub(lines){return lines.filter(function(l){return !l.ret;}).reduce(function(s,l){return s+l.q*l.p;},0);}
 function rets(lines){return lines.filter(function(l){return l.ret;}).reduce(function(s,l){return s+l.q*l.p;},0);}
 function grand(lines){return lines.reduce(function(s,l){return s+l.q*(l.ret?-1:1)*l.p;},0);}
@@ -1146,7 +1146,7 @@ function buildPDF(inv){
   var brandSub=[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');
   return '<div class="pdf-doc">'
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub+'</div></div>'
-      +'<div class="pdf-inv-box"><div class="lbl">Invoice</div><div class="num">'+esc(inv.num)+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
+      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">Tax Invoice</div><div class="num">'+esc(inv.num)+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
       +'<div><div class="pm-lbl">Reference</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
@@ -1198,44 +1198,53 @@ function doPrint(){if(!current){toast('No invoice open.');return;}readEditor();d
 function downloadPDF(){if(!current){toast('No invoice open.');return;}readEditor();realDownloadPDF(current);}
 function downloadInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv)realDownloadPDF(inv);}
 
-// ── TRUE PDF DOWNLOAD — iframe print-to-PDF ──
+// ── TRUE PDF DOWNLOAD — html2canvas + jsPDF ──
 function realDownloadPDF(inv){
-  var docType=inv.isQuotation?'Quotation':'Invoice';
+  var docType=inv.isQuotation?'Quotation':'Tax Invoice';
   var filename=(inv.num||docType)+'.pdf';
-  // Build a full self-contained HTML page
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+filename+'</title>'
-    +'<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=DM+Mono:wght@400;600&display=swap" rel="stylesheet">'
-    +'<style>'
-    +getPDFCSS()
-    +'body{background:#fff;}'
-    +'@media print{'
-    +'  @page{size:A4;margin:0;}'
-    +'  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
-    +'}'
-    +'</style>'
-    +'</head><body>'
-    +buildPDF(inv)
-    +'<script>'
-    +'window.onload=function(){'
-    +'  setTimeout(function(){'
-    +'    window.print();'
-    +'    setTimeout(function(){window.close();},500);'
-    +'  },800);'
-    +'};'
-    +'<\/script>'
-    +'</body></html>';
 
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  var w=window.open(url,'_blank');
-  if(!w){
-    // popup blocked — fallback: open inline print
-    toast('Allow popups to download PDF, then try again.');
-    return;
-  }
-  toast('Opening print dialog — choose "Save as PDF"');
-  // Revoke blob URL after a delay
-  setTimeout(function(){URL.revokeObjectURL(url);},30000);
+  // Render invoice HTML into a hidden div, then capture with html2canvas
+  var container=document.createElement('div');
+  container.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;z-index:-1;';
+  container.innerHTML='<style>'+getPDFCSS()+'</style><div id="_pdf_render">'+buildPDF(inv)+'</div>';
+  document.body.appendChild(container);
+
+  toast('Generating PDF…');
+
+  // Wait for fonts to load
+  var renderEl=container.querySelector('#_pdf_render');
+  setTimeout(function(){
+    html2canvas(renderEl,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#ffffff',
+      width:794,
+      windowWidth:794,
+      logging:false
+    }).then(function(canvas){
+      document.body.removeChild(container);
+      var imgData=canvas.toDataURL('image/jpeg',0.92);
+      var {jsPDF}=window.jspdf;
+      var pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+      var pdfW=pdf.internal.pageSize.getWidth();
+      var pdfH=pdf.internal.pageSize.getHeight();
+      var ratio=canvas.width/canvas.height;
+      var imgH=pdfW/ratio;
+      var y=0;
+      // Handle multi-page
+      while(y<imgH){
+        if(y>0)pdf.addPage();
+        pdf.addImage(imgData,'JPEG',0,-(y),pdfW,imgH);
+        y+=pdfH;
+      }
+      pdf.save(filename);
+      toast('\u2713 '+filename+' downloaded!');
+    }).catch(function(err){
+      document.body.removeChild(container);
+      console.error(err);
+      toast('PDF generation failed — try again.');
+    });
+  },600);
 }
 
 // ══ HELPERS ══
@@ -1250,11 +1259,11 @@ function getGSTRate(inv){
   var isSwits=(inv&&inv.company==='swits'&&cfg.dual);
   if(isSwits){
     if(!cfg.co2GstOn)return null;
-    var pct=parseFloat(cfg.co2GstPct)||9;
+    var pct=(cfg.co2GstPct===0||cfg.co2GstPct==='0')?0:(parseFloat(cfg.co2GstPct)||9);
     return pct;
   } else {
     if(!cfg.gstOn)return null;
-    var pct2=parseFloat(cfg.gstPct)||9;
+    var pct2=(cfg.gstPct===0||cfg.gstPct==='0')?0:(parseFloat(cfg.gstPct)||9);
     return pct2;
   }
 }
@@ -1280,9 +1289,9 @@ function loadSettingsForm(){
   fn.forEach(function(id,i){var el=document.getElementById(id);if(el)el.value=c[fk[i]]||'';});
   // GST toggles
   var gstOn=document.getElementById('s-gst-on');if(gstOn)gstOn.checked=!!c.gstOn;
-  var gstPct=document.getElementById('s-gst-pct');if(gstPct)gstPct.value=c.gstPct||9;
+  var gstPct=document.getElementById('s-gst-pct');if(gstPct)gstPct.value=(c.gstPct===0||c.gstPct==='0')?0:(c.gstPct||9);
   var g2On=document.getElementById('s2-gst-on');if(g2On)g2On.checked=!!c.co2GstOn;
-  var g2Pct=document.getElementById('s2-gst-pct');if(g2Pct)g2Pct.value=c.co2GstPct||9;
+  var g2Pct=document.getElementById('s2-gst-pct');if(g2Pct)g2Pct.value=(c.co2GstPct===0||c.co2GstPct==='0')?0:(c.co2GstPct||9);
 }
 function saveSetting(key,val){
   DB.settings[key]=val;
@@ -1307,11 +1316,11 @@ function saveSettings(){
   fn2.forEach(function(id,i){var el=document.getElementById(id);if(el)DB.settings[fk2[i]]=el.value.trim();});
   // GST toggles
   var gstOnEl=document.getElementById('s-gst-on');DB.settings.gstOn=gstOnEl?gstOnEl.checked:false;
-  var gstPctEl=document.getElementById('s-gst-pct');DB.settings.gstPct=gstPctEl?parseFloat(gstPctEl.value)||9:9;
+  var gstPctEl=document.getElementById('s-gst-pct');var _gp=gstPctEl?gstPctEl.value.trim():'';DB.settings.gstPct=(_gp===''||_gp===null)?9:parseFloat(_gp);
   var g2OnEl=document.getElementById('s2-gst-on');DB.settings.co2GstOn=g2OnEl?g2OnEl.checked:false;
-  var g2PctEl=document.getElementById('s2-gst-pct');DB.settings.co2GstPct=g2PctEl?parseFloat(g2PctEl.value)||9:9;
+  var g2PctEl=document.getElementById('s2-gst-pct');var _g2p=g2PctEl?g2PctEl.value.trim():'';DB.settings.co2GstPct=(_g2p===''||_g2p===null)?9:parseFloat(_g2p);
   persist();
-  toast('&#x2713; Settings saved!');
+  toast('✓ Settings saved!');
 }
 
 var _pdfInv=null;
