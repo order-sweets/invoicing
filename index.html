@@ -298,7 +298,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
   <!-- MOBILE TOPBAR -->
   <div class="mob-topbar" style="flex-direction:column;align-items:flex-start;gap:3px;padding:8px 16px;">
-    <div style="font-family:'DM Serif Display',serif;font-size:14px;color:#fff;"><span style="font-family:'DM Serif Display',serif;font-size:17px;font-weight:400;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;opacity:.55;">Bee Events &amp; SWITS</span></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:14px;color:#fff;"><span style="font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;opacity:.55;">Bee Events &amp; SWITS</span></div>
     <div style="display:flex;align-items:center;gap:8px;width:100%;">
       <div id="mob-topbar-actions" style="display:flex;gap:6px;flex:1;"></div>
       <button class="mob-menu" onclick="openMobMenu()" style="flex-shrink:0;padding:2px;">
@@ -309,7 +309,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
   <!-- DESKTOP TOPBAR -->
   <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:4px;">
-    <div style="font-family:'DM Serif Display',serif;font-size:15px;color:#fff;letter-spacing:-.01em;"><span style="font-family:'DM Serif Display',serif;font-size:19px;font-weight:400;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;opacity:.55;">Bee Events &amp; SWITS</span></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:15px;color:#fff;letter-spacing:-.01em;"><span style="font-family:'DM Sans',sans-serif;font-size:19px;font-weight:600;">Invoicing System</span>&nbsp;<span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;opacity:.55;">Bee Events &amp; SWITS</span></div>
     <div class="topbar-left" style="flex:1;width:100%;display:flex;align-items:center;justify-content:space-between;">
       <div class="topbar-actions" id="topbar-actions" style="justify-content:flex-start;"></div>
       <div class="topbar-title" id="topbar-title" style="display:none;color:#fff;"></div>
@@ -653,19 +653,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 
 // ══ REAL STORE DATA ══
-var KNOWN_CUSTOMERS = {
-  'Nelly Retro':                   {tier:'retail',   addr:'Causeway Point, Singapore', customPrices:[]},
-  'Hong Yi Hao':                   {tier:'distributor', addr:'rrrrrrr',               customPrices:[]},
-  'Walson Food Distributor Pte Ltd':{tier:'distributor', addr:'T-Space, 1 Tampines North Dr 1 #06-27, (S)528559',
-    customPrices:[{pid:'cc',unit:'box',price:34.5}]}
-};
-var PRODS = {
-  a1: {name:'Airheads Bars',           ppc:36, w:'37g',   r:2.50, d:2.00, bR:90.00,  bD:72.00},
-  a2: {name:'Airheads Bites',          ppc:24, w:'57g',   r:3.00, d:2.40, bR:72.00,  bD:57.60},
-  nb1:{name:'Nerds Grape & Strawberry',ppc:36, w:'46.7g', r:2.80, d:2.20, bR:100.80, bD:79.20},
-  nb2:{name:'Nerds Rope Rainbow',      ppc:24, w:'26g',   r:3.20, d:2.60, bR:76.80,  bD:62.40},
-  cc: {name:'Cotton Candy',            ppc:15, w:'38g',   r:1.80, d:1.70, bR:27.00,  bD:25.50}
-};
+var KNOWN_CUSTOMERS = {};
+var PRODS = {};
 
 var SAMPLE_PENDING = [];
 
@@ -677,10 +666,7 @@ var DB = {
   counter:     parseInt(localStorage.getItem('beinv-counter')       || '0'),
   quoCounter:  parseInt(localStorage.getItem('beinv-quo-counter')   || '0'),
   settings:    JSON.parse(localStorage.getItem('beinv-settings') || JSON.stringify({
-    name:'Bee Events', desc:'Classic & Trending Snacks', phone:'+65 8164 8864',
-    email:'b33events.sg@gmail.com', addr:'Singapore', gst:'', web:'',
-    notes:'Payment due within 7 days.\nThank you for your business!\nPayNow: 81648864',
-    dual:false
+    name:'', desc:'', phone:'', email:'', addr:'', gst:'', web:'', notes:'', dual:false
   }))
 };
 // Ensure dual is always boolean
@@ -720,6 +706,40 @@ document.addEventListener('click',function(e){
   else if(e.target.closest('.qbtn-dl')){downloadQuo(qid);}
   else if(e.target.closest('.qbtn-gen')){generateInvoiceFromQuo(qid);}
 });
+
+// ══ STOCK DEDUCTION ══
+// Called when invoice is confirmed — deducts stock from snack-inv-v5 (shared with store)
+function deductStockForInvoice(lines){
+  var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+  var prods=JSON.parse(localStorage.getItem('snack-products-v5')||'null');
+  // Build a flat product list from store's localStorage
+  var allProds=[];
+  if(prods){
+    if(prods.newArrivals)allProds=allProds.concat(prods.newArrivals);
+    if(prods.hotSale)allProds=allProds.concat(prods.hotSale);
+    if(prods.brands)prods.brands.forEach(function(b){allProds=allProds.concat(b.products||[]);});
+  }
+  lines.forEach(function(l){
+    if(l.ret)return; // returns add back, don't deduct
+    // Match line description to product name
+    var matched=allProds.find(function(p){
+      var descLower=(l.desc||'').toLowerCase();
+      return descLower.indexOf((p.name||'').toLowerCase())===0||(p.name||'').toLowerCase().indexOf(descLower)===0||descLower===((p.name||'').toLowerCase());
+    });
+    if(!matched)return;
+    var pid=matched.id;
+    var ppc=matched.ppc||1;
+    var currentStock=parseInt(inv[pid]||matched.stockPieces||0,10);
+    // Determine pieces to deduct based on line desc (Box vs Piece)
+    var piecesToDeduct=l.q; // default: pieces
+    if((l.desc||'').toLowerCase().indexOf('box')!==-1||l.q===Math.round(l.q/ppc)*ppc===false){
+      // If ordered in boxes, convert
+      if(ppc>1 && l.q<ppc) piecesToDeduct=l.q*ppc; // ordered N boxes
+    }
+    inv[pid]=Math.max(0,currentStock-piecesToDeduct);
+  });
+  localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+}
 
 // ══ UTILS ══
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
@@ -1034,8 +1054,16 @@ function confirmInvoice(){
 
   // Helper: remove source orders from pending
   function removePending(){
-    if(current._sourceOrderId)DB.pending=DB.pending.filter(function(o){return o.id!==current._sourceOrderId;});
-    if(current._mergedOrders)current._mergedOrders.forEach(function(mid){DB.pending=DB.pending.filter(function(o){return o.id!==mid;});});
+    var ids=[];
+    if(current._sourceOrderId)ids.push(current._sourceOrderId);
+    if(current._mergedOrders)ids=ids.concat(current._mergedOrders);
+    ids.forEach(function(oid){
+      DB.pending=DB.pending.filter(function(o){return o.id!==oid;});
+      // Also mark as done in store's order log
+      var storeOrders=JSON.parse(localStorage.getItem('snack-orders-v1')||'[]');
+      storeOrders=storeOrders.map(function(o){return o.id===oid?Object.assign({},o,{status:'done'}):o;});
+      localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
+    });
   }
 
   if(DB.settings.dual===true){
@@ -1065,6 +1093,8 @@ function confirmInvoice(){
       splitNums.push(swinv.num+' (SWITS)');
     }
     removePending();
+    if(beelines.length)deductStockForInvoice(beelines);
+    if(swlines.length)deductStockForInvoice(swlines);
     persist();
     toast('\u2713 '+splitNums.join(' + '),4000);
     gotoHome();switchTab('completed');
@@ -1078,6 +1108,7 @@ function confirmInvoice(){
   var existing=DB.invoices.findIndex(function(i){return i.id===inv.id;});
   if(existing>=0)DB.invoices[existing]=inv;else DB.invoices.push(inv);
   removePending();
+  deductStockForInvoice(inv.lines);
   persist();
   toast('\u2713 '+current.num+' confirmed!',3000);
   gotoHome();
