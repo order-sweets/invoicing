@@ -715,17 +715,24 @@ function grand(lines){return lines.reduce(function(s,l){return s+l.q*(l.ret?-1:1
 
 // ══ MOBILE MENU ══
 function openMobMenu(){document.getElementById('sidebar').classList.add('open');document.getElementById('sb-overlay').classList.add('show');}
-function closeMobMenu(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sb-overlay').classList.remove('show');}
+function closeMobMenu(){var s=document.getElementById('sidebar');if(s)s.classList.remove('open');var o=document.getElementById('sb-overlay');if(o)o.classList.remove('show');}
 
 // ══ NAV ══
 function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});document.getElementById(id).classList.add('active');}
 function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
-function setTopbar(title,html){var tt=document.getElementById('topbar-title');tt.textContent=title;tt.style.display=title?'':'none';document.getElementById('topbar-actions').innerHTML=html;var mob=document.getElementById('mob-topbar-actions');if(mob)mob.innerHTML=html;}
+function setTopbar(title,html){
+  var tt=document.getElementById('topbar-title');
+  if(tt){tt.textContent=title;tt.style.display=title?'':'none';}
+  var ta=document.getElementById('topbar-actions');
+  if(ta)ta.innerHTML=html;
+  var mob=document.getElementById('mob-topbar-actions');
+  if(mob)mob.innerHTML=html;
+}
 var HOME_BTNS=(function(){
-  var s='background:#fff;color:var(--accent);border:1.5px solid var(--accent);';
+  var s='background:#C8501F;color:#fff;border:none;';
   var ico='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-  return '<button class="btn" style="'+s+'" onclick="newInvoice()">'+ico+' + New Invoice</button>'
-       +'<button class="btn" style="'+s+'" onclick="newQuotation()">'+ico+' + New Quotation</button>';
+  return '<button class="btn" style="'+s+'" onclick="newInvoice();closeMobMenu()">'+ico+' + New Invoice</button>'
+       +'<button class="btn" style="'+s+'" onclick="newQuotation();closeMobMenu()">'+ico+' + New Quotation</button>';
 })();
 var BACK_BTN='<button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="gotoHome()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>';
 
@@ -1159,6 +1166,7 @@ function buildPDF(inv){
 function previewPDF(){if(!current){toast('No invoice open.');return;}readEditor();openPDF(current);}
 function previewInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv)openPDF(inv);}
 function openPDF(inv){
+  _pdfInv=inv;
   document.getElementById('pdf-area').innerHTML=buildPDF(inv);
   document.getElementById('pdf-bar-title').textContent=(inv.num||'Draft')+' — Preview';
   document.getElementById('pdf-ov').classList.add('open');
@@ -1641,6 +1649,7 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
 })();
 // Always land on home screen
 gotoHome();
+var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
 </body>
 </html>
