@@ -34,6 +34,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
   .sidebar.open{transform:translateX(0);}
   .main{margin-left:0;}
   .mob-topbar{display:flex!important;}
+  .topbar{display:none!important;}
 }
 
 /* ── SIDEBAR ── */
@@ -298,11 +299,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 <div class="main">
 
   <!-- MOBILE TOPBAR -->
-  <div class="mob-topbar">
-    <div class="mob-logo">Bee Events &amp; SWITS</div>
-    <button class="mob-menu" onclick="openMobMenu()">
+  <div class="mob-topbar" style="gap:10px;">
+    <button class="mob-menu" onclick="openMobMenu()" style="flex-shrink:0;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
+    <div id="mob-topbar-actions" style="display:flex;gap:6px;flex:1;"></div>
   </div>
 
   <!-- DESKTOP TOPBAR -->
@@ -719,7 +720,7 @@ function closeMobMenu(){document.getElementById('sidebar').classList.remove('ope
 // ══ NAV ══
 function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});document.getElementById(id).classList.add('active');}
 function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
-function setTopbar(title,html){var tt=document.getElementById('topbar-title');tt.textContent=title;tt.style.display=title?'':'none';document.getElementById('topbar-actions').innerHTML=html;}
+function setTopbar(title,html){var tt=document.getElementById('topbar-title');tt.textContent=title;tt.style.display=title?'':'none';document.getElementById('topbar-actions').innerHTML=html;var mob=document.getElementById('mob-topbar-actions');if(mob)mob.innerHTML=html;}
 var HOME_BTNS=(function(){
   var s='background:#fff;color:var(--accent);border:1.5px solid var(--accent);';
   var ico='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
