@@ -1168,7 +1168,7 @@ function buildPDF(inv){
   var brandSub=[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join('<br>');
   return '<div class="pdf-doc">'
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub+'</div></div>'
-      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">Tax Invoice</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
+      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
       +'<div><div class="pm-lbl">Order Number</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
