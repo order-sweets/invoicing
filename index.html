@@ -299,19 +299,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 <div class="main">
 
   <!-- MOBILE TOPBAR -->
-  <div class="mob-topbar" style="gap:10px;">
-    <button class="mob-menu" onclick="openMobMenu()" style="flex-shrink:0;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
-    <div id="mob-topbar-actions" style="display:flex;gap:6px;flex:1;"></div>
+  <div class="mob-topbar" style="flex-direction:column;align-items:flex-start;gap:3px;padding:8px 16px;">
+    <div style="font-family:'DM Serif Display',serif;font-size:14px;color:#fff;">Bee Events &amp; SWITS <span style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:400;opacity:.6;">Invoicing System</span></div>
+    <div style="display:flex;align-items:center;gap:8px;width:100%;">
+      <div id="mob-topbar-actions" style="display:flex;gap:6px;flex:1;"></div>
+      <button class="mob-menu" onclick="openMobMenu()" style="flex-shrink:0;padding:2px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- DESKTOP TOPBAR -->
-  <div class="topbar">
-    <div class="topbar-left" style="flex:1;">
+  <div class="topbar" style="flex-direction:column;align-items:flex-start;gap:4px;">
+    <div style="font-family:'DM Serif Display',serif;font-size:15px;color:#fff;letter-spacing:-.01em;">Bee Events &amp; SWITS <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;opacity:.6;">Invoicing System</span></div>
+    <div class="topbar-left" style="flex:1;width:100%;display:flex;align-items:center;justify-content:space-between;">
       <div class="topbar-actions" id="topbar-actions" style="justify-content:flex-start;"></div>
+      <div class="topbar-title" id="topbar-title" style="display:none;color:#fff;"></div>
     </div>
-    <div class="topbar-title" id="topbar-title" style="display:none;"></div>
   </div>
 
   <div class="content">
@@ -718,7 +722,7 @@ function openMobMenu(){document.getElementById('sidebar').classList.add('open');
 function closeMobMenu(){var s=document.getElementById('sidebar');if(s)s.classList.remove('open');var o=document.getElementById('sb-overlay');if(o)o.classList.remove('show');}
 
 // ══ NAV ══
-function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});document.getElementById(id).classList.add('active');}
+function setNav(id){document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('active');});var el=document.getElementById(id);if(el)el.classList.add('active');}
 function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
 function setTopbar(title,html){
   var tt=document.getElementById('topbar-title');
@@ -729,7 +733,7 @@ function setTopbar(title,html){
   if(mob)mob.innerHTML=html;
 }
 var HOME_BTNS=(function(){
-  var s='background:#C8501F;color:#fff;border:none;';
+  var s='background:#fff;color:#C8501F;border:1.5px solid #C8501F;';
   var ico='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
   return '<button class="btn" style="'+s+'" onclick="newInvoice();closeMobMenu()">'+ico+' + New Invoice</button>'
        +'<button class="btn" style="'+s+'" onclick="newQuotation();closeMobMenu()">'+ico+' + New Quotation</button>';
@@ -1151,7 +1155,7 @@ function buildPDF(inv){
   var brandSub=[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join('<br>');
   return '<div class="pdf-doc">'
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub+'</div></div>'
-      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">Tax Invoice</div><div class="num">'+esc(inv.num)+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
+      +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">Tax Invoice</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
       +'<div><div class="pm-lbl">Reference</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
