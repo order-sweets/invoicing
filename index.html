@@ -38,7 +38,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 }
 
 /* ── SIDEBAR ── */
-.sb-header{padding:20px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-header{padding:0;}
 .sb-logo{font-family:'DM Serif Display',serif;font-size:18px;color:#fff;letter-spacing:-.01em;}
 .sb-sub{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
 .sb-nav{padding:10px 8px;flex:1;overflow-y:auto;}
@@ -270,10 +270,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-  <div class="sb-header">
-    <div class="sb-logo" style="font-size:15px;line-height:1.3;">Bee Events &amp; SWITS<br><span style="font-size:11px;opacity:.6;font-family:'DM Sans',sans-serif;font-weight:400;">Invoicing System</span></div>
-
-
+  <div class="sb-header" style="display:block;padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.08);">
+    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.12em;text-transform:uppercase;">Settings</div>
   </div>
   <nav class="sb-nav">
     <button class="nb" id="nav-quotations" style="display:none" onclick="gotoQuotations();closeMobMenu()">
@@ -290,7 +288,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
     </button>
     <button class="nb" id="nav-settings" onclick="gotoSettings();closeMobMenu()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      Settings
+      Profiles
     </button>
   </nav>
 </aside>
@@ -396,7 +394,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                   <textarea id="f-addr" placeholder="Block, street, unit number" style="min-height:52px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}" ></textarea>
                 </div>
                 <div class="mf">
-                  <label>Order Reference</label>
+                  <label>Order Number</label>
                   <input type="text" id="f-ref" placeholder="e.g. ORD-NELLY-001">
                 </div>
               </div>
@@ -574,7 +572,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       <button class="btn btn-primary btn-lg" onclick="saveSettings()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Settings
+        Save Profiles
       </button>
     </div>
 
@@ -752,7 +750,7 @@ function gotoQuotations(){
 }
 function gotoSettings(){
   setNav('nav-settings');showPanel('panel-settings');
-  setTopbar('Settings',BACK_BTN);
+  setTopbar('Profiles',BACK_BTN);
   loadSettingsForm();
 }
 
@@ -820,7 +818,7 @@ function renderInvCard(inv){
       +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'
         +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'
         +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' — '+esc(inv.outlet):'')+'</div>'
-        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' &nbsp;&middot;&nbsp; '+esc(inv.ref||'No ref')+'</div>'
+        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' &nbsp;&middot;&nbsp; '+esc(inv.ref||'No order no.')+'</div>'
       +'</div>'
       +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'
       +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
@@ -1158,7 +1156,7 @@ function buildPDF(inv){
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">Tax Invoice</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
-      +'<div><div class="pm-lbl">Reference</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
+      +'<div><div class="pm-lbl">Order Number</div><div class="pm-val">'+esc(inv.ref||'—')+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>'
     +'</div>'
     +'<table class="pdf-tbl"><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
@@ -1330,7 +1328,7 @@ function saveSettings(){
   var g2OnEl=document.getElementById('s2-gst-on');DB.settings.co2GstOn=g2OnEl?g2OnEl.checked:false;
   var g2PctEl=document.getElementById('s2-gst-pct');var _g2p=g2PctEl?g2PctEl.value.trim():'';DB.settings.co2GstPct=(_g2p===''||_g2p===null)?9:parseFloat(_g2p);
   persist();
-  toast('✓ Settings saved!');
+  toast('✓ Profiles saved!');
 }
 
 var _pdfInv=null;
@@ -1413,7 +1411,7 @@ function renderQuoCard(quo){
   h+='<div onclick="toggleCard(\'qc-'+qid+'\')" style="flex:1;min-width:0;cursor:pointer;">';
   h+='<div class="inv-card-num"><span style="font-size:9px;font-weight:700;background:#E8F2FB;color:#1A4F7A;padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>'+esc(quo.num)+'</div>';
   h+='<div class="inv-card-name">'+esc(quo.custName)+'</div>';
-  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+' &middot; '+esc(quo.ref||"No ref")+'</div>';
+  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+' &middot; '+esc(quo.ref||"No order no.")+'</div>';
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
   h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
@@ -1518,7 +1516,7 @@ function buildCSV(invoices,coLabel,label){
     ['Period',label||'All'],
     ['Generated',new Date().toLocaleDateString('en-SG')],
     [],
-    ['Invoice No','Date','Customer','Reference','Payment','Subtotal','Returns','GST','Total']
+    ['Invoice No','Date','Customer','Order Number','Payment','Subtotal','Returns','GST','Total']
   ];
   invoices.forEach(function(inv){
     var s=sub(inv.lines),r=rets(inv.lines),g=s+r;
