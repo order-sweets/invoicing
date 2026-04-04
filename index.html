@@ -1203,7 +1203,8 @@ function doPrintInv(inv){
 }
 function downloadInvFile(inv){
   var docType=inv.isQuotation?'Quotation':'Invoice';
-  var filename=(inv.num||docType)+'.pdf';
+  var custSlug=(inv.custName||'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+  var filename=(custSlug?custSlug+'_':'')+(inv.num||docType)+'.pdf';
   var w=window.open('','_blank');
   if(!w){toast('Please allow popups to download PDF.');return;}
   // Build HTML with auto-print on load so browser opens print dialog (Save as PDF)
@@ -1224,7 +1225,8 @@ function downloadInv(id){var inv=DB.invoices.find(function(i){return i.id===id;}
 // ── TRUE PDF DOWNLOAD — html2canvas + jsPDF ──
 function realDownloadPDF(inv){
   var docType=inv.isQuotation?'Quotation':'Tax Invoice';
-  var filename=(inv.num||docType)+'.pdf';
+  var custSlug=(inv.custName||'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+  var filename=(custSlug?custSlug+'_':'')+(inv.num||docType)+'.pdf';
 
   // Render invoice HTML into a hidden div, then capture with html2canvas
   var container=document.createElement('div');
