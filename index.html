@@ -707,6 +707,20 @@ function updateBadge() {
   b.textContent = n; b.style.display = n ? '' : 'none';
 }
 
+// ── Quotation card button delegation ──
+document.addEventListener('click',function(e){
+  var tog=e.target.closest('.qbtn-toggle');
+  if(tog){toggleCard(tog.getAttribute('data-card'));return;}
+  var card=e.target.closest('[data-qid]');
+  if(!card)return;
+  var qid=card.getAttribute('data-qid');
+  if(e.target.closest('.qbtn-edit')){editQuo(qid);}
+  else if(e.target.closest('.qbtn-del')){delQuo(qid);}
+  else if(e.target.closest('.qbtn-pdf')){previewQuo(qid);}
+  else if(e.target.closest('.qbtn-dl')){downloadQuo(qid);}
+  else if(e.target.closest('.qbtn-gen')){generateInvoiceFromQuo(qid);}
+});
+
 // ══ UTILS ══
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function fmtDate(d){if(!d)return'';try{var p=d.split('-');return p[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]+' '+p[0];}catch(e){return d;}}
@@ -894,6 +908,7 @@ function loadEditor(){
 function onCompanyChange(){
   var fco=document.getElementById("f-company");
   if(fco)current.company=fco.value;
+  renderTotals();
 }
 function onCustNameInput(){
   var name=document.getElementById('f-cust-name').value.trim();
@@ -1262,9 +1277,10 @@ function setItemDropdownsVisible(show){
 }
 
 function getGSTRate(inv){
-  // Returns GST multiplier (e.g. 1.09) or 1 if GST not enabled for this invoice
+  // Returns GST rate (%) or null if GST not enabled for this invoice
   var cfg=DB.settings;
-  var isSwits=(inv&&inv.company==='swits'&&cfg.dual);
+  // If company is explicitly set to swits on the invoice, use SWITS GST
+  var isSwits=(inv&&inv.company==='swits');
   if(isSwits){
     if(!cfg.co2GstOn)return null;
     var pct=(cfg.co2GstPct===0||cfg.co2GstPct==='0')?0:(parseFloat(cfg.co2GstPct)||9);
@@ -1405,30 +1421,29 @@ function renderQuoCard(quo){
   }).join("");
   var tots="<div class=\"qvt grand\"><span>Total</span><span class=\"m\">$"+g.toFixed(2)+"</span></div>";
   var qid=quo.id;
+  var TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
   var h="";
-  h+='<div class="inv-card-item">';
+  h+='<div class="inv-card-item" data-qid="'+qid+'">';
   h+='<div class="inv-card-header">';
-  h+='<div onclick="toggleCard(\'qc-'+qid+'\')" style="flex:1;min-width:0;cursor:pointer;">';
+  h+='<div class="qbtn-toggle" data-card="qc-'+qid+'" style="flex:1;min-width:0;cursor:pointer;">';
   h+='<div class="inv-card-num"><span style="font-size:9px;font-weight:700;background:#E8F2FB;color:#1A4F7A;padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>'+esc(quo.num)+'</div>';
   h+='<div class="inv-card-name">'+esc(quo.custName)+'</div>';
-  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+' &middot; '+esc(quo.ref||"No order no.")+'</div>';
+  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+" &middot; "+esc(quo.ref||"No order no.")+'</div>';
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
   h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
-  h+='<button class="btn btn-accent btn-sm" onclick="editQuo(\'"+ qid +"\')" style="padding:4px 8px;font-size:11px;">Edit</button>';
-  h+='<button class="btn btn-red btn-sm" onclick="delQuo(\'"+ qid +"\')" style="padding:4px 8px;font-size:11px;" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>';
-  h+='<button class="btn btn-ghost btn-sm" onclick="previewQuo(\'"+ qid +"\')" style="padding:4px 8px;font-size:11px;">PDF</button>';
-  h+='<svg onclick="toggleCard(\'qc-'+qid+'\')" class="inv-card-chevron" id="chev-qc-'+qid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;"><polyline points="6 9 12 15 18 9"/></svg>';
+  h+='<button class="btn btn-accent btn-sm qbtn-edit" style="padding:4px 8px;font-size:11px;">Edit</button>';
+  h+='<button class="btn btn-red btn-sm qbtn-del" style="padding:4px 8px;font-size:11px;" title="Delete">'+TRASH+'</button>';
+  h+='<button class="btn btn-ghost btn-sm qbtn-pdf" style="padding:4px 8px;font-size:11px;">PDF</button>';
+  h+='<svg class="inv-card-chevron qbtn-toggle" data-card="qc-'+qid+'" id="chev-qc-'+qid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;"><polyline points="6 9 12 15 18 9"/></svg>';
   h+='</div></div>';
   h+='<div class="inv-card-body" id="qc-'+qid+'">';
   h+='<table class="qv-table"><thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
   h+='<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>';
   h+='<div class="inv-card-actions">';
-  h+='<button class="btn btn-ghost btn-sm" onclick="previewQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">Preview PDF</button>';
-  h+='<button class="btn btn-ghost btn-sm" onclick="downloadQuo(\''+ qid +'\')" style="padding:4px 8px;font-size:11px;">Download PDF</button>';
-
-  h+='<button class="btn btn-sm" onclick="generateInvoiceFromQuo(\''+ qid +'\')" style="background:var(--green-lt);color:var(--green);border:1.5px solid rgba(22,122,88,.2);padding:4px 8px;font-size:11px;font-weight:600;">Generate Invoice &#x2192;</button>';
-
+  h+='<button class="btn btn-ghost btn-sm qbtn-pdf" style="padding:4px 8px;font-size:11px;">Preview PDF</button>';
+  h+='<button class="btn btn-ghost btn-sm qbtn-dl" style="padding:4px 8px;font-size:11px;">Download PDF</button>';
+  h+='<button class="btn btn-sm qbtn-gen" style="background:var(--green-lt);color:var(--green);border:1.5px solid rgba(22,122,88,.2);padding:4px 8px;font-size:11px;font-weight:600;">Generate Invoice &#x2192;</button>';
   h+='</div></div></div>';
   return h;
 }
