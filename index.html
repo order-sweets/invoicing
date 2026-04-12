@@ -1801,37 +1801,21 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   }
   window._invFbDebouncedPush = debouncedPush;
 
-  // -- MERGE HELPERS --
-  // Firebase strips empty arrays to null and omits the key if never set.
-  // null = "was emptied/all deleted" = use [] and do NOT add local back.
-  // undefined = "key never existed" = skip update for this field entirely.
-  // array = use remote as authoritative base, add local-only items.
-  function mergeById(local, remote) {
-    var remoteMap = {};
-    remote.forEach(function(r){ remoteMap[r.id] = r; });
-    var result = remote.slice();
-    local.forEach(function(l){
-      if (!remoteMap[l.id]) result.push(l);
-    });
-    return result;
-  }
-
   // -- APPLY INVOICE DATA from /invoice node --
+  // Remote is fully authoritative. Never add local items back.
+  // Firebase strips [] to null — use hasOwnProperty so null (deleted) and
+  // undefined (key never set) are treated differently.
   function applyInvData(d) {
     if (!d || d._pushId === _lastPushId) return;
-    // Use hasOwnProperty to distinguish null (deleted) from undefined (never set).
-    // Firebase strips [] to null — null means all items deleted, so use [] and do NOT merge local back.
     var hasInvoices   = Object.prototype.hasOwnProperty.call(d, 'invoices');
     var hasQuotations = Object.prototype.hasOwnProperty.call(d, 'quotations');
     var hasPending    = Object.prototype.hasOwnProperty.call(d, 'pending');
-    var invoices   = d.invoices   || [];
-    var quotations = d.quotations || [];
-    var pending    = d.pending    || [];
     var counter    = d.counter    != null ? parseInt(d.counter)    : null;
     var quoCounter = d.quoCounter != null ? parseInt(d.quoCounter) : null;
     var settings   = d.settings   || {};
     _applyingRemote = true;
     try {
+      // Counters: take the higher value
       if (counter != null && counter > DB.counter) {
         DB.counter = counter;
         localStorage.setItem('beinv-counter', String(counter));
@@ -1840,22 +1824,19 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
         DB.quoCounter = quoCounter;
         localStorage.setItem('beinv-quo-counter', String(quoCounter));
       }
-      // If key is present (even as null): null means Firebase stripped [] = all deleted.
-      // Do NOT add local items back — the deletion must propagate to all devices.
+      // Remote wins completely. null = Firebase stripped [] = all deleted = use [].
+      // Never merge local items back — that would resurrect deleted records.
       if (hasInvoices) {
-        var mergedInv = (d.invoices === null) ? [] : mergeById(DB.invoices, invoices);
-        DB.invoices = mergedInv;
-        localStorage.setItem('beinv-invoices', JSON.stringify(mergedInv));
+        DB.invoices = d.invoices || [];
+        localStorage.setItem('beinv-invoices', JSON.stringify(DB.invoices));
       }
       if (hasQuotations) {
-        var mergedQuo = (d.quotations === null) ? [] : mergeById(DB.quotations, quotations);
-        DB.quotations = mergedQuo;
-        localStorage.setItem('beinv-quotations', JSON.stringify(mergedQuo));
+        DB.quotations = d.quotations || [];
+        localStorage.setItem('beinv-quotations', JSON.stringify(DB.quotations));
       }
       if (hasPending) {
-        var mergedPending = (d.pending === null) ? [] : mergeById(DB.pending, pending);
-        DB.pending = mergedPending;
-        localStorage.setItem('beinv-pending', JSON.stringify(mergedPending));
+        DB.pending = d.pending || [];
+        localStorage.setItem('beinv-pending', JSON.stringify(DB.pending));
       }
       if (settings && Object.keys(settings).length) {
         Object.assign(DB.settings, settings);
@@ -1869,28 +1850,12 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   }
 
   // -- APPLY PENDING from /store/pendingOrders --
-  // Remote wins - new orders from WhatsApp appear immediately.
-  // Firebase strips [] to null — null means all orders cleared, use [] and do NOT add local back.
+  // Remote fully wins. Firebase strips [] to null — both mean no pending orders.
   function applyStorePending(remotePending) {
-    // remotePending === null means Firebase stripped the empty array = all deleted.
-    // remotePending === undefined should not happen but treat same as null.
-    var allDeleted = (remotePending === null || remotePending === undefined);
-    var remote = allDeleted ? [] : remotePending;
     _applyingRemote = true;
     try {
-      var merged;
-      if (allDeleted) {
-        // Firebase says no pending orders exist - trust it fully
-        merged = [];
-      } else {
-        // Remote wins: start from remote, keep local orders not in remote
-        var remoteIds = {};
-        remote.forEach(function(o){ remoteIds[o.id] = true; });
-        var localOnly = DB.pending.filter(function(o){ return !remoteIds[o.id]; });
-        merged = remote.concat(localOnly);
-      }
-      DB.pending = merged;
-      localStorage.setItem('beinv-pending', JSON.stringify(merged));
+      DB.pending = remotePending || [];
+      localStorage.setItem('beinv-pending', JSON.stringify(DB.pending));
       if (window.updateBadge) updateBadge();
       if (window.renderHome) renderHome();
     } finally {
