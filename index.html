@@ -394,7 +394,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                   <textarea id="f-addr" placeholder="" style="min-height:52px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}" ></textarea>
                 </div>
                 <div class="mf">
-                  <label>Order Number</label>
+                  <input type="text" id="f-ref-label" value="Order Number" style="font-size:10px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.05em;border:none;border-bottom:1px dashed #ccc;background:transparent;padding:0 0 1px;margin-bottom:4px;width:100%;outline:none;cursor:text;" title="Click to rename this field">
                   <input type="text" id="f-ref" placeholder="">
                 </div>
               </div>
@@ -478,7 +478,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 <!-- CONFIRM & GENERATE -->
                 <button class="confirm-btn" id="confirm-btn" onclick="confirmInvoice()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  Confirm & Generate Invoice
+                  <span id="confirm-btn-label">Confirm &amp; Generate Invoice</span>
                 </button>
                 <div style="height:4px"></div>
                 <button class="btn btn-accent btn-lg" onclick="previewPDF()">
@@ -944,6 +944,11 @@ function loadEditor(){
   document.getElementById('num-display').style.opacity = current.num ? '1' : '0.6';
   var detailsTitle = document.getElementById('details-card-title');
   if(detailsTitle) detailsTitle.textContent = current.isQuotation ? 'Quotation Details' : 'Invoice Details';
+  var confirmLabel = document.getElementById('confirm-btn-label');
+  if(confirmLabel) confirmLabel.textContent = current.isQuotation ? 'Generate Quotation' : 'Confirm & Generate Invoice';
+  var refLabel = document.getElementById('f-ref-label');
+  if(refLabel && !current._refLabel) refLabel.value = 'Order Number';
+  else if(refLabel && current._refLabel) refLabel.value = current._refLabel;
   document.getElementById('f-cust-name').value = current.custName||'';
   var fco=document.getElementById('f-company');if(fco)fco.value=current.company||'bee';
   document.getElementById('f-date').value = current.date||'';
@@ -1071,6 +1076,7 @@ function readEditor(){
   current.outlet='';
   current.date=document.getElementById('f-date').value;
   current.ref=document.getElementById('f-ref').value.trim();
+  var rl=document.getElementById('f-ref-label');if(rl)current._refLabel=rl.value.trim()||'Order Number';
   current.pay=document.getElementById('f-pay').value;
 }
 
@@ -1229,7 +1235,7 @@ function buildPDF(inv){
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
-      +(inv.ref?'<div><div class="pm-lbl">Order Number</div><div class="pm-val">'+esc(inv.ref)+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>':'<div><div class="pm-lbl">Payment</div><div class="pm-val">'+esc(inv.pay)+'</div></div>')
+      +(inv.ref?'<div><div class="pm-lbl">'+(inv._refLabel||'Order Number')+'</div><div class="pm-val">'+esc(inv.ref)+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>':'<div><div class="pm-lbl">Payment</div><div class="pm-val">'+esc(inv.pay)+'</div></div>')
     +'</div>'
     +'<table class="pdf-tbl"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
