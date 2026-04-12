@@ -685,6 +685,7 @@ function persist() {
   localStorage.setItem('beinv-quo-counter', String(DB.quoCounter));
   localStorage.setItem('beinv-quotations',  JSON.stringify(DB.quotations));
   updateBadge();
+  if(window._invFbDebouncedPush) window._invFbDebouncedPush();
 }
 function nextNum() { DB.counter++; persist(); return 'INV-'+String(DB.counter).padStart(4,'0'); }
 function updateBadge() {
@@ -1716,5 +1717,147 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
 gotoHome();
 var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
+
+
+<!-- FIREBASE SYNC - pendingOrders two-way sync with store -->
+<div id="fb-status" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2D3748;color:#fff;font-size:11px;font-weight:600;padding:5px 14px;border-radius:20px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap;"></div>
+<script>
+(function(){
+  var FB_URL = 'https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var _deviceId = 'inv_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+  var _lastPushId = '';
+  var _applyingRemote = false;
+  var _pushTimer = null;
+  var _pushInFlight = false;
+  var _pushQueued = false;
+
+  function fbStatus(msg, colour) {
+    var el = document.getElementById('fb-status');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.background = colour || '#2D3748';
+    el.style.opacity = '1';
+    clearTimeout(el._t);
+    if (colour !== 'orange' && colour !== '#e53e3e') {
+      el._t = setTimeout(function(){ el.style.opacity = '0'; }, 2500);
+    }
+  }
+
+  function fbPush() {
+    if (_applyingRemote) return;
+    if (_pushInFlight) { _pushQueued = true; return; }
+    _pushInFlight = true;
+    _pushQueued = false;
+    var pushId = _deviceId + '_' + Date.now();
+    _lastPushId = pushId;
+    fbStatus('Saving...', 'orange');
+    var pending;
+    try { pending = JSON.parse(localStorage.getItem('beinv-pending') || '[]'); } catch(e) { pending = []; }
+    fetch(FB_URL + '/store/pendingOrders.json', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(pending.length ? pending : null)
+    }).then(function(){
+      return fetch(FB_URL + '/store/_invPush.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({_pushId: pushId, _v: Date.now()})
+      });
+    }).then(function(){
+      fbStatus('Saved', '#38a169');
+    }).catch(function(){
+      fbStatus('Save failed', '#e53e3e');
+    }).finally(function(){
+      _pushInFlight = false;
+      if (_pushQueued) { _pushQueued = false; fbPush(); }
+    });
+  }
+
+  function debouncedPush() {
+    if (_applyingRemote) return;
+    clearTimeout(_pushTimer);
+    _pushTimer = setTimeout(fbPush, 600);
+  }
+  window._invFbDebouncedPush = debouncedPush;
+
+  function applyRemotePending(remotePending) {
+    var remote = remotePending || [];
+    var local;
+    try { local = JSON.parse(localStorage.getItem('beinv-pending') || '[]'); } catch(e) { local = []; }
+    var localIds = {};
+    local.forEach(function(o){ localIds[o.id] = o; });
+    var merged = remote.map(function(ro){
+      var lo = localIds[ro.id];
+      return lo ? Object.assign({}, ro, lo) : ro;
+    });
+    _applyingRemote = true;
+    try {
+      DB.pending = merged;
+      localStorage.setItem('beinv-pending', JSON.stringify(merged));
+      if (window.updateBadge) updateBadge();
+      if (window.renderHome) renderHome();
+    } finally {
+      _applyingRemote = false;
+    }
+  }
+
+  function fbListen() {
+    fbStatus('Syncing...', 'orange');
+    try {
+      var es = new EventSource(FB_URL + '/store.json');
+      var firstEvent = true;
+      es.addEventListener('put', function(e) {
+        try {
+          var msg = JSON.parse(e.data);
+          var d = msg.data;
+          if (msg.path === '/') {
+            if (!d) { firstEvent = false; return; }
+            if (!firstEvent && d._invPush && d._invPush._pushId === _lastPushId) {
+              fbStatus('In sync', '#38a169');
+              firstEvent = false;
+              return;
+            }
+            if (_pushInFlight && !firstEvent) { firstEvent = false; return; }
+            applyRemotePending(d.pendingOrders || []);
+            fbStatus(firstEvent ? 'Synced' : 'Updated', '#38a169');
+            firstEvent = false;
+          } else if (msg.path === '/pendingOrders') {
+            firstEvent = false;
+            if (_pushInFlight) return;
+            applyRemotePending(d || []);
+            fbStatus('Updated', '#38a169');
+          } else {
+            firstEvent = false;
+          }
+        } catch(err) { fbStatus('Sync error', '#e53e3e'); }
+      });
+      es.addEventListener('patch', function(e) {
+        fetch(FB_URL + '/store/pendingOrders.json')
+          .then(function(r){ return r.json(); })
+          .then(function(d){ applyRemotePending(d || []); })
+          .catch(function(){});
+      });
+      es.onerror = function() {
+        fbStatus('Offline', '#e53e3e');
+        es.close();
+        setTimeout(fbListen, 5000);
+      };
+    } catch(err) {
+      fbStatus('Polling...', '#2D3748');
+      function poll() {
+        fetch(FB_URL + '/store/pendingOrders.json')
+          .then(function(r){ return r.json(); })
+          .then(function(d){ applyRemotePending(d || []); fbStatus('Synced', '#38a169'); })
+          .catch(function(){ fbStatus('Offline', '#e53e3e'); });
+      }
+      poll();
+      setInterval(poll, 10000);
+    }
+  }
+
+  fbListen();
+})();
+</script>
+
 </body>
 </html>
