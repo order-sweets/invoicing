@@ -1797,7 +1797,7 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   function debouncedPush() {
     if (_applyingRemote) return;
     clearTimeout(_pushTimer);
-    _pushTimer = setTimeout(fbPush, 600);
+    _pushTimer = setTimeout(fbPush, 100);
   }
   window._invFbDebouncedPush = debouncedPush;
 
@@ -1807,6 +1807,9 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   // undefined (key never set) are treated differently.
   function applyInvData(d) {
     if (!d || d._pushId === _lastPushId) return;
+    // If a local push is queued (user just made a change), skip applying
+    // stale remote data — our pending push has the correct latest state.
+    if (_pushTimer !== null || _pushInFlight) return;
     var hasInvoices   = Object.prototype.hasOwnProperty.call(d, 'invoices');
     var hasQuotations = Object.prototype.hasOwnProperty.call(d, 'quotations');
     var hasPending    = Object.prototype.hasOwnProperty.call(d, 'pending');
@@ -1852,6 +1855,8 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   // -- APPLY PENDING from /store/pendingOrders --
   // Remote fully wins. Firebase strips [] to null — both mean no pending orders.
   function applyStorePending(remotePending) {
+    // Don't overwrite local pending changes that haven't been pushed yet.
+    if (_pushTimer !== null || _pushInFlight) return;
     _applyingRemote = true;
     try {
       DB.pending = remotePending || [];
@@ -1875,7 +1880,7 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
           var d = msg.data;
           if (!d) { firstInv = false; return; }
           if (!firstInv && d._pushId === _lastPushId) { firstInv = false; return; }
-          if (_pushInFlight && !firstInv) { firstInv = false; return; }
+          if ((_pushInFlight || _pushTimer !== null) && !firstInv) { firstInv = false; return; }
           applyInvData(d);
           fbStatus(firstInv ? 'Synced' : 'Updated', '#38a169');
           firstInv = false;
