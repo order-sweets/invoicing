@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Bee Events &amp; SWITS Invoicing System</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#C8501F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Invoicing">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1991,5 +1997,23 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 })();
 </script>
 
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(function(reg){
+      // Ask for notification permission
+      if('Notification' in window && Notification.permission === 'default'){
+        setTimeout(function(){
+          Notification.requestPermission().then(function(perm){
+            if(perm === 'granted'){
+              toast('Notifications enabled! You will be alerted for new orders.');
+            }
+          });
+        }, 3000); // Wait 3s after load so it doesn't feel intrusive
+      }
+    })
+    .catch(function(err){ console.warn('SW registration failed:', err); });
+}
+</script>
 </body>
 </html>
