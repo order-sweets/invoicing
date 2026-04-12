@@ -1720,6 +1720,7 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 
 
 
+
 <!-- FIREBASE SYNC - invoice two-way sync -->
 <div id="fb-status" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2D3748;color:#fff;font-size:11px;font-weight:600;padding:5px 14px;border-radius:20px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap;"></div>
 <script>
@@ -1744,20 +1745,8 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     }
   }
 
-  // Read all invoice data from localStorage
-  function getInvData() {
-    function lj(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
-    return {
-      invoices:   lj('beinv-invoices')   || [],
-      quotations: lj('beinv-quotations') || [],
-      pending:    lj('beinv-pending')    || [],
-      counter:    parseInt(localStorage.getItem('beinv-counter') || '0'),
-      quoCounter: parseInt(localStorage.getItem('beinv-quo-counter') || '0'),
-      settings:   lj('beinv-settings')   || {}
-    };
-  }
-
-  // Push all invoice data + pendingOrders to Firebase
+  // -- PUSH --
+  // Pushes all invoice data to /invoice, and pending to /store/pendingOrders
   function fbPush() {
     if (_applyingRemote) return;
     if (_pushInFlight) { _pushQueued = true; return; }
@@ -1766,33 +1755,35 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     var pushId = _deviceId + '_' + Date.now();
     _lastPushId = pushId;
     fbStatus('Saving...', 'orange');
-
-    var invData = getInvData();
-
-    // Push invoice data to /invoice node
+    function lj(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }
+    var invoices   = lj('beinv-invoices')   || [];
+    var quotations = lj('beinv-quotations') || [];
+    var pending    = lj('beinv-pending')    || [];
+    var counter    = parseInt(localStorage.getItem('beinv-counter') || '0');
+    var quoCounter = parseInt(localStorage.getItem('beinv-quo-counter') || '0');
+    var settings   = lj('beinv-settings')  || {};
+    // Push invoice node
     var p1 = fetch(FB_URL + '/invoice.json', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        invoices:   invData.invoices.length   ? invData.invoices   : null,
-        quotations: invData.quotations.length ? invData.quotations : null,
-        pending:    invData.pending.length    ? invData.pending    : null,
-        counter:    invData.counter,
-        quoCounter: invData.quoCounter,
-        settings:   invData.settings,
+        invoices:   invoices.length   ? invoices   : null,
+        quotations: quotations.length ? quotations : null,
+        pending:    pending.length    ? pending    : null,
+        counter:    counter,
+        quoCounter: quoCounter,
+        settings:   settings,
         _pushId:    pushId,
         _deviceId:  _deviceId,
         _v:         Date.now()
       })
     });
-
-    // Also sync pendingOrders into /store node so store sees it
+    // Also update store's pendingOrders so store sees any deletions
     var p2 = fetch(FB_URL + '/store/pendingOrders.json', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(invData.pending.length ? invData.pending : null)
+      body: JSON.stringify(pending.length ? pending : null)
     });
-
     Promise.all([p1, p2]).then(function(){
       fbStatus('Saved', '#38a169');
     }).catch(function(){
@@ -1810,71 +1801,66 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   }
   window._invFbDebouncedPush = debouncedPush;
 
-  // Apply full invoice snapshot from Firebase
+  // -- MERGE HELPERS --
+  // Firebase strips empty arrays to null and omits the key if never set.
+  // null = "was emptied/all deleted" = use [] and do NOT add local back.
+  // undefined = "key never existed" = skip update for this field entirely.
+  // array = use remote as authoritative base, add local-only items.
+  function mergeById(local, remote) {
+    var remoteMap = {};
+    remote.forEach(function(r){ remoteMap[r.id] = r; });
+    var result = remote.slice();
+    local.forEach(function(l){
+      if (!remoteMap[l.id]) result.push(l);
+    });
+    return result;
+  }
+
+  // -- APPLY INVOICE DATA from /invoice node --
   function applyInvData(d) {
-    if (!d) return;
-    // Firebase strips empty arrays to null - use || []
+    if (!d || d._pushId === _lastPushId) return;
+    // Use hasOwnProperty to distinguish null (deleted) from undefined (never set).
+    // Firebase strips [] to null — null means all items deleted, so use [] and do NOT merge local back.
+    var hasInvoices   = Object.prototype.hasOwnProperty.call(d, 'invoices');
+    var hasQuotations = Object.prototype.hasOwnProperty.call(d, 'quotations');
+    var hasPending    = Object.prototype.hasOwnProperty.call(d, 'pending');
     var invoices   = d.invoices   || [];
     var quotations = d.quotations || [];
     var pending    = d.pending    || [];
-    var counter    = parseInt(d.counter    || '0');
-    var quoCounter = parseInt(d.quoCounter || '0');
+    var counter    = d.counter    != null ? parseInt(d.counter)    : null;
+    var quoCounter = d.quoCounter != null ? parseInt(d.quoCounter) : null;
     var settings   = d.settings   || {};
-
     _applyingRemote = true;
     try {
-      // Only apply if remote is newer (higher counters or more items)
-      var localCounter    = parseInt(localStorage.getItem('beinv-counter')     || '0');
-      var localQuoCounter = parseInt(localStorage.getItem('beinv-quo-counter') || '0');
-
-      if (counter >= localCounter) {
-        localStorage.setItem('beinv-counter', String(counter));
+      if (counter != null && counter > DB.counter) {
         DB.counter = counter;
+        localStorage.setItem('beinv-counter', String(counter));
       }
-      if (quoCounter >= localQuoCounter) {
-        localStorage.setItem('beinv-quo-counter', String(quoCounter));
+      if (quoCounter != null && quoCounter > DB.quoCounter) {
         DB.quoCounter = quoCounter;
+        localStorage.setItem('beinv-quo-counter', String(quoCounter));
       }
-
-      // Invoices: merge by id - remote wins for new, keep local if same id
-      var localInvMap = {};
-      DB.invoices.forEach(function(i){ localInvMap[i.id] = i; });
-      var mergedInvoices = invoices.map(function(ri){
-        return localInvMap[ri.id] ? Object.assign({}, ri, localInvMap[ri.id]) : ri;
-      });
-      // Add any local-only invoices not in remote
-      DB.invoices.forEach(function(li){
-        if (!invoices.find(function(ri){ return ri.id === li.id; })) mergedInvoices.push(li);
-      });
-      DB.invoices = mergedInvoices;
-      localStorage.setItem('beinv-invoices', JSON.stringify(mergedInvoices));
-
-      // Quotations: same merge
-      var localQuoMap = {};
-      DB.quotations.forEach(function(q){ localQuoMap[q.id] = q; });
-      var mergedQuotations = quotations.map(function(rq){
-        return localQuoMap[rq.id] ? Object.assign({}, rq, localQuoMap[rq.id]) : rq;
-      });
-      DB.quotations.forEach(function(lq){
-        if (!quotations.find(function(rq){ return rq.id === lq.id; })) mergedQuotations.push(lq);
-      });
-      DB.quotations = mergedQuotations;
-      localStorage.setItem('beinv-quotations', JSON.stringify(mergedQuotations));
-
-      // Pending: remote wins (store is authoritative for new orders)
-      var localPendingMap = {};
-      DB.pending.forEach(function(o){ localPendingMap[o.id] = o; });
-      var mergedPending = pending.map(function(ro){
-        return localPendingMap[ro.id] ? Object.assign({}, ro, localPendingMap[ro.id]) : ro;
-      });
-      DB.pending = mergedPending;
-      localStorage.setItem('beinv-pending', JSON.stringify(mergedPending));
-
-      // Settings
+      // If key is present (even as null): null means Firebase stripped [] = all deleted.
+      // Do NOT add local items back — the deletion must propagate to all devices.
+      if (hasInvoices) {
+        var mergedInv = (d.invoices === null) ? [] : mergeById(DB.invoices, invoices);
+        DB.invoices = mergedInv;
+        localStorage.setItem('beinv-invoices', JSON.stringify(mergedInv));
+      }
+      if (hasQuotations) {
+        var mergedQuo = (d.quotations === null) ? [] : mergeById(DB.quotations, quotations);
+        DB.quotations = mergedQuo;
+        localStorage.setItem('beinv-quotations', JSON.stringify(mergedQuo));
+      }
+      if (hasPending) {
+        var mergedPending = (d.pending === null) ? [] : mergeById(DB.pending, pending);
+        DB.pending = mergedPending;
+        localStorage.setItem('beinv-pending', JSON.stringify(mergedPending));
+      }
       if (settings && Object.keys(settings).length) {
-        localStorage.setItem('beinv-settings', JSON.stringify(settings));
+        Object.assign(DB.settings, settings);
+        localStorage.setItem('beinv-settings', JSON.stringify(DB.settings));
       }
-
       if (window.updateBadge) updateBadge();
       if (window.renderHome) renderHome();
     } finally {
@@ -1882,16 +1868,27 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     }
   }
 
-  // Apply only pendingOrders from store node
+  // -- APPLY PENDING from /store/pendingOrders --
+  // Remote wins - new orders from WhatsApp appear immediately.
+  // Firebase strips [] to null — null means all orders cleared, use [] and do NOT add local back.
   function applyStorePending(remotePending) {
-    var remote = remotePending || [];
+    // remotePending === null means Firebase stripped the empty array = all deleted.
+    // remotePending === undefined should not happen but treat same as null.
+    var allDeleted = (remotePending === null || remotePending === undefined);
+    var remote = allDeleted ? [] : remotePending;
     _applyingRemote = true;
     try {
-      var localMap = {};
-      DB.pending.forEach(function(o){ localMap[o.id] = o; });
-      var merged = remote.map(function(ro){
-        return localMap[ro.id] ? Object.assign({}, ro, localMap[ro.id]) : ro;
-      });
+      var merged;
+      if (allDeleted) {
+        // Firebase says no pending orders exist - trust it fully
+        merged = [];
+      } else {
+        // Remote wins: start from remote, keep local orders not in remote
+        var remoteIds = {};
+        remote.forEach(function(o){ remoteIds[o.id] = true; });
+        var localOnly = DB.pending.filter(function(o){ return !remoteIds[o.id]; });
+        merged = remote.concat(localOnly);
+      }
       DB.pending = merged;
       localStorage.setItem('beinv-pending', JSON.stringify(merged));
       if (window.updateBadge) updateBadge();
@@ -1901,40 +1898,30 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     }
   }
 
-  // SSE listener - watches both /store and /invoice nodes
+  // -- SSE LISTENERS --
   function fbListen() {
-    fbStatus('Syncing...', 'orange');
-
-    // Listen to /invoice node for quotations/invoices sync
+    // Watch /invoice node for quotations/invoices/counter sync
     try {
       var esInv = new EventSource(FB_URL + '/invoice.json');
       var firstInv = true;
-
       esInv.addEventListener('put', function(e) {
         try {
           var msg = JSON.parse(e.data);
           var d = msg.data;
           if (!d) { firstInv = false; return; }
-          // Skip our own echo
-          if (!firstInv && d._pushId === _lastPushId) {
-            fbStatus('In sync', '#38a169');
-            firstInv = false;
-            return;
-          }
+          if (!firstInv && d._pushId === _lastPushId) { firstInv = false; return; }
           if (_pushInFlight && !firstInv) { firstInv = false; return; }
           applyInvData(d);
           fbStatus(firstInv ? 'Synced' : 'Updated', '#38a169');
           firstInv = false;
         } catch(err) { fbStatus('Sync error', '#e53e3e'); }
       });
-
       esInv.addEventListener('patch', function(e) {
         fetch(FB_URL + '/invoice.json')
           .then(function(r){ return r.json(); })
-          .then(function(d){ if(d && d._pushId !== _lastPushId) applyInvData(d); })
+          .then(function(d){ applyInvData(d); })
           .catch(function(){});
       });
-
       esInv.onerror = function() {
         fbStatus('Offline', '#e53e3e');
         esInv.close();
@@ -1942,46 +1929,44 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
       };
     } catch(err) {}
 
-    // Also listen to /store node for pending orders from WhatsApp
+    // Watch /store/pendingOrders for new WhatsApp orders
     try {
-      var esStore = new EventSource(FB_URL + '/store.json');
+      var esStore = new EventSource(FB_URL + '/store/pendingOrders.json');
       var firstStore = true;
-
       esStore.addEventListener('put', function(e) {
         try {
           var msg = JSON.parse(e.data);
           var d = msg.data;
-          if (msg.path === '/') {
-            if (!d) { firstStore = false; return; }
-            applyStorePending(d.pendingOrders || []);
-            fbStatus(firstStore ? 'Synced' : 'Updated', '#38a169');
-            firstStore = false;
-          } else if (msg.path === '/pendingOrders') {
-            firstStore = false;
-            if (!_pushInFlight) applyStorePending(d || []);
-          } else {
-            firstStore = false;
-          }
+          // Firebase sends the value directly for a sub-path SSE
+          applyStorePending(d || []);
+          fbStatus(firstStore ? 'Synced' : 'Updated', '#38a169');
+          firstStore = false;
         } catch(err) {}
       });
-
-      esStore.addEventListener('patch', function(e) {
-        fetch(FB_URL + '/store/pendingOrders.json')
-          .then(function(r){ return r.json(); })
-          .then(function(d){ applyStorePending(d || []); })
-          .catch(function(){});
-      });
-
       esStore.onerror = function() { esStore.close(); };
     } catch(err) {}
   }
 
-  // Initial load from Firebase before SSE starts
+  // -- INITIAL LOAD --
+  // Fetch both invoice data and store pending orders on open
+  fbStatus('Syncing...', 'orange');
+  var gotInv = false; var gotStore = false;
+  function onBothLoaded() {
+    if (gotInv && gotStore) {
+      fbStatus('Synced', '#38a169');
+      fbListen();
+    }
+  }
   fetch(FB_URL + '/invoice.json')
     .then(function(r){ return r.json(); })
     .then(function(d){ if(d) applyInvData(d); })
     .catch(function(){})
-    .finally(function(){ fbListen(); });
+    .finally(function(){ gotInv = true; onBothLoaded(); });
+  fetch(FB_URL + '/store/pendingOrders.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ applyStorePending(d || []); })
+    .catch(function(){})
+    .finally(function(){ gotStore = true; onBothLoaded(); });
 
 })();
 </script>
