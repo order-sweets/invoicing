@@ -573,6 +573,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Profiles
       </button>
+      <button class="btn btn-ghost btn-lg" id="notif-btn" onclick="enableNotifications()" style="margin-top:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span id="notif-btn-label">Enable Notifications</span>
+      </button>
     </div>
 
   </div><!-- /content -->
@@ -2000,20 +2004,45 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 <script>
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./service-worker.js')
-    .then(function(reg){
-      // Ask for notification permission
-      if('Notification' in window && Notification.permission === 'default'){
-        setTimeout(function(){
-          Notification.requestPermission().then(function(perm){
-            if(perm === 'granted'){
-              toast('Notifications enabled! You will be alerted for new orders.');
-            }
-          });
-        }, 3000); // Wait 3s after load so it doesn't feel intrusive
-      }
+    .then(function(){
+      updateNotifBtn();
     })
     .catch(function(err){ console.warn('SW registration failed:', err); });
 }
+function updateNotifBtn(){
+  var btn = document.getElementById('notif-btn-label');
+  if(!btn) return;
+  if(!('Notification' in window)){ btn.textContent = 'Notifications not supported'; return; }
+  if(Notification.permission === 'granted'){ btn.textContent = 'Notifications: ON'; }
+  else if(Notification.permission === 'denied'){ btn.textContent = 'Notifications blocked (check Settings)'; }
+  else { btn.textContent = 'Enable Notifications'; }
+}
+function enableNotifications(){
+  if(!('Notification' in window)){ toast('Notifications not supported on this browser.'); return; }
+  if(Notification.permission === 'granted'){ toast('Notifications are already enabled!'); return; }
+  if(Notification.permission === 'denied'){
+    toast('Notifications are blocked. Go to Settings > Safari > [this site] to allow.');
+    return;
+  }
+  Notification.requestPermission().then(function(perm){
+    if(perm === 'granted'){
+      toast('Notifications enabled! You will be alerted for new orders.');
+      // Send a test notification
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.ready.then(function(reg){
+          reg.showNotification('Notifications enabled', {
+            body: 'You will now receive alerts for new orders.',
+            icon: 'icon-192.png'
+          });
+        });
+      }
+    } else {
+      toast('Permission not granted. You can enable in Settings.');
+    }
+    updateNotifBtn();
+  });
+}
+updateNotifBtn();
 </script>
 </body>
 </html>
