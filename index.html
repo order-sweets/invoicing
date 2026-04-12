@@ -11,13 +11,13 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --ink:#1C1B18;--paper:#FDFCF9;--surface:#F3F1EC;--surface2:#EAE8E2;
-  --border:rgba(0,0,0,.08);--border-md:rgba(0,0,0,.14);--border-dk:rgba(0,0,0,.22);
+  --ink:#1C1B18;--paper:#ffffff;--surface:#f7f7f7;--surface2:#efefef;
+  --border:rgba(0,0,0,.09);--border-md:rgba(0,0,0,.16);--border-dk:rgba(0,0,0,.26);
   --accent:#C8501F;--accent-lt:#FAECE6;--accent-dk:#9C3D17;
   --green:#167A58;--green-lt:#E2F5EE;
   --amber:#B45309;--amber-lt:#FEF3C7;
   --red:#B91C1C;--red-lt:#FEE2E2;
-  --muted:#78766E;--hint:#ABA9A1;
+  --muted:#666;--hint:#aaa;
   --r:9px;--r-lg:13px;--r-xl:18px;
   --sh:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
   --sh-lg:0 4px 20px rgba(0,0,0,.12),0 1px 4px rgba(0,0,0,.08);
@@ -148,14 +148,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 .card{background:var(--paper);border:1.5px solid var(--border-md);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;box-shadow:var(--sh);min-width:0;width:100%;}
 .card-hd{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);gap:6px;flex-wrap:wrap;}
-.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#555;}
 .card-body{padding:14px;}
 
 /* FORM */
 .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
 .mf{display:flex;flex-direction:column;gap:3px;}.mf.full{grid-column:1/-1;}
-.mf label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-.mf input,.mf select,.mf textarea{font-size:13px;padding:7px 9px;border:1.5px solid var(--border-md);border-radius:7px;background:var(--surface);color:var(--ink);font-family:inherit;outline:none;width:100%;}
+.mf label{font-size:10px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.05em;}
+.mf input,.mf select,.mf textarea{font-size:13px;padding:7px 9px;border:1.5px solid var(--border-md);border-radius:7px;background:#fff;color:var(--ink);font-family:inherit;outline:none;width:100%;}
 .mf input:focus,.mf select:focus,.mf textarea:focus{border-color:var(--accent);background:var(--paper);}
 .mf textarea{resize:vertical;min-height:60px;line-height:1.5;}
 
