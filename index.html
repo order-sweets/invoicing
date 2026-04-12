@@ -4,12 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Bee Events &amp; SWITS Invoicing System</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#C8501F">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Invoicing">
-<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -572,10 +566,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
       <button class="btn btn-primary btn-lg" onclick="saveSettings()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Profiles
-      </button>
-      <button class="btn btn-ghost btn-lg" id="notif-btn" onclick="enableNotifications()" style="margin-top:8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        <span id="notif-btn-label">Enable Notifications</span>
       </button>
     </div>
 
@@ -2001,48 +1991,5 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 })();
 </script>
 
-<script>
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./service-worker.js')
-    .then(function(){
-      updateNotifBtn();
-    })
-    .catch(function(err){ console.warn('SW registration failed:', err); });
-}
-function updateNotifBtn(){
-  var btn = document.getElementById('notif-btn-label');
-  if(!btn) return;
-  if(!('Notification' in window)){ btn.textContent = 'Notifications not supported'; return; }
-  if(Notification.permission === 'granted'){ btn.textContent = 'Notifications: ON'; }
-  else if(Notification.permission === 'denied'){ btn.textContent = 'Notifications blocked (check Settings)'; }
-  else { btn.textContent = 'Enable Notifications'; }
-}
-function enableNotifications(){
-  if(!('Notification' in window)){ toast('Notifications not supported on this browser.'); return; }
-  if(Notification.permission === 'granted'){ toast('Notifications are already enabled!'); return; }
-  if(Notification.permission === 'denied'){
-    toast('Notifications are blocked. Go to Settings > Safari > [this site] to allow.');
-    return;
-  }
-  Notification.requestPermission().then(function(perm){
-    if(perm === 'granted'){
-      toast('Notifications enabled! You will be alerted for new orders.');
-      // Send a test notification
-      if('serviceWorker' in navigator){
-        navigator.serviceWorker.ready.then(function(reg){
-          reg.showNotification('Notifications enabled', {
-            body: 'You will now receive alerts for new orders.',
-            icon: 'icon-192.png'
-          });
-        });
-      }
-    } else {
-      toast('Permission not granted. You can enable in Settings.');
-    }
-    updateNotifBtn();
-  });
-}
-updateNotifBtn();
-</script>
 </body>
 </html>
