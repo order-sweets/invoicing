@@ -519,12 +519,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         <div class="card-body">
           <div class="settings-grid">
             <div class="mf full"><label>Company Name</label><input type="text" id="s-name" placeholder="Bee Events"></div>
-            <div class="mf full"><label>Tagline / Description</label><input type="text" id="s-desc" placeholder="Classic &amp; Trending Snacks"></div>
             <div class="mf"><label>Phone / WhatsApp</label><input type="text" id="s-phone" placeholder="+65 8164 8864"></div>
             <div class="mf"><label>Email</label><input type="text" id="s-email" placeholder="b33events.sg@gmail.com"></div>
-            <div class="mf full"><label>Address (optional)</label><input type="text" id="s-addr" placeholder="Singapore"></div>
+            <div class="mf full"><label>Address</label><textarea id="s-addr" placeholder="" style="min-height:60px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}"></textarea></div>
             <div class="mf"><label>GST / Reg No. (optional)</label><input type="text" id="s-gst" placeholder="Leave blank if N/A"></div>
             <div class="mf"><label>Website (optional)</label><input type="text" id="s-web" placeholder="www.beeevents.sg"></div>
+            <div class="mf full"><label>Payment Terms &amp; Notes</label><textarea id="s-notes" placeholder="e.g. Payment due within 7 days.&#10;Thank you for your business!&#10;PayNow: 81648864" style="min-height:72px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}"></textarea></div>
             <div class="mf full" style="display:flex;align-items:center;gap:14px;background:var(--surface2);padding:10px 12px;border-radius:8px;flex-wrap:wrap;margin-top:4px;">
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);text-transform:none;letter-spacing:0;">
                 <input type="checkbox" id="s-gst-on" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;" onchange="syncGSTDisplay('bee')">
@@ -540,25 +540,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
       </div>
 
       <div class="card" style="max-width:680px;">
-        <div class="card-hd"><span class="card-title">Payment Terms &amp; Notes</span><span style="font-size:11px;color:var(--muted);">Auto-applied to all invoices</span></div>
-        <div class="card-body">
-          <div class="mf full">
-            <label>Notes / Terms (appears on every invoice)</label>
-            <textarea id="s-notes" placeholder="e.g. Payment due within 7 days.&#10;Thank you for your business!&#10;PayNow: 81648864"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" style="max-width:680px;">
         <div class="card-hd"><span class="card-title">SWITS — Company 2 Details</span><span style="font-size:11px;color:var(--muted);">Used when dual-company is enabled</span></div>
         <div class="card-body">
           <div class="settings-grid">
             <div class="mf full"><label>Company Name</label><input type="text" id="s2-name" placeholder="SWITS"></div>
-            <div class="mf full"><label>Tagline / Description</label><input type="text" id="s2-desc" placeholder="Snacks &amp; Confectionery"></div>
             <div class="mf"><label>Phone / WhatsApp</label><input type="text" id="s2-phone" placeholder="+65 XXXX XXXX"></div>
             <div class="mf"><label>Email</label><input type="text" id="s2-email" placeholder="swits@email.com"></div>
-            <div class="mf full"><label>Address (optional)</label><input type="text" id="s2-addr" placeholder="Singapore"></div>
+            <div class="mf full"><label>Address</label><textarea id="s2-addr" placeholder="" style="min-height:60px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}"></textarea></div>
             <div class="mf"><label>GST / Reg No. (optional)</label><input type="text" id="s2-gst" placeholder=""></div>
+            <div class="mf full"><label>Payment Terms &amp; Notes</label><textarea id="s2-notes" placeholder="e.g. Payment due within 7 days.&#10;Thank you for your business!" style="min-height:72px;resize:vertical;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();}"></textarea></div>
             <div class="mf full" style="display:flex;align-items:center;gap:14px;background:var(--surface2);padding:10px 12px;border-radius:8px;flex-wrap:wrap;margin-top:4px;">
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink);text-transform:none;letter-spacing:0;">
                 <input type="checkbox" id="s2-gst-on" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;" onchange="syncGSTDisplay('swits')">
@@ -1210,7 +1200,7 @@ function buildPDF(inv){
   var cfg=DB.settings;
   var useCo2=inv.company==='swits';
   var companyName=useCo2?(cfg.co2name||'SWITS'):(cfg.name||'Bee Events');
-  var brandSub2=useCo2?[cfg.co2desc,cfg.co2phone,cfg.co2email,cfg.co2addr].filter(Boolean).join('<br>'):[cfg.desc,cfg.phone,cfg.email,cfg.addr].filter(Boolean).join('<br>');
+  var brandSub2=useCo2?[cfg.co2phone,cfg.co2email,(cfg.co2addr||'').replace(/\n/g,'<br>')].filter(Boolean).join('<br>'):[(cfg.phone),(cfg.email),(cfg.addr||'').replace(/\n/g,'<br>')].filter(Boolean).join('<br>');
   var docLabel=inv.isQuotation?'Quotation':'Invoice';
   var quoRefLine=inv.quoRef?'<div class="pm-sub">From Quotation: '+esc(inv.quoRef)+'</div>':'';
   var rows=inv.lines.map(function(l){
@@ -1239,7 +1229,7 @@ function buildPDF(inv){
     +'</div>'
     +'<table class="pdf-tbl"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
-    +((cfg.notes||inv.notes)?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+esc(cfg.notes||inv.notes||'').replace(/\n/g,'<br>')+'</div></div>':'')
+    +(function(){var n=useCo2?(cfg.co2notes||''):(cfg.notes||'');return n?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'';}())
     +'</div>';
 }
 
@@ -1408,7 +1398,6 @@ function syncGSTDisplay(co){
 function loadSettingsForm(){
   var c=DB.settings;
   document.getElementById('s-name').value=c.name||'';
-  document.getElementById('s-desc').value=c.desc||'';
   document.getElementById('s-phone').value=c.phone||'';
   document.getElementById('s-email').value=c.email||'';
   document.getElementById('s-addr').value=c.addr||'';
@@ -1416,9 +1405,10 @@ function loadSettingsForm(){
   document.getElementById('s-web').value=c.web||'';
   document.getElementById('s-notes').value=c.notes||'';
   document.getElementById('s-dual').checked=!!c.dual;
-  var fn=['s2-name','s2-desc','s2-phone','s2-email','s2-addr','s2-gst'];
-  var fk=['co2name','co2desc','co2phone','co2email','co2addr','co2gst'];
+  var fn=['s2-name','s2-phone','s2-email','s2-addr','s2-gst'];
+  var fk=['co2name','co2phone','co2email','co2addr','co2gst'];
   fn.forEach(function(id,i){var el=document.getElementById(id);if(el)el.value=c[fk[i]]||'';});
+  var s2n=document.getElementById('s2-notes');if(s2n)s2n.value=c.co2notes||'';
   // GST toggles
   var gstOn=document.getElementById('s-gst-on');if(gstOn)gstOn.checked=!!c.gstOn;
   var gstPct=document.getElementById('s-gst-pct');if(gstPct)gstPct.value=(c.gstPct===0||c.gstPct==='0')?0:(c.gstPct||9);
@@ -1435,17 +1425,17 @@ function saveSetting(key,val){
 }
 function saveSettings(){
   DB.settings.name=document.getElementById('s-name').value.trim();
-  DB.settings.desc=document.getElementById('s-desc').value.trim();
   DB.settings.phone=document.getElementById('s-phone').value.trim();
   DB.settings.email=document.getElementById('s-email').value.trim();
   DB.settings.addr=document.getElementById('s-addr').value.trim();
   DB.settings.gst=document.getElementById('s-gst').value.trim();
   DB.settings.web=document.getElementById('s-web').value.trim();
-  DB.settings.notes=document.getElementById('s-notes').value.trim();
+  DB.settings.notes=document.getElementById('s-notes').value;
   DB.settings.dual=document.getElementById('s-dual').checked;
-  var fn2=['s2-name','s2-desc','s2-phone','s2-email','s2-addr','s2-gst'];
-  var fk2=['co2name','co2desc','co2phone','co2email','co2addr','co2gst'];
+  var fn2=['s2-name','s2-phone','s2-email','s2-addr','s2-gst'];
+  var fk2=['co2name','co2phone','co2email','co2addr','co2gst'];
   fn2.forEach(function(id,i){var el=document.getElementById(id);if(el)DB.settings[fk2[i]]=el.value.trim();});
+  var s2n=document.getElementById('s2-notes');if(s2n)DB.settings.co2notes=s2n.value;
   // GST toggles
   var gstOnEl=document.getElementById('s-gst-on');DB.settings.gstOn=gstOnEl?gstOnEl.checked:false;
   var gstPctEl=document.getElementById('s-gst-pct');var _gp=gstPctEl?gstPctEl.value.trim():'';DB.settings.gstPct=(_gp===''||_gp===null)?9:parseFloat(_gp);
