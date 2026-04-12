@@ -1825,12 +1825,16 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     // Skip our own echo
     if (d._pushId && d._pushId === _lastPushId) return;
 
-    var hasInvoices   = Object.prototype.hasOwnProperty.call(d, 'invoices');
-    var hasQuotations = Object.prototype.hasOwnProperty.call(d, 'quotations');
-    var hasPending    = Object.prototype.hasOwnProperty.call(d, 'pending');
     var counter    = d.counter    != null ? parseInt(d.counter)    : null;
     var quoCounter = d.quoCounter != null ? parseInt(d.quoCounter) : null;
     var settings   = d.settings   || {};
+
+    // Firebase omits keys entirely when their value is null/empty.
+    // So a missing key means "was deleted/emptied" - treat same as null = use [].
+    // Only skip a field if the entire snapshot has never included it
+    // (i.e. counter is absent too, meaning this is a partial/unrelated update).
+    // We use the presence of _pushId as the signal that this is a full invoice snapshot.
+    var isFullSnapshot = Object.prototype.hasOwnProperty.call(d, '_pushId');
 
     _applyingRemote = true;
     try {
@@ -1842,16 +1846,13 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
         DB.quoCounter = quoCounter;
         localStorage.setItem('beinv-quo-counter', String(quoCounter));
       }
-      // Remote wins fully. null = Firebase stripped [] = all deleted.
-      if (hasInvoices) {
+      // Remote wins fully. Firebase omits keys when empty (same as null) = use [].
+      // Only apply arrays if this is a full invoice snapshot (has _pushId).
+      if (isFullSnapshot) {
         DB.invoices = d.invoices || [];
         localStorage.setItem('beinv-invoices', JSON.stringify(DB.invoices));
-      }
-      if (hasQuotations) {
         DB.quotations = d.quotations || [];
         localStorage.setItem('beinv-quotations', JSON.stringify(DB.quotations));
-      }
-      if (hasPending) {
         DB.pending = d.pending || [];
         localStorage.setItem('beinv-pending', JSON.stringify(DB.pending));
       }
