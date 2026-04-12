@@ -73,7 +73,7 @@ self.addEventListener('notificationclick', function(e) {
         }
         // Otherwise open it
         if (clients.openWindow) {
-          return clients.openWindow('./invoice_v3.html');
+          return clients.openWindow('/invoicing/');
         }
       })
   );
