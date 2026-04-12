@@ -1795,7 +1795,19 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
       fbStatus('Save failed', '#e53e3e');
     }).finally(function(){
       _pushInFlight = false;
-      if (_pushQueued) { _pushQueued = false; fbPush(); }
+      if (_pushQueued) {
+        _pushQueued = false;
+        fbPush();
+      } else {
+        // Re-fetch after push to catch any changes from other devices
+        // that arrived while our push was in flight (SSE events were skipped)
+        setTimeout(function(){
+          fetch(FB_URL + '/invoice.json')
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if(d) applyInvData(d); })
+            .catch(function(){});
+        }, 300);
+      }
     });
   }
 
@@ -1812,8 +1824,6 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     if (!d) return;
     // Skip our own echo
     if (d._pushId && d._pushId === _lastPushId) return;
-    // Skip if a local change is in-flight (we have newer data)
-    if (_pushInFlight) return;
 
     var hasInvoices   = Object.prototype.hasOwnProperty.call(d, 'invoices');
     var hasQuotations = Object.prototype.hasOwnProperty.call(d, 'quotations');
@@ -1858,7 +1868,6 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 
   // Apply pending orders from /store node. Remote fully wins.
   function applyStorePending(remotePending) {
-    if (_pushInFlight) return;
     _applyingRemote = true;
     try {
       DB.pending = remotePending || [];
