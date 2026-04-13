@@ -502,7 +502,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                   Delete Invoice
                 </button>
-              </div>
+
+                <!-- COMBINE OUTLETS — shown only for pending invoices -->
+                <div id="combine-sec" style="display:none;border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">
+                  <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Combine Outlets</div>
+                  <select id="combine-order-sel" style="width:100%;font-size:13px;padding:7px 9px;border:1.5px solid var(--border-md);border-radius:var(--r);font-family:inherit;background:#fff;color:var(--text);outline:none;margin-bottom:6px;"></select>
+                  <button class="btn btn-ghost" style="width:100%;" onclick="mergeOrder()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M8 6H21M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    Merge into this invoice
+                  </button>
+                </div>
             </div>
           </div>
 
@@ -909,6 +918,7 @@ function newInvoice(){
   setNav('nav-new');showPanel('panel-editor');
   setTopbar('+ New Invoice',BACK_BTN);
   renderCombineList();
+  document.getElementById('combine-sec').style.display='block';
   setItemDropdownsVisible(true);
 }
 
@@ -926,6 +936,7 @@ function generateFromOrder(orderId){
   setNav('nav-new');showPanel('panel-editor');
   setTopbar('Generate Invoice — '+o.id,BACK_BTN);
   renderCombineList();
+  document.getElementById('combine-sec').style.display='block';
   setItemDropdownsVisible(true);
 }
 
@@ -1149,6 +1160,7 @@ function editInvoice(id){
   setNav('nav-new');showPanel('panel-editor');
   setTopbar('Edit — '+current.num,BACK_BTN);
   renderCombineList();
+  document.getElementById('combine-sec').style.display=current.isQuotation?'none':'block';
   setItemDropdownsVisible(true);
 }
 
@@ -1293,7 +1305,7 @@ function realDownloadPDF(inv){
   var renderEl=container.querySelector('#_pdf_render');
   setTimeout(function(){
     html2canvas(renderEl,{
-      scale:4,
+      scale:2,
       useCORS:true,
       backgroundColor:'#ffffff',
       width:794,
@@ -1337,7 +1349,7 @@ function sharePDF(inv){
   toast('Generating PDF...');
   var renderEl=container.querySelector('#_pdf_share');
   setTimeout(function(){
-    html2canvas(renderEl,{scale:4,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
+    html2canvas(renderEl,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
     .then(function(canvas){
       document.body.removeChild(container);
       var imgData=canvas.toDataURL('image/png');
@@ -1492,6 +1504,7 @@ function newQuotation(){
   setNav("nav-quotation");showPanel("panel-editor");
   setTopbar("+ New Quotation",BACK_BTN);
   renderCombineList();
+  document.getElementById('combine-sec').style.display='none';
   setItemDropdownsVisible(false);
 }
 function confirmQuotation(){
@@ -1680,7 +1693,7 @@ function invToPDFBlob(inv){
     iframe.contentDocument.close();
     setTimeout(function(){
       var inner=iframe.contentDocument.body;
-      html2canvas(inner,{scale:4,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794})
+      html2canvas(inner,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794})
         .then(function(canvas){
           var {jsPDF}=window.jspdf;
           var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
