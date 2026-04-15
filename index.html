@@ -724,36 +724,86 @@ document.addEventListener('click',function(e){
 });
 
 // ══ STOCK DEDUCTION ══
-// Called when invoice is confirmed — deducts stock from snack-inv-v5 (shared with store)
-function deductStockForInvoice(lines){
-  var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+// Build flat product list from snack-products-v5 localStorage
+function _getAllProds(){
   var prods=JSON.parse(localStorage.getItem('snack-products-v5')||'null');
-  // Build a flat product list from store's localStorage
   var allProds=[];
   if(prods){
     if(prods.newArrivals)allProds=allProds.concat(prods.newArrivals);
     if(prods.hotSale)allProds=allProds.concat(prods.hotSale);
     if(prods.brands)prods.brands.forEach(function(b){allProds=allProds.concat(b.products||[]);});
   }
+  return allProds;
+}
+
+// Resolve a line to {pid, ppc} using pid field first, then name matching as fallback
+function _resolveLineProd(l, allProds){
+  // 1. Direct pid match (most reliable — set when order comes from store)
+  if(l.pid){
+    var byId=allProds.find(function(p){return p.id===l.pid;});
+    if(byId)return byId;
+  }
+  // 2. Name match fallback (for manually typed invoice lines)
+  var descLower=(l.desc||'').toLowerCase().replace(/\[.*?\]/g,'').trim();
+  return allProds.find(function(p){
+    var nameLower=(p.name||'').toLowerCase();
+    return descLower===nameLower||descLower.indexOf(nameLower)===0;
+  })||null;
+}
+
+// Called when invoice is confirmed — fetches live stock from Firebase, deducts, pushes back
+function deductStockForInvoice(lines){
+  var FB_URL='https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var allProds=_getAllProds();
+
+  // Build deduction map: {pid -> piecesToDeduct}
+  var deductions={};
+  var ppcMap={};
   lines.forEach(function(l){
-    if(l.ret)return; // returns add back, don't deduct
-    // Match line description to product name (desc is just the product name from the store)
-    var matched=allProds.find(function(p){
-      var descLower=(l.desc||'').toLowerCase().replace(/\[.*?\]/g,'').trim();
-      var nameLower=(p.name||'').toLowerCase();
-      return descLower===nameLower||descLower.indexOf(nameLower)===0;
-    });
+    if(l.ret)return;
+    var matched=_resolveLineProd(l,allProds);
     if(!matched)return;
     var pid=matched.id;
-    var ppc=matched.ppc||1;
-    var currentStock=parseInt(inv[pid]!==undefined?inv[pid]:matched.stockPieces||0,10);
-    // Use l.unit ('case' or 'piece') set by the store — never guess from desc
-    var piecesToDeduct=(l.unit==='case')?l.q*ppc:l.q;
-    inv[pid]=Math.max(0,currentStock-piecesToDeduct);
+    var ppc=parseInt(matched.ppc||1,10);
+    ppcMap[pid]=ppc;
+    var pieces=(l.unit==='case')?parseInt(l.q,10)*ppc:parseInt(l.q,10);
+    deductions[pid]=(deductions[pid]||0)+pieces;
   });
-  localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
-  // Also push updated inv to Firebase so the store reflects the new stock
-  if(window._invFbDebouncedPush) window._invFbDebouncedPush();
+
+  if(!Object.keys(deductions).length)return;
+
+  // Fetch current live inv from Firebase, deduct, push back
+  fetch(FB_URL+'/store/inv.json')
+    .then(function(r){return r.json();})
+    .then(function(fbInv){
+      // Merge Firebase inv with localStorage inv — Firebase is authoritative
+      var localInv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+      var inv=Object.assign({},localInv,fbInv||{});
+
+      Object.keys(deductions).forEach(function(pid){
+        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
+        inv[pid]=Math.max(0,current-deductions[pid]);
+      });
+
+      // Write back to localStorage
+      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+
+      // Push updated inv directly to Firebase /store/inv
+      return fetch(FB_URL+'/store/inv.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(inv)
+      });
+    })
+    .catch(function(){
+      // Firebase unavailable — deduct from localStorage only as fallback
+      var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+      Object.keys(deductions).forEach(function(pid){
+        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
+        inv[pid]=Math.max(0,current-deductions[pid]);
+      });
+      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+    });
 }
 
 window.deletePendingOrder=function(oid){
@@ -936,7 +986,7 @@ function generateFromOrder(orderId){
   current={
     id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
     date:o.date,ref:o.id,pay:'Cash on Delivery',
-    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,desc:it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false};}),
+    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,pid:it.pid||'',desc:it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false};}),
     confirmed:false,_sourceOrderId:o.id
   };
   loadEditor();
@@ -995,7 +1045,7 @@ function mergeOrder(){
   var id=document.getElementById('combine-order-sel').value;if(!id)return;
   var o=DB.pending.find(function(x){return x.id===id;});if(!o)return;
   o.items.forEach(function(it,i){
-    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false});
+    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,pid:it.pid||'',desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false});
   });
   if(!current._mergedOrders)current._mergedOrders=[];
   current._mergedOrders.push(id);
