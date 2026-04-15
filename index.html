@@ -344,6 +344,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         </select>
       </div>
 
+      <!-- Mass delete toolbar -->
+      <div id="mass-bar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:4px 0;">
+        <input type="checkbox" id="sel-all" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;" onchange="toggleSelectAll(this.checked)">
+        <label for="sel-all" style="font-size:12px;font-weight:600;cursor:pointer;flex:1;">Select All</label>
+        <span id="sel-count" style="font-size:11px;color:var(--muted);"></span>
+        <button class="btn btn-red btn-sm" onclick="deleteSelected()" style="padding:5px 12px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          Delete
+        </button>
+      </div>
       <div id="home-body"></div>
     </div>
 
@@ -365,7 +375,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 <div class="mf full">
                   <label>Customer Name</label>
                   <input type="text" id="f-cust-name" list="cust-list" placeholder="Type or select customer…" oninput="onCustNameInput()">
-                  <datalist id="cust-list"></datalist>
+                  <datalist id="cust-list">
+                    <option value="Nelly Retro">
+                    <option value="Hong Yi Hao">
+                    <option value="Walson Food Distributor Pte Ltd">
+                  </datalist>
                 </div>
                 <div class="mf">
                   <label>Company</label>
@@ -516,7 +530,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       </div>
     </div>
-    </div>
 
     <!-- ══ SETTINGS PANEL ══ -->
     <div class="panel" id="panel-settings">
@@ -659,18 +672,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 var KNOWN_CUSTOMERS = {};
 var PRODS = {};
 
-function refreshKnownCustomers(custArr) {
-  var arr = custArr || JSON.parse(localStorage.getItem('snack-customers-v2') || '[]');
-  KNOWN_CUSTOMERS = {};
-  arr.forEach(function(c) { KNOWN_CUSTOMERS[c.name] = c; });
-  var dl = document.getElementById('cust-list');
-  if (dl) {
-    dl.innerHTML = arr.map(function(c) {
-      return '<option value="' + esc(c.name) + '">';
-    }).join('');
-  }
-}
-
 var SAMPLE_PENDING = [];
 
 // ══ STATE ══
@@ -724,86 +725,37 @@ document.addEventListener('click',function(e){
 });
 
 // ══ STOCK DEDUCTION ══
-// Build flat product list from snack-products-v5 localStorage
-function _getAllProds(){
+// Called when invoice is confirmed — deducts stock from snack-inv-v5 (shared with store)
+function deductStockForInvoice(lines){
+  var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
   var prods=JSON.parse(localStorage.getItem('snack-products-v5')||'null');
+  // Build a flat product list from store's localStorage
   var allProds=[];
   if(prods){
     if(prods.newArrivals)allProds=allProds.concat(prods.newArrivals);
     if(prods.hotSale)allProds=allProds.concat(prods.hotSale);
     if(prods.brands)prods.brands.forEach(function(b){allProds=allProds.concat(b.products||[]);});
   }
-  return allProds;
-}
-
-// Resolve a line to {pid, ppc} using pid field first, then name matching as fallback
-function _resolveLineProd(l, allProds){
-  // 1. Direct pid match (most reliable — set when order comes from store)
-  if(l.pid){
-    var byId=allProds.find(function(p){return p.id===l.pid;});
-    if(byId)return byId;
-  }
-  // 2. Name match fallback (for manually typed invoice lines)
-  var descLower=(l.desc||'').toLowerCase().replace(/\[.*?\]/g,'').trim();
-  return allProds.find(function(p){
-    var nameLower=(p.name||'').toLowerCase();
-    return descLower===nameLower||descLower.indexOf(nameLower)===0;
-  })||null;
-}
-
-// Called when invoice is confirmed — fetches live stock from Firebase, deducts, pushes back
-function deductStockForInvoice(lines){
-  var FB_URL='https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
-  var allProds=_getAllProds();
-
-  // Build deduction map: {pid -> piecesToDeduct}
-  var deductions={};
-  var ppcMap={};
   lines.forEach(function(l){
-    if(l.ret)return;
-    var matched=_resolveLineProd(l,allProds);
+    if(l.ret)return; // returns add back, don't deduct
+    // Match line description to product name
+    var matched=allProds.find(function(p){
+      var descLower=(l.desc||'').toLowerCase();
+      return descLower.indexOf((p.name||'').toLowerCase())===0||(p.name||'').toLowerCase().indexOf(descLower)===0||descLower===((p.name||'').toLowerCase());
+    });
     if(!matched)return;
     var pid=matched.id;
-    var ppc=parseInt(matched.ppc||1,10);
-    ppcMap[pid]=ppc;
-    var pieces=(l.unit==='case')?parseInt(l.q,10)*ppc:parseInt(l.q,10);
-    deductions[pid]=(deductions[pid]||0)+pieces;
+    var ppc=matched.ppc||1;
+    var currentStock=parseInt(inv[pid]||matched.stockPieces||0,10);
+    // Determine pieces to deduct based on line desc (Box vs Piece)
+    var piecesToDeduct=l.q; // default: pieces
+    if((l.desc||'').toLowerCase().indexOf('box')!==-1||l.q===Math.round(l.q/ppc)*ppc===false){
+      // If ordered in boxes, convert
+      if(ppc>1 && l.q<ppc) piecesToDeduct=l.q*ppc; // ordered N boxes
+    }
+    inv[pid]=Math.max(0,currentStock-piecesToDeduct);
   });
-
-  if(!Object.keys(deductions).length)return;
-
-  // Fetch current live inv from Firebase, deduct, push back
-  fetch(FB_URL+'/store/inv.json')
-    .then(function(r){return r.json();})
-    .then(function(fbInv){
-      // Merge Firebase inv with localStorage inv — Firebase is authoritative
-      var localInv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
-      var inv=Object.assign({},localInv,fbInv||{});
-
-      Object.keys(deductions).forEach(function(pid){
-        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
-        inv[pid]=Math.max(0,current-deductions[pid]);
-      });
-
-      // Write back to localStorage
-      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
-
-      // Push updated inv directly to Firebase /store/inv
-      return fetch(FB_URL+'/store/inv.json',{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(inv)
-      });
-    })
-    .catch(function(){
-      // Firebase unavailable — deduct from localStorage only as fallback
-      var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
-      Object.keys(deductions).forEach(function(pid){
-        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
-        inv[pid]=Math.max(0,current-deductions[pid]);
-      });
-      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
-    });
+  localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
 }
 
 window.deletePendingOrder=function(oid){
@@ -872,6 +824,41 @@ function gotoSettings(){
 }
 
 // ══ HOME / FILTER ══
+// ══ MASS DELETE ══
+function updateSelCount(){
+  var cbs=document.querySelectorAll('.mass-cb');
+  var checked=document.querySelectorAll('.mass-cb:checked');
+  var selAll=document.getElementById('sel-all');
+  var selCount=document.getElementById('sel-count');
+  if(selCount)selCount.textContent=checked.length?checked.length+' selected':'';
+  if(selAll){
+    selAll.checked=cbs.length>0&&checked.length===cbs.length;
+    selAll.indeterminate=checked.length>0&&checked.length<cbs.length;
+  }
+}
+function toggleSelectAll(checked){
+  document.querySelectorAll('.mass-cb').forEach(function(cb){cb.checked=checked;});
+  updateSelCount();
+}
+function deleteSelected(){
+  var checked=Array.from(document.querySelectorAll('.mass-cb:checked'));
+  if(!checked.length){toast('No items selected.');return;}
+  if(!confirm('Delete '+checked.length+' item'+(checked.length!==1?'s':'')+'?'))return;
+  var ids=checked.map(function(cb){return cb.getAttribute('data-id');});
+  if(activeTab==='pending'){
+    ids.forEach(function(id){
+      DB.pending=DB.pending.filter(function(o){return o.id!==id;});
+      var storeOrders=JSON.parse(localStorage.getItem('snack-orders-v1')||'[]');
+      storeOrders=storeOrders.map(function(o){return o.id===id?Object.assign({},o,{status:'done'}):o;});
+      localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
+    });
+  } else if(activeTab==='quotations'){
+    DB.quotations=DB.quotations.filter(function(q){return ids.indexOf(q.id)<0;});
+  } else if(activeTab==='completed'){
+    DB.invoices=DB.invoices.filter(function(i){return ids.indexOf(i.id)<0;});
+  }
+  persist();renderHome();toast('Deleted '+ids.length+' item'+(ids.length!==1?'s':'')+'.');
+}
 function switchTab(tab){
   activeTab=tab;
   document.getElementById('tab-pending').classList.toggle('active',tab==='pending');
@@ -892,6 +879,12 @@ function matchesFilter(name,date,num){
 
 function renderHome(){
   var db=document.getElementById('dual-banner');if(db)db.style.display=DB.settings.dual?'block':'none';
+  // Show mass-delete toolbar (hidden for pending if empty)
+  var massBar=document.getElementById('mass-bar');
+  var selAll=document.getElementById('sel-all');
+  if(massBar){massBar.style.display='flex';}
+  if(selAll){selAll.checked=false;selAll.indeterminate=false;}
+  var selCount=document.getElementById('sel-count');if(selCount)selCount.textContent='';
   var el=document.getElementById('home-body');
   if(activeTab==='pending'){
     var list=DB.pending.filter(function(o){return matchesFilter(o.custName,o.date,o.id);});
@@ -903,7 +896,7 @@ function renderHome(){
       var itemRows=(o.items||[]).map(function(it){var t=(it.qty*it.price).toFixed(2);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+Number(it.price).toFixed(2)+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');
       var notes=o.notes?'<div style="margin-top:8px;padding:8px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--muted);"><strong>Notes:</strong> '+esc(o.notes)+'</div>':'';
       var addr=o.addr?'<div style="margin-top:6px;font-size:12px;color:var(--muted);">📍 '+esc(o.addr)+'</div>':'';
-      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'</div></div>';   }).join('');
+      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'</div></div>';   }).join('');
     el.innerHTML='<div class="order-list">'+html+'</div>';
   } else if(activeTab==='quotations'){
     var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
@@ -913,7 +906,7 @@ function renderHome(){
   } else {
     var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
-    el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
+    el.innerHTML=list2.map(function(inv){return renderInvCard(inv);}).join('');
   }
 }
 
@@ -931,6 +924,7 @@ function renderInvCard(inv){
   else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
   return '<div class="inv-card-item">'
     +'<div class="inv-card-header">'
+      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'
       +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'
         +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'
         +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' — '+esc(inv.outlet):'')+'</div>'
@@ -986,7 +980,7 @@ function generateFromOrder(orderId){
   current={
     id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
     date:o.date,ref:o.id,pay:'Cash on Delivery',
-    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,pid:it.pid||'',desc:it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false};}),
+    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,desc:it.desc,q:it.qty,p:it.price,ret:false};}),
     confirmed:false,_sourceOrderId:o.id
   };
   loadEditor();
@@ -1025,8 +1019,7 @@ function onCompanyChange(){
 function onCustNameInput(){
   var name=document.getElementById('f-cust-name').value.trim();
   var cust=KNOWN_CUSTOMERS[name];
-  // Always autofill address when a known customer is selected
-  if(cust){document.getElementById('f-addr').value=cust.addr||'';}
+  if(cust&&!current.addr){document.getElementById('f-addr').value=cust.addr||'';}
   current.custName=name;
 }
 
@@ -1045,7 +1038,7 @@ function mergeOrder(){
   var id=document.getElementById('combine-order-sel').value;if(!id)return;
   var o=DB.pending.find(function(x){return x.id===id;});if(!o)return;
   o.items.forEach(function(it,i){
-    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,pid:it.pid||'',desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false});
+    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,ret:false});
   });
   if(!current._mergedOrders)current._mergedOrders=[];
   current._mergedOrders.push(id);
@@ -1596,6 +1589,7 @@ function renderQuoCard(quo){
   var h="";
   h+='<div class="inv-card-item" data-qid="'+qid+'">';
   h+='<div class="inv-card-header">';
+  h+='<input type="checkbox" class="mass-cb" data-id="'+qid+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">';
   h+='<div class="qbtn-toggle" data-card="qc-'+qid+'" style="flex:1;min-width:0;cursor:pointer;">';
   h+='<div class="inv-card-num"><span style="font-size:9px;font-weight:700;background:#E8F2FB;color:#1A4F7A;padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>'+esc(quo.num)+'</div>';
   h+='<div class="inv-card-name">'+esc(quo.custName)+'</div>';
@@ -1836,7 +1830,6 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
   if(cb)cb.checked=(DB.settings.dual===true);
 })();
 // Always land on home screen
-refreshKnownCustomers(); // seed from localStorage before Firebase responds
 gotoHome();
 var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
@@ -2060,24 +2053,6 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     .then(function(d){ applyStorePending(d || []); })
     .catch(function(){})
     .finally(function(){ gotStore = true; onBothLoaded(); });
-
-  // Load customers from Firebase for cross-device autofill
-  fetch(FB_URL + '/store/customers.json')
-    .then(function(r){ return r.json(); })
-    .then(function(d){ if(d && Array.isArray(d)) refreshKnownCustomers(d); })
-    .catch(function(){});
-
-  // Live customer updates via SSE
-  try {
-    var esCust = new EventSource(FB_URL + '/store/customers.json');
-    esCust.addEventListener('put', function(e) {
-      try {
-        var msg = JSON.parse(e.data);
-        if(msg.data && Array.isArray(msg.data)) refreshKnownCustomers(msg.data);
-      } catch(err) {}
-    });
-    esCust.onerror = function() { esCust.close(); };
-  } catch(err) {}
 
 })();
 </script>
