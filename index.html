@@ -365,11 +365,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 <div class="mf full">
                   <label>Customer Name</label>
                   <input type="text" id="f-cust-name" list="cust-list" placeholder="Type or select customer…" oninput="onCustNameInput()">
-                  <datalist id="cust-list">
-                    <option value="Nelly Retro">
-                    <option value="Hong Yi Hao">
-                    <option value="Walson Food Distributor Pte Ltd">
-                  </datalist>
+                  <datalist id="cust-list"></datalist>
                 </div>
                 <div class="mf">
                   <label>Company</label>
@@ -663,6 +659,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 var KNOWN_CUSTOMERS = {};
 var PRODS = {};
 
+function refreshKnownCustomers(custArr) {
+  var arr = custArr || JSON.parse(localStorage.getItem('snack-customers-v2') || '[]');
+  KNOWN_CUSTOMERS = {};
+  arr.forEach(function(c) { KNOWN_CUSTOMERS[c.name] = c; });
+  var dl = document.getElementById('cust-list');
+  if (dl) {
+    dl.innerHTML = arr.map(function(c) {
+      return '<option value="' + esc(c.name) + '">';
+    }).join('');
+  }
+}
+
 var SAMPLE_PENDING = [];
 
 // ══ STATE ══
@@ -928,7 +936,7 @@ function generateFromOrder(orderId){
   current={
     id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
     date:o.date,ref:o.id,pay:'Cash on Delivery',
-    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,desc:it.desc,q:it.qty,p:it.price,ret:false};}),
+    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,desc:it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false};}),
     confirmed:false,_sourceOrderId:o.id
   };
   loadEditor();
@@ -967,7 +975,8 @@ function onCompanyChange(){
 function onCustNameInput(){
   var name=document.getElementById('f-cust-name').value.trim();
   var cust=KNOWN_CUSTOMERS[name];
-  if(cust&&!current.addr){document.getElementById('f-addr').value=cust.addr||'';}
+  // Always autofill address when a known customer is selected
+  if(cust){document.getElementById('f-addr').value=cust.addr||'';}
   current.custName=name;
 }
 
@@ -986,7 +995,7 @@ function mergeOrder(){
   var id=document.getElementById('combine-order-sel').value;if(!id)return;
   var o=DB.pending.find(function(x){return x.id===id;});if(!o)return;
   o.items.forEach(function(it,i){
-    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,ret:false});
+    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,unit:it.unit||'piece',ret:false});
   });
   if(!current._mergedOrders)current._mergedOrders=[];
   current._mergedOrders.push(id);
@@ -1777,6 +1786,7 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
   if(cb)cb.checked=(DB.settings.dual===true);
 })();
 // Always land on home screen
+refreshKnownCustomers(); // seed from localStorage before Firebase responds
 gotoHome();
 var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
@@ -2000,6 +2010,24 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     .then(function(d){ applyStorePending(d || []); })
     .catch(function(){})
     .finally(function(){ gotStore = true; onBothLoaded(); });
+
+  // Load customers from Firebase for cross-device autofill
+  fetch(FB_URL + '/store/customers.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d && Array.isArray(d)) refreshKnownCustomers(d); })
+    .catch(function(){});
+
+  // Live customer updates via SSE
+  try {
+    var esCust = new EventSource(FB_URL + '/store/customers.json');
+    esCust.addEventListener('put', function(e) {
+      try {
+        var msg = JSON.parse(e.data);
+        if(msg.data && Array.isArray(msg.data)) refreshKnownCustomers(msg.data);
+      } catch(err) {}
+    });
+    esCust.onerror = function() { esCust.close(); };
+  } catch(err) {}
 
 })();
 </script>
