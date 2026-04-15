@@ -520,6 +520,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       </div>
     </div>
+    </div>
 
     <!-- ══ SETTINGS PANEL ══ -->
     <div class="panel" id="panel-settings">
@@ -728,24 +729,23 @@ function deductStockForInvoice(lines){
   }
   lines.forEach(function(l){
     if(l.ret)return; // returns add back, don't deduct
-    // Match line description to product name
+    // Match line description to product name (desc is just the product name from the store)
     var matched=allProds.find(function(p){
-      var descLower=(l.desc||'').toLowerCase();
-      return descLower.indexOf((p.name||'').toLowerCase())===0||(p.name||'').toLowerCase().indexOf(descLower)===0||descLower===((p.name||'').toLowerCase());
+      var descLower=(l.desc||'').toLowerCase().replace(/\[.*?\]/g,'').trim();
+      var nameLower=(p.name||'').toLowerCase();
+      return descLower===nameLower||descLower.indexOf(nameLower)===0;
     });
     if(!matched)return;
     var pid=matched.id;
     var ppc=matched.ppc||1;
-    var currentStock=parseInt(inv[pid]||matched.stockPieces||0,10);
-    // Determine pieces to deduct based on line desc (Box vs Piece)
-    var piecesToDeduct=l.q; // default: pieces
-    if((l.desc||'').toLowerCase().indexOf('box')!==-1||l.q===Math.round(l.q/ppc)*ppc===false){
-      // If ordered in boxes, convert
-      if(ppc>1 && l.q<ppc) piecesToDeduct=l.q*ppc; // ordered N boxes
-    }
+    var currentStock=parseInt(inv[pid]!==undefined?inv[pid]:matched.stockPieces||0,10);
+    // Use l.unit ('case' or 'piece') set by the store — never guess from desc
+    var piecesToDeduct=(l.unit==='case')?l.q*ppc:l.q;
     inv[pid]=Math.max(0,currentStock-piecesToDeduct);
   });
   localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+  // Also push updated inv to Firebase so the store reflects the new stock
+  if(window._invFbDebouncedPush) window._invFbDebouncedPush();
 }
 
 window.deletePendingOrder=function(oid){
@@ -855,7 +855,7 @@ function renderHome(){
   } else {
     var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
-    el.innerHTML=list2.map(function(inv){return renderInvCard(inv);}).join('');
+    el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
   }
 }
 
