@@ -414,50 +414,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 <div id="item-dropdowns">
                 <select class="qa-select" id="qa-item" style="display:inline-block;" onchange="quickAdd(false)">
                   <option value="">+ Add item…</option>
-                  <optgroup label="Airheads Bars">
-                    <option value="a1|piece">Airheads Bars — Piece</option>
-                    <option value="a1|box">Airheads Bars — Box</option>
-                  </optgroup>
-                  <optgroup label="Airheads Bites">
-                    <option value="a2|piece">Airheads Bites — Piece</option>
-                    <option value="a2|box">Airheads Bites — Box</option>
-                  </optgroup>
-                  <optgroup label="Nerds Grape &amp; Strawberry">
-                    <option value="nb1|piece">Nerds G&amp;S — Piece</option>
-                    <option value="nb1|box">Nerds G&amp;S — Box</option>
-                  </optgroup>
-                  <optgroup label="Nerds Rope Rainbow">
-                    <option value="nb2|piece">Nerds Rope — Piece</option>
-                    <option value="nb2|box">Nerds Rope — Box</option>
-                  </optgroup>
-                  <optgroup label="Cotton Candy">
-                    <option value="p_1774654791150|piece">Cotton Candy — Piece</option>
-                    <option value="p_1774654791150|box">Cotton Candy — Box</option>
-                  </optgroup>
                 </select>
                 <!-- Quick add return dropdown -->
                 <select class="qa-select" id="qa-ret" style="display:inline-block;" onchange="quickAdd(true)" style="border-color:rgba(185,28,28,.3);color:var(--red);">
                   <option value="">− Return…</option>
-                  <optgroup label="Airheads Bars">
-                    <option value="a1|piece">Airheads Bars — Piece</option>
-                    <option value="a1|box">Airheads Bars — Box</option>
-                  </optgroup>
-                  <optgroup label="Airheads Bites">
-                    <option value="a2|piece">Airheads Bites — Piece</option>
-                    <option value="a2|box">Airheads Bites — Box</option>
-                  </optgroup>
-                  <optgroup label="Nerds Grape &amp; Strawberry">
-                    <option value="nb1|piece">Nerds G&amp;S — Piece</option>
-                    <option value="nb1|box">Nerds G&amp;S — Box</option>
-                  </optgroup>
-                  <optgroup label="Nerds Rope Rainbow">
-                    <option value="nb2|piece">Nerds Rope — Piece</option>
-                    <option value="nb2|box">Nerds Rope — Box</option>
-                  </optgroup>
-                  <optgroup label="Cotton Candy">
-                    <option value="p_1774654791150|piece">Cotton Candy — Piece</option>
-                    <option value="p_1774654791150|box">Cotton Candy — Box</option>
-                  </optgroup>
                 </select>
                 </div><!-- /item-dropdowns -->
               </div>
@@ -682,6 +642,37 @@ function _buildPRODS(){
       bD:p.ppc?Math.round(Number(p.priceDist||p.price||0)*parseInt(p.ppc,10)*100)/100:0
     };
   });
+}
+
+function _buildDropdowns(){
+  var allP=_getAllProds();
+  if(!allP.length)return;
+  // Group by brand
+  var brands={};
+  allP.forEach(function(p){
+    var b=p.brand||'Other';
+    if(!brands[b])brands[b]=[];
+    brands[b].push(p);
+  });
+  function buildOptions(placeholder){
+    var html='<option value="">'+placeholder+'</option>';
+    Object.keys(brands).forEach(function(b){
+      html+='<optgroup label="'+esc(b)+'">';
+      brands[b].forEach(function(p){
+        var canPiece=!p.unitsDist||p.unitsDist==='both'||p.unitsDist==='piece'||p.unitsRetail==='both'||p.unitsRetail==='piece';
+        var canBox=!p.unitsDist||p.unitsDist==='both'||p.unitsDist==='case'||p.unitsRetail==='both'||p.unitsRetail==='case';
+        // Show both options — quickAdd applies correct tier/custom price
+        html+='<option value="'+p.id+'|piece">'+esc(p.name)+' — Piece</option>';
+        if(p.ppc&&p.ppc>1)html+='<option value="'+p.id+'|box">'+esc(p.name)+' — Box</option>';
+      });
+      html+='</optgroup>';
+    });
+    return html;
+  }
+  var qaItem=document.getElementById('qa-item');
+  var qaRet=document.getElementById('qa-ret');
+  if(qaItem)qaItem.innerHTML=buildOptions('+ Add item…');
+  if(qaRet)qaRet.innerHTML=buildOptions('− Return…');
 }
 
 function refreshKnownCustomers(custArr) {
@@ -987,7 +978,6 @@ function renderInvCard(inv){
       +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'
       +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
       +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'
-      +'<button class="btn btn-red btn-sm" onclick="if(confirm(\'Delete?\'))deleteInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>'
       +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'
       +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'
     +'</div>'
@@ -996,7 +986,6 @@ function renderInvCard(inv){
       +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
       +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'
       +'<div class="inv-card-actions">'
-        +'<button class="btn btn-ghost btn-sm" onclick="downloadInv(\''+inv.id+'\');event.stopPropagation()">Download PDF</button>'
 
       +'</div>'
     +'</div>'
@@ -1073,6 +1062,7 @@ function generateFromOrder(orderId){
 
 function loadEditor(){
   _buildPRODS(); // refresh product prices
+  _buildDropdowns(); // rebuild item dropdowns from live product list
   document.getElementById('num-display').textContent = current.num ? current.num : 'Draft';
   document.getElementById('num-display').style.opacity = current.num ? '1' : '0.6';
   var detailsTitle = document.getElementById('details-card-title');
@@ -1686,16 +1676,14 @@ function renderQuoCard(quo){
   h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
   h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
   h+='<button class="btn btn-accent btn-sm qbtn-edit" style="padding:4px 8px;font-size:11px;">Edit</button>';
-  h+='<button class="btn btn-red btn-sm qbtn-del" style="padding:4px 8px;font-size:11px;" title="Delete">'+TRASH+'</button>';
   h+='<button class="btn btn-ghost btn-sm qbtn-pdf" style="padding:4px 8px;font-size:11px;">PDF</button>';
+  h+='<button class="btn btn-red btn-sm qbtn-del" style="padding:4px 8px;font-size:11px;" title="Delete">'+TRASH+'</button>';
   h+='<svg class="inv-card-chevron qbtn-toggle" data-card="qc-'+qid+'" id="chev-qc-'+qid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;"><polyline points="6 9 12 15 18 9"/></svg>';
   h+='</div></div>';
   h+='<div class="inv-card-body" id="qc-'+qid+'">';
   h+='<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
   h+='<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>';
   h+='<div class="inv-card-actions">';
-  h+='<button class="btn btn-ghost btn-sm qbtn-pdf" style="padding:4px 8px;font-size:11px;">Preview PDF</button>';
-  h+='<button class="btn btn-ghost btn-sm qbtn-dl" style="padding:4px 8px;font-size:11px;">Download PDF</button>';
   h+='<button class="btn btn-sm qbtn-gen" style="background:var(--green-lt);color:var(--green);border:1.5px solid rgba(22,122,88,.2);padding:4px 8px;font-size:11px;font-weight:600;">Generate Quotation</button>';
   h+='</div></div></div>';
   return h;
@@ -1920,6 +1908,7 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
 // Always land on home screen
 refreshKnownCustomers(); // seed from localStorage immediately
 _buildPRODS(); // populate product prices for quick-add dropdowns
+_buildDropdowns(); // populate item dropdowns from live product list
 gotoHome();
 var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
