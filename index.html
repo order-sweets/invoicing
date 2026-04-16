@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- invoice_v3 | built: 2026-04-16 | DO NOT REPLACE WITH OLDER FILE -->
 <html lang="en" translate="no">
 <head>
 <meta charset="UTF-8">
@@ -344,7 +345,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         </select>
       </div>
 
-      <!-- Mass delete toolbar -->
       <div id="mass-bar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:4px 0;">
         <input type="checkbox" id="sel-all" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;" onchange="toggleSelectAll(this.checked)">
         <label for="sel-all" style="font-size:12px;font-weight:600;cursor:pointer;flex:1;">Select All</label>
@@ -375,11 +375,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 <div class="mf full">
                   <label>Customer Name</label>
                   <input type="text" id="f-cust-name" list="cust-list" placeholder="Type or select customer…" oninput="onCustNameInput()">
-                  <datalist id="cust-list">
-                    <option value="Nelly Retro">
-                    <option value="Hong Yi Hao">
-                    <option value="Walson Food Distributor Pte Ltd">
-                  </datalist>
+                  <datalist id="cust-list"></datalist>
                 </div>
                 <div class="mf">
                   <label>Company</label>
@@ -530,6 +526,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       </div>
     </div>
+    </div>
 
     <!-- ══ SETTINGS PANEL ══ -->
     <div class="panel" id="panel-settings">
@@ -672,6 +669,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 var KNOWN_CUSTOMERS = {};
 var PRODS = {};
 
+function refreshKnownCustomers(custArr) {
+  var arr = custArr || JSON.parse(localStorage.getItem('snack-customers-v2') || '[]');
+  KNOWN_CUSTOMERS = {};
+  arr.forEach(function(c) { KNOWN_CUSTOMERS[c.name] = c; });
+  var dl = document.getElementById('cust-list');
+  if (dl) {
+    dl.innerHTML = arr.map(function(c) {
+      return '<option value="' + esc(c.name) + '">';
+    }).join('');
+  }
+}
+
 var SAMPLE_PENDING = [];
 
 // ══ STATE ══
@@ -725,37 +734,68 @@ document.addEventListener('click',function(e){
 });
 
 // ══ STOCK DEDUCTION ══
-// Called when invoice is confirmed — deducts stock from snack-inv-v5 (shared with store)
-function deductStockForInvoice(lines){
-  var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+// ══ STOCK DEDUCTION ══
+function _getAllProds(){
   var prods=JSON.parse(localStorage.getItem('snack-products-v5')||'null');
-  // Build a flat product list from store's localStorage
   var allProds=[];
   if(prods){
     if(prods.newArrivals)allProds=allProds.concat(prods.newArrivals);
     if(prods.hotSale)allProds=allProds.concat(prods.hotSale);
     if(prods.brands)prods.brands.forEach(function(b){allProds=allProds.concat(b.products||[]);});
   }
+  return allProds;
+}
+function _resolveLineProd(l,allProds){
+  if(l.pid){
+    var byId=allProds.find(function(p){return p.id===l.pid;});
+    if(byId)return byId;
+  }
+  var descLower=(l.desc||'').toLowerCase().replace(/\[.*?\]/g,'').trim();
+  // Strip unit suffix added by _richDesc e.g. "Cotton Candy — Box (15pcs × 38g)"
+  var baseName=descLower.split(' — ')[0].trim();
+  return allProds.find(function(p){
+    var n=(p.name||'').toLowerCase();
+    return baseName===n||baseName.indexOf(n)===0;
+  })||null;
+}
+function deductStockForInvoice(lines){
+  var FB_URL='https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var allProds=_getAllProds();
+  var deductions={};
   lines.forEach(function(l){
-    if(l.ret)return; // returns add back, don't deduct
-    // Match line description to product name
-    var matched=allProds.find(function(p){
-      var descLower=(l.desc||'').toLowerCase();
-      return descLower.indexOf((p.name||'').toLowerCase())===0||(p.name||'').toLowerCase().indexOf(descLower)===0||descLower===((p.name||'').toLowerCase());
-    });
+    if(l.ret)return;
+    var matched=_resolveLineProd(l,allProds);
     if(!matched)return;
     var pid=matched.id;
-    var ppc=matched.ppc||1;
-    var currentStock=parseInt(inv[pid]||matched.stockPieces||0,10);
-    // Determine pieces to deduct based on line desc (Box vs Piece)
-    var piecesToDeduct=l.q; // default: pieces
-    if((l.desc||'').toLowerCase().indexOf('box')!==-1||l.q===Math.round(l.q/ppc)*ppc===false){
-      // If ordered in boxes, convert
-      if(ppc>1 && l.q<ppc) piecesToDeduct=l.q*ppc; // ordered N boxes
-    }
-    inv[pid]=Math.max(0,currentStock-piecesToDeduct);
+    var ppc=parseInt(matched.ppc||1,10);
+    var pieces=(l.unit==='case')?parseInt(l.q,10)*ppc:parseInt(l.q,10);
+    deductions[pid]=(deductions[pid]||0)+pieces;
   });
-  localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+  if(!Object.keys(deductions).length)return;
+  fetch(FB_URL+'/store/inv.json')
+    .then(function(r){return r.json();})
+    .then(function(fbInv){
+      var localInv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+      var inv=Object.assign({},localInv,fbInv||{});
+      Object.keys(deductions).forEach(function(pid){
+        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
+        inv[pid]=Math.max(0,current-deductions[pid]);
+      });
+      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+      return fetch(FB_URL+'/store/inv.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(inv)
+      });
+    })
+    .catch(function(){
+      var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+      Object.keys(deductions).forEach(function(pid){
+        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
+        inv[pid]=Math.max(0,current-deductions[pid]);
+      });
+      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+    });
 }
 
 window.deletePendingOrder=function(oid){
@@ -879,10 +919,9 @@ function matchesFilter(name,date,num){
 
 function renderHome(){
   var db=document.getElementById('dual-banner');if(db)db.style.display=DB.settings.dual?'block':'none';
-  // Show mass-delete toolbar (hidden for pending if empty)
   var massBar=document.getElementById('mass-bar');
   var selAll=document.getElementById('sel-all');
-  if(massBar){massBar.style.display='flex';}
+  if(massBar)massBar.style.display='flex';
   if(selAll){selAll.checked=false;selAll.indeterminate=false;}
   var selCount=document.getElementById('sel-count');if(selCount)selCount.textContent='';
   var el=document.getElementById('home-body');
@@ -906,7 +945,7 @@ function renderHome(){
   } else {
     var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
-    el.innerHTML=list2.map(function(inv){return renderInvCard(inv);}).join('');
+    el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
   }
 }
 
@@ -974,13 +1013,38 @@ function newInvoice(){
   setItemDropdownsVisible(true);
 }
 
+// Build rich desc from pending item: "Cotton Candy — Box (15pcs × 38g)"
+function _richDesc(it){
+  var base=it.desc||'';
+  var unit=it.unit||'piece';
+  // Try to look up product for ppc/weight
+  var prods=null;
+  try{ prods=JSON.parse(localStorage.getItem('snack-products-v5')); }catch(e){}
+  var allP=[];
+  if(prods){
+    if(prods.newArrivals)allP=allP.concat(prods.newArrivals);
+    if(prods.hotSale)allP=allP.concat(prods.hotSale);
+    if(prods.brands)prods.brands.forEach(function(b){allP=allP.concat(b.products||[]);});
+  }
+  var prod=allP.find(function(p){return p.id===it.pid;})||null;
+  var ppc=prod?parseInt(prod.ppc||1,10):1;
+  var weight=prod?(prod.weight||''):'';
+  if(unit==='case'){
+    var spec=ppc>1?(ppc+'pcs'):'';
+    if(weight)spec=spec?(spec+' × '+weight):weight;
+    return base+' — Box'+(spec?' ('+spec+')':'');
+  } else {
+    return base+' — Piece'+(weight?' ('+weight+')':'');
+  }
+}
+
 function generateFromOrder(orderId){
   var o=DB.pending.find(function(x){return x.id===orderId;});
   if(!o)return;
   current={
     id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
     date:o.date,ref:o.id,pay:'Cash on Delivery',
-    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,desc:it.desc,q:it.qty,p:it.price,ret:false};}),
+    lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,pid:it.pid||'',unit:it.unit||'piece',desc:_richDesc(it),q:it.qty,p:it.price,ret:false};}),
     confirmed:false,_sourceOrderId:o.id
   };
   loadEditor();
@@ -1019,7 +1083,7 @@ function onCompanyChange(){
 function onCustNameInput(){
   var name=document.getElementById('f-cust-name').value.trim();
   var cust=KNOWN_CUSTOMERS[name];
-  if(cust&&!current.addr){document.getElementById('f-addr').value=cust.addr||'';}
+  if(cust){document.getElementById('f-addr').value=cust.addr||'';}
   current.custName=name;
 }
 
@@ -1038,7 +1102,7 @@ function mergeOrder(){
   var id=document.getElementById('combine-order-sel').value;if(!id)return;
   var o=DB.pending.find(function(x){return x.id===id;});if(!o)return;
   o.items.forEach(function(it,i){
-    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,desc:'['+esc(o.outlet||o.custName)+'] '+it.desc,q:it.qty,p:it.price,ret:false});
+    current.lines.push({id:'l_merge_'+Date.now()+'_'+i,pid:it.pid||'',unit:it.unit||'piece',desc:'['+esc(o.outlet||o.custName)+'] '+_richDesc(it),q:it.qty,p:it.price,ret:false});
   });
   if(!current._mergedOrders)current._mergedOrders=[];
   current._mergedOrders.push(id);
@@ -1830,6 +1894,7 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
   if(cb)cb.checked=(DB.settings.dual===true);
 })();
 // Always land on home screen
+refreshKnownCustomers(); // seed from localStorage immediately
 gotoHome();
 var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
@@ -2053,6 +2118,24 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     .then(function(d){ applyStorePending(d || []); })
     .catch(function(){})
     .finally(function(){ gotStore = true; onBothLoaded(); });
+
+  // Load customers from Firebase for cross-device autofill
+  fetch(FB_URL + '/store/customers.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(d && Array.isArray(d)) refreshKnownCustomers(d); })
+    .catch(function(){});
+
+  // Live customer updates via SSE
+  try {
+    var esCust = new EventSource(FB_URL + '/store/customers.json');
+    esCust.addEventListener('put', function(e) {
+      try {
+        var msg = JSON.parse(e.data);
+        if(msg.data && Array.isArray(msg.data)) refreshKnownCustomers(msg.data);
+      } catch(err) {}
+    });
+    esCust.onerror = function() { esCust.close(); };
+  } catch(err) {}
 
 })();
 </script>
