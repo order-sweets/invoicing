@@ -110,18 +110,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 /* ── INVOICE CARDS (completed) ── */
 .inv-card-item{background:var(--paper);border:1.5px solid var(--border-md);border-radius:var(--r-lg);box-shadow:var(--sh);overflow:hidden;margin-bottom:8px;}
-.inv-card-header{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;cursor:pointer;transition:background .13s;gap:10px;}
+.inv-card-header{display:flex;align-items:center;padding:10px 12px;cursor:pointer;transition:background .13s;gap:8px;}
 .inv-card-header:hover{background:var(--surface);}
-.inv-card-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--accent-dk);}
-.inv-card-name{font-size:13px;font-weight:700;}
-.inv-card-meta{font-size:11px;color:var(--muted);margin-top:1px;}
+.inv-card-num{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:var(--accent-dk);}
+.inv-card-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inv-card-meta{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;}
 .inv-card-amount{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0;}
 .inv-card-chevron{color:var(--hint);flex-shrink:0;transition:transform .2s;}
 .inv-card-chevron.open{transform:rotate(180deg);}
 .inv-card-body{display:none;border-top:1px solid var(--border);padding:14px 15px;}
 .inv-card-body.open{display:block;}
 .inv-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
-@media(max-width:600px){.inv-card-header{flex-wrap:wrap;}.inv-card-amount{margin-left:auto;}}
+@media(max-width:600px){.inv-card-header{flex-wrap:nowrap;}.inv-card-name{max-width:140px;}}
 
 /* Quick view line items in card */
 .qv-table{width:100%;border-collapse:collapse;font-size:12px;}
@@ -431,8 +431,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                     <option value="nb2|box">Nerds Rope — Box</option>
                   </optgroup>
                   <optgroup label="Cotton Candy">
-                    <option value="cc|piece">Cotton Candy — Piece</option>
-                    <option value="cc|box">Cotton Candy — Box</option>
+                    <option value="p_1774654791150|piece">Cotton Candy — Piece</option>
+                    <option value="p_1774654791150|box">Cotton Candy — Box</option>
                   </optgroup>
                 </select>
                 <!-- Quick add return dropdown -->
@@ -455,8 +455,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                     <option value="nb2|box">Nerds Rope — Box</option>
                   </optgroup>
                   <optgroup label="Cotton Candy">
-                    <option value="cc|piece">Cotton Candy — Piece</option>
-                    <option value="cc|box">Cotton Candy — Box</option>
+                    <option value="p_1774654791150|piece">Cotton Candy — Piece</option>
+                    <option value="p_1774654791150|box">Cotton Candy — Box</option>
                   </optgroup>
                 </select>
                 </div><!-- /item-dropdowns -->
@@ -668,6 +668,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 // ══ REAL STORE DATA ══
 var KNOWN_CUSTOMERS = {};
 var PRODS = {};
+function _buildPRODS(){
+  var allP=_getAllProds();
+  PRODS={};
+  allP.forEach(function(p){
+    PRODS[p.id]={
+      name:p.name,
+      ppc:parseInt(p.ppc||1,10),
+      w:p.weight||'',
+      r:Number(p.price||0),
+      bR:p.ppc?Math.round(Number(p.price||0)*parseInt(p.ppc,10)*100)/100:0,
+      d:Number(p.priceDist||p.price||0),
+      bD:p.ppc?Math.round(Number(p.priceDist||p.price||0)*parseInt(p.ppc,10)*100)/100:0
+    };
+  });
+}
 
 function refreshKnownCustomers(custArr) {
   var arr = custArr || JSON.parse(localStorage.getItem('snack-customers-v2') || '[]');
@@ -966,8 +981,8 @@ function renderInvCard(inv){
       +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'
       +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'
         +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'
-        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' — '+esc(inv.outlet):'')+'</div>'
-        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' &nbsp;&middot;&nbsp; '+esc(inv.ref||'No order no.')+'</div>'
+        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'
+        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'
       +'</div>'
       +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'
       +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
@@ -1057,6 +1072,7 @@ function generateFromOrder(orderId){
 }
 
 function loadEditor(){
+  _buildPRODS(); // refresh product prices
   document.getElementById('num-display').textContent = current.num ? current.num : 'Draft';
   document.getElementById('num-display').style.opacity = current.num ? '1' : '0.6';
   var detailsTitle = document.getElementById('details-card-title');
@@ -1117,18 +1133,26 @@ function quickAdd(isRet){
   if(!val){return;}
   var parts=val.split('|'),pid=parts[0],isBox=parts[1]==='box';
   var prod=PRODS[pid];if(!prod)return;
-  var name=current.custName;
-  var cust=KNOWN_CUSTOMERS[name];
+  var cust=KNOWN_CUSTOMERS[current.custName]||null;
   var isDist=cust&&cust.tier==='distributor';
+  var custPrices=cust&&cust.customPrices?cust.customPrices:[];
+  var extraDisc=cust?Number(cust.extraDisc||0):0;
   var price;
-  if(pid==='cc'&&isBox&&cust&&cust.customPrices.length){
-    var cp=cust.customPrices.find(function(x){return x.pid==='cc'&&x.unit==='box';});
-    price=cp?cp.price:(isDist?prod.bD:prod.bR);
+  var unit=isBox?'case':'piece';
+  // 1. Check for exact custom price (case or piece)
+  var cp=custPrices.find(function(x){return x.pid===pid&&x.unit===unit;});
+  if(cp){
+    price=Number(cp.price);
   } else {
+    // 2. Tier base price
     price=isBox?(isDist?prod.bD:prod.bR):(isDist?prod.d:prod.r);
+    // 3. Apply extra discount % if set
+    if(extraDisc>0)price=Math.round(price*(1-extraDisc/100)*100)/100;
   }
-  var desc=prod.name+(isBox?' — Box × '+prod.ppc+'pcs × '+prod.w:' — Piece × '+prod.w);
-  current.lines.push({id:'l_'+Date.now(),desc:desc,q:1,p:price,ret:isRet});
+  // Custom ppc for this customer (e.g. Hong Yi Hao 9pcs/box)
+  var ppc=cp&&cp.ppc?parseInt(cp.ppc,10):prod.ppc;
+  var desc=prod.name+(isBox?' — Box ('+ppc+'pcs × '+prod.w+')':' — Piece ('+prod.w+')');
+  current.lines.push({id:'l_'+Date.now(),pid:pid,unit:unit,desc:desc,q:1,p:price,ret:isRet});
   renderLines();
   document.getElementById(selId).value='';
 }
@@ -1657,7 +1681,7 @@ function renderQuoCard(quo){
   h+='<div class="qbtn-toggle" data-card="qc-'+qid+'" style="flex:1;min-width:0;cursor:pointer;">';
   h+='<div class="inv-card-num"><span style="font-size:9px;font-weight:700;background:#E8F2FB;color:#1A4F7A;padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>'+esc(quo.num)+'</div>';
   h+='<div class="inv-card-name">'+esc(quo.custName)+'</div>';
-  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+" &middot; "+esc(quo.ref||"No order no.")+'</div>';
+  h+='<div class="inv-card-meta">'+esc(fmtDate(quo.date))+' · '+esc(quo.ref||'\u2014')+'</div>';
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
   h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
@@ -1895,6 +1919,7 @@ document.getElementById("export-ov").addEventListener("click",function(e){if(e.t
 })();
 // Always land on home screen
 refreshKnownCustomers(); // seed from localStorage immediately
+_buildPRODS(); // populate product prices for quick-add dropdowns
 gotoHome();
 var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HOME_BTNS;
 </script>
