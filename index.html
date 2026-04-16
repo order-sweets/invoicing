@@ -656,7 +656,7 @@ function _buildDropdowns(){
   });
   function buildOptions(placeholder){
     var html='<option value="">'+placeholder+'</option>';
-    Object.keys(brands).forEach(function(b){
+    Object.keys(brands).sort().forEach(function(b){
       html+='<optgroup label="'+esc(b)+'">';
       brands[b].forEach(function(p){
         var canPiece=!p.unitsDist||p.unitsDist==='both'||p.unitsDist==='piece'||p.unitsRetail==='both'||p.unitsRetail==='piece';
@@ -1182,7 +1182,7 @@ function upF(lid,field,val){
 }
 
 function renderTotals(){
-  var s=sub(current.lines),r=rets(current.lines),g=s+r;
+  var s=sub(current.lines),r=rets(current.lines),g=s-r;
   var html='<div class="totals-block">';
   if(r<0){html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div><div class="tot-row ret"><span>Returns</span><span class="mono">&#8722;$'+Math.abs(r).toFixed(2)+'</span></div>';}
   var gstRate=getGSTRate(current);
@@ -2133,11 +2133,38 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     .catch(function(){})
     .finally(function(){ gotStore = true; onBothLoaded(); });
 
+  // Load products from Firebase so stock deduction works cross-device
+  fetch(FB_URL + '/store/products.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d){
+        localStorage.setItem('snack-products-v5', JSON.stringify(d));
+        _buildPRODS();
+        _buildDropdowns();
+      }
+    })
+    .catch(function(){});
+
   // Load customers from Firebase for cross-device autofill
   fetch(FB_URL + '/store/customers.json')
     .then(function(r){ return r.json(); })
     .then(function(d){ if(d && Array.isArray(d)) refreshKnownCustomers(d); })
     .catch(function(){});
+
+  // Live product updates via SSE
+  try {
+    var esProds = new EventSource(FB_URL + '/store/products.json');
+    esProds.addEventListener('put', function(e) {
+      try {
+        var msg = JSON.parse(e.data);
+        if(msg.data){
+          localStorage.setItem('snack-products-v5', JSON.stringify(msg.data));
+          _buildPRODS(); _buildDropdowns();
+        }
+      } catch(err) {}
+    });
+    esProds.onerror = function() { esProds.close(); };
+  } catch(err) {}
 
   // Live customer updates via SSE
   try {
