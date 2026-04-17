@@ -44,8 +44,9 @@
 
   .container { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(26,46,74,0.06); }
-  .section-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface2); }
-  .section-label { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); }
+  .section-header { padding: 0; border-bottom: 1px solid var(--border); display: flex; align-items: stretch; justify-content: space-between; background: #f7d44c; overflow: hidden; }
+  .section-label { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--navy); padding: 10px 16px; }
+  .section-header-right { display: flex; align-items: center; padding: 0 16px; }
   .section-body { padding: 16px; }
 
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -60,7 +61,7 @@
 
   .co-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
   .co-tab { flex: 1; padding: 8px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--mono); font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
-  .co-tab.active { border-color: var(--navy); color: var(--surface); background: var(--navy); }
+  .co-tab.active { border-color: var(--navy); color: var(--surface); background: var(--navy); border-bottom: 3px solid var(--accent); }
 
   .co-info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.9; }
   .co-info .co-name { color: var(--navy); font-weight: 600; font-size: 13px; }
@@ -159,7 +160,7 @@
             <span>%</span>
           </div>
           <div class="gst-no-wrap">
-            GST No.: <input type="text" id="beeGstNo" placeholder="TBC" oninput="refreshAll()">
+            GST No.: <input type="text" id="beeGstNo" placeholder="" oninput="refreshAll()">
           </div>
         </div>
       </div>
@@ -179,7 +180,7 @@
             <span>%</span>
           </div>
           <div class="gst-no-wrap">
-            GST No.: <input type="text" id="switsGstNo" placeholder="TBC" oninput="refreshAll()">
+            GST No.: <input type="text" id="switsGstNo" placeholder="" oninput="refreshAll()">
           </div>
         </div>
       </div>
@@ -191,8 +192,8 @@
     <div class="section-header"><span class="section-label">Invoice Info</span></div>
     <div class="section-body">
       <div class="field-row three">
-        <div><label>Invoice No.</label><input type="text" id="invNo" placeholder="INV-0001" oninput="refreshAll()"></div>
-        <div><label>Order No.</label><input type="text" id="ordNo" placeholder="ORD-0001" oninput="refreshAll()"></div>
+        <div><label>Invoice No.</label><input type="text" id="invNo" placeholder="" oninput="refreshAll()"></div>
+        <div><label>Order No.</label><input type="text" id="ordNo" placeholder="" oninput="refreshAll()"></div>
         <div><label>Date</label><input type="text" id="invDate" oninput="refreshAll()"></div>
       </div>
     </div>
@@ -202,17 +203,15 @@
   <div class="section">
     <div class="section-header"><span class="section-label">Customer</span></div>
     <div class="section-body">
-      <div class="field-row full"><div><label>Name</label><input type="text" id="custName" placeholder="e.g. Nelly Retro" oninput="refreshAll()"></div></div>
-      <div class="field-row full"><div><label>Address</label><textarea id="custAddr" placeholder="e.g. 1 Woodlands Square #02-18, Causeway Point" oninput="refreshAll()"></textarea></div></div>
-      <div class="field-row full"><div><label>Phone (optional)</label><input type="text" id="custPhone" placeholder="+65 XXXX XXXX" oninput="refreshAll()"></div></div>
+      <div class="field-row full"><div><label>Name</label><input type="text" id="custName" placeholder="" oninput="refreshAll()"></div></div>
+      <div class="field-row full"><div><label>Address</label><textarea id="custAddr" placeholder="" oninput="refreshAll()"></textarea></div></div>
+      <div class="field-row full"><div><label>Phone (optional)</label><input type="text" id="custPhone" placeholder="" oninput="refreshAll()"></div></div>
     </div>
   </div>
 
   <!-- Items -->
   <div class="section">
-    <div class="section-header">
-      <span class="section-label">Items Delivered</span>
-    </div>
+    <div class="section-header"><span class="section-label">Items Delivered</span></div>
     <div class="section-body">
       <div class="col-labels"><span>ITEM</span><span>QTY</span><span>UNIT $</span><span></span></div>
       <div class="items-list" id="itemsList"></div>
@@ -234,7 +233,7 @@
       <div class="field-row full">
         <div>
           <label>Bottom message</label>
-          <input type="text" id="signOff" value="Thank you!" maxlength="32" oninput="refreshAll()">
+          <input type="text" id="signOff" value="" maxlength="32" placeholder="" oninput="refreshAll()">
         </div>
       </div>
     </div>
@@ -249,10 +248,7 @@
 
   <!-- Preview -->
   <div class="section">
-    <div class="section-header">
-      <span class="section-label">Receipt Preview</span>
-      <button onclick="refreshAll()" style="background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;padding:0;">↻ Refresh</button>
-    </div>
+    <div class="section-header"><span class="section-label">Receipt Preview</span><span class="section-header-right"><button onclick="refreshAll()" style="background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;">↻ Refresh</button></span></div>
     <div class="section-body" style="padding:12px">
       <div class="preview-wrap"><div class="receipt-preview" id="receiptPreview">—</div></div>
     </div>
@@ -357,7 +353,7 @@ function addItem(name='',qty='',price='',spec=''){
   if(di!==-1 && !spec){ baseName=name.substring(0,di); autoSpec=name.substring(di+3); }
   const wrap=document.createElement('div');
   wrap.className='item-block item-data-block'; wrap.id=id;
-  wrap.innerHTML=`<div class="item-row"><input class="iname" type="text" placeholder="Item name" value="${esc(baseName)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><input class="ispec" type="hidden" value="${esc(autoSpec)}">`;
+  wrap.innerHTML=`<div class="item-row"><input class="iname" type="text" placeholder="" value="${esc(baseName)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><input class="ispec" type="hidden" value="${esc(autoSpec)}">`;
   wrap.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
   document.getElementById('itemsList').appendChild(wrap);
   refreshAll();
@@ -371,7 +367,7 @@ function addReturn(name='',qty='',price='',spec=''){
   if(di!==-1 && !spec){ baseName=name.substring(0,di); autoSpec=name.substring(di+3); }
   const wrap=document.createElement('div');
   wrap.className='item-block return-data-block'; wrap.id=id;
-  wrap.innerHTML=`<div class="item-row return-row"><input class="rname" type="text" placeholder="Returned item" value="${esc(baseName)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><input class="rspec" type="hidden" value="${esc(autoSpec)}">`;
+  wrap.innerHTML=`<div class="item-row return-row"><input class="rname" type="text" placeholder="" value="${esc(baseName)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><input class="rspec" type="hidden" value="${esc(autoSpec)}">`;
   wrap.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
   document.getElementById('returnsList').appendChild(wrap);
   refreshAll();
