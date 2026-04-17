@@ -764,6 +764,33 @@ function _resolveLineProd(l,allProds){
     return baseName===n||baseName.indexOf(n)===0;
   })||null;
 }
+function _getLineSpec(l){
+  // Always resolve from l.unit + product catalogue for correct format
+  // l.unit is 'case' (box) or 'piece' — set when order is placed
+  var allProds=_getAllProds();
+  var prod=_resolveLineProd(l,allProds);
+  var unit=l.unit||'piece';
+  if(prod){
+    var ppc=parseInt(prod.ppc||1,10);
+    var weight=prod.weight||'';
+    if(unit==='case'){
+      var spec=ppc>1?(ppc+'pcs'):'1pc';
+      if(weight) spec=spec+' x '+weight;
+      return 'Box: '+spec;
+    } else {
+      return 'Piece: 1pc'+(weight?' x '+weight:'');
+    }
+  }
+  // Fallback: parse from desc if no product match
+  var desc=l.desc||'';
+  var di=desc.indexOf(' — ');
+  if(di!==-1){
+    var raw=desc.substring(di+3);
+    raw=raw.replace(/^(Box|Piece)\s*[:(]\s*([^)]+)\)?$/,'$1: $2');
+    return raw;
+  }
+  return '';
+}
 function deductStockForInvoice(lines){
   var FB_URL='https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
   var allProds=_getAllProds();
@@ -960,7 +987,11 @@ function renderInvCard(inv){
   var sb=sub(inv.lines),rt=rets(inv.lines);
   var rows=inv.lines.map(function(l){
     var t=l.q*(l.ret?-1:1)*l.p;
-    return '<tr><td>'+(l.ret?'<span class="qv-ret">Return</span>':'')+esc(l.desc)+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+    var spec=_getLineSpec(l);
+    var descParts=l.desc.split(' — ');
+    var baseName=descParts[0];
+    var specHtml=spec?'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+esc(spec)+'</div>':'';
+    return '<tr><td>'+(l.ret?'<span class="qv-ret">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
   }).join('');
   var tots='';
   if(rt<0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+sb.toFixed(2)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+Math.abs(rt).toFixed(2)+'</span></div>';}
@@ -1048,11 +1079,11 @@ function _richDesc(it){
   var ppc=prod?parseInt(prod.ppc||1,10):1;
   var weight=prod?(prod.weight||''):'';
   if(unit==='case'){
-    var spec=ppc>1?(ppc+'pcs'):'';
-    if(weight)spec=spec?(spec+' × '+weight):weight;
-    return base+' — Box'+(spec?' ('+spec+')':'');
+    var spec=ppc>1?(ppc+'pcs'):'1pc';
+    if(weight)spec=spec+' x '+weight;
+    return base+' — Box: '+spec;
   } else {
-    return base+' — Piece'+(weight?' ('+weight+')':'');
+    return base+' — Piece: 1pc'+(weight?' x '+weight:'');
   }
 }
 
@@ -1361,7 +1392,11 @@ function buildPDF(inv){
   var quoRefLine=inv.quoRef?'<div class="pm-sub">From Quotation: '+esc(inv.quoRef)+'</div>':'';
   var rows=inv.lines.map(function(l){
     var t=l.q*(l.ret?-1:1)*l.p;
-    return '<tr><td>'+(l.ret?'<span class="pdf-ret-pill">Return</span>':'')+esc(l.desc)+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+    var spec=_getLineSpec(l);
+    var descParts=l.desc.split(' — ');
+    var baseName=descParts[0];
+    var specHtml=spec?'<div style="font-size:11px;color:#3a3834;margin-top:2px;font-style:italic;">'+esc(spec)+'</div>':'';
+    return '<tr><td>'+(l.ret?'<span class="pdf-ret-pill">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
   }).join('');
   var tots='';
   if(r<0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+Math.abs(r).toFixed(2)+'</span></div>';}
@@ -1673,7 +1708,10 @@ function renderQuoCard(quo){
     var t=l.q*(l.ret?-1:1)*l.p;
     var cls=t<0?" qv-neg":"";
     var neg=t<0?"&#8722;":"";
-    return "<tr><td>"+esc(l.desc)+"</td><td class=\"r\">"+l.q+"</td><td class=\"r\">$"+l.p.toFixed(2)+"</td><td class=\"r"+cls+"\">"+neg+"$"+Math.abs(t).toFixed(2)+"</td></tr>";
+    var spec=_getLineSpec(l);
+    var baseName=l.desc.split(" — ")[0];
+    var specHtml=spec?"<div style=\"font-size:9px;color:var(--muted);margin-top:1px;\">"+esc(spec)+"</div>":"";
+    return "<tr><td>"+esc(baseName)+specHtml+"</td><td class=\"r\">"+l.q+"</td><td class=\"r\">$"+l.p.toFixed(2)+"</td><td class=\"r"+cls+"\">"+neg+"$"+Math.abs(t).toFixed(2)+"</td></tr>";
   }).join("");
   var tots="<div class=\"qvt grand\"><span>Total</span><span class=\"m\">$"+g.toFixed(2)+"</span></div>";
   var qid=quo.id;
