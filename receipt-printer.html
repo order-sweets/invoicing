@@ -411,10 +411,35 @@ function ctr(s,w){if(s.length>=w)return s.substring(0,w);return' '.repeat(Math.f
 function wrap(text,w,ind=''){const out=[];text.split('\n').forEach(l=>{if((ind+l).length<=w){out.push(ind+l);return;}const wds=l.split(' ');let cur=ind;wds.forEach(wrd=>{if((cur+wrd).length>w){out.push(cur.trimEnd());cur=ind+wrd+' ';}else cur+=wrd+' ';});if(cur.trim())out.push(cur.trimEnd());});return out;}
 
 function renderItemLine(L,name,qty,amt,W,spec){
-  // name is already the base name (spec stripped in addItem/addReturn)
-  if(name.length<=18){L.push(pad(name,18,true)+pad(qty,5)+pad(amt,9));}
-  else{L.push(pad(name.substring(0,W),W,true));L.push(pad('',18,true)+pad(qty,5)+pad(amt,9));}
-  if(spec) L.push('  '+spec);
+  // Wrap name across lines at W chars, qty+amt on spec line (or last name line if no spec)
+  var words=name.split(' ');
+  var lines=[]; var cur='';
+  words.forEach(function(w){
+    if(cur&&(cur+' '+w).length>W){lines.push(cur);cur=w;}
+    else cur=(cur?cur+' ':'')+w;
+  });
+  if(cur)lines.push(cur);
+
+  if(spec){
+    // name lines first (no qty/amt)
+    lines.forEach(function(l){L.push(l);});
+    // spec line with qty+amt right-aligned
+    var specLine=spec;
+    var rightPart=pad(qty,5)+pad(amt,9);
+    var available=W-rightPart.length;
+    if(specLine.length>available)specLine=specLine.substring(0,available);
+    L.push(pad(specLine,available,true)+rightPart);
+  } else {
+    // no spec — last line gets qty+amt, others plain
+    for(var i=0;i<lines.length-1;i++) L.push(lines[i]);
+    var last=lines[lines.length-1]||'';
+    var rightPart2=pad(qty,5)+pad(amt,9);
+    var avail2=W-rightPart2.length;
+    if(last.length>avail2)last=last.substring(0,avail2);
+    L.push(pad(last,avail2,true)+rightPart2);
+  }
+  // blank line after each item
+  L.push('');
 }
 
 function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAmt,grand){
@@ -455,8 +480,8 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
     renderItemLine(L,item.name,item.qty,'$'+(item.qty*item.price).toFixed(2),W,item.spec||'');
   });
 
-  // Returns
-  if(withRet&&returns.length>0){
+  // Returns — always shown if present
+  if(returns.length>0){
     L.push(D1);
     L.push(ctr('-- RETURNS --',W));
     L.push(D1);
