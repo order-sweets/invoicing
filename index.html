@@ -757,7 +757,7 @@ function _resolveLineProd(l,allProds){
     if(byId)return byId;
   }
   var descLower=(l.desc||'').toLowerCase().replace(/\[.*?\]/g,'').trim();
-  // Strip unit suffix added by _richDesc e.g. "Cotton Candy — Box (15pcs × 38g)"
+  // Strip unit suffix added by _richDesc e.g. "Cotton Candy — Box: 15pcs x 38g"
   var baseName=descLower.split(' — ')[0].trim();
   return allProds.find(function(p){
     var n=(p.name||'').toLowerCase();
@@ -765,29 +765,40 @@ function _resolveLineProd(l,allProds){
   })||null;
 }
 function _getLineSpec(l){
-  // Always resolve from l.unit + product catalogue for correct format
-  // l.unit is 'case' (box) or 'piece' — set when order is placed
+  // Strategy: read from l.desc (has correct custom ppc baked in),
+  // then reformat to "Box: Xpcs x Yg" or "Piece: 1pc x Yg"
+  var desc=l.desc||'';
+  var di=desc.indexOf(' — ');
+  if(di!==-1){
+    var raw=desc.substring(di+3).trim();
+    // Formats seen:
+    // "Box (9pcs × 38g)" -> "Box: 9pcs x 38g"
+    // "Box: 9pcs x 38g"  -> already correct
+    // "Piece (38g)"       -> "Piece: 1pc x 38g"
+    // "Piece: 1pc x 38g" -> already correct
+    // Normalise × to x
+    raw=raw.replace(/×/g,'x').replace(/×/g,'x');
+    // Old parentheses format: "Box (9pcs x 38g)" -> "Box: 9pcs x 38g"
+    var mBox=raw.match(/^Box\s*\(([^)]+)\)$/);
+    if(mBox) return 'Box: '+mBox[1];
+    // Old piece format: "Piece (38g)" -> "Piece: 1pc x 38g"
+    var mPiece=raw.match(/^Piece\s*\(([^)]+)\)$/);
+    if(mPiece) return 'Piece: 1pc x '+mPiece[1];
+    // Already new format or unknown — return as-is
+    return raw;
+  }
+  // No desc spec — fall back to product catalogue
+  var unit=l.unit||'piece';
   var allProds=_getAllProds();
   var prod=_resolveLineProd(l,allProds);
-  var unit=l.unit||'piece';
   if(prod){
     var ppc=parseInt(prod.ppc||1,10);
     var weight=prod.weight||'';
     if(unit==='case'){
-      var spec=ppc>1?(ppc+'pcs'):'1pc';
-      if(weight) spec=spec+' x '+weight;
-      return 'Box: '+spec;
+      return 'Box: '+(ppc>1?ppc+'pcs':'1pc')+(weight?' x '+weight:'');
     } else {
       return 'Piece: 1pc'+(weight?' x '+weight:'');
     }
-  }
-  // Fallback: parse from desc if no product match
-  var desc=l.desc||'';
-  var di=desc.indexOf(' — ');
-  if(di!==-1){
-    var raw=desc.substring(di+3);
-    raw=raw.replace(/^(Box|Piece)\s*[:(]\s*([^)]+)\)?$/,'$1: $2');
-    return raw;
   }
   return '';
 }
@@ -1186,7 +1197,7 @@ function quickAdd(isRet){
   }
   // Custom ppc for this customer (e.g. Hong Yi Hao 9pcs/box)
   var ppc=cp&&cp.ppc?parseInt(cp.ppc,10):prod.ppc;
-  var desc=prod.name+(isBox?' — Box ('+ppc+'pcs × '+prod.w+')':' — Piece ('+prod.w+')');
+  var desc=prod.name+(isBox?' — Box: '+ppc+'pcs x '+prod.w:' — Piece: 1pc x '+prod.w);
   current.lines.push({id:'l_'+Date.now(),pid:pid,unit:unit,desc:desc,q:1,p:price,ret:isRet});
   renderLines();
   document.getElementById(selId).value='';
