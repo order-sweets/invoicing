@@ -985,17 +985,31 @@ function renderInvCard(inv){
     +'<div class="inv-card-body" id="ic-'+inv.id+'">'
       +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
       +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'
-      +'<div class="inv-card-actions">'
-
-      +'</div>'
-    +'</div>'
-    +'</div>';
+      +'<div class="inv-card-actions">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'</div>'    +'</div>'    +'</div>';
 }
 
 window.deleteInvoice=function(id){
   DB.invoices=DB.invoices.filter(function(i){return i.id!==id;});
   persist();renderHome();toast('Deleted.');
 };
+function openReceiptPrinter(id){
+  var inv=DB.invoices.find(function(i){return i.id===id;});
+  if(!inv){toast('Invoice not found.');return;}
+  var p=new URLSearchParams();
+  p.set('co',inv.company==='swits'?'swits':'bee');
+  if(inv.num)      p.set('inv',inv.num);
+  if(inv.ref)      p.set('ord',inv.ref);
+  if(inv.date)     p.set('date',fmtDate(inv.date));
+  if(inv.custName) p.set('cust',inv.custName);
+  if(inv.addr)     p.set('addr',inv.addr);
+  var gstRate=getGSTRate(inv);
+  if(inv.company==='swits'&&gstRate!==null){p.set('gst','1');p.set('gstrate',String(gstRate));}
+  var itemLines=inv.lines.filter(function(l){return !l.ret;});
+  var retLines =inv.lines.filter(function(l){return  l.ret;});
+  if(itemLines.length) p.set('items',itemLines.map(function(l){return encodeURIComponent(l.desc)+'|'+l.q+'|'+l.p.toFixed(2);}).join('||'));
+  if(retLines.length)  p.set('returns',retLines.map(function(l){return encodeURIComponent(l.desc)+'|'+l.q+'|'+l.p.toFixed(2);}).join('||'));
+  window.open('receipt-printer.html?'+p.toString(),'_blank');
+}
 function toggleCard(id){
   var body=document.getElementById(id);
   var chev=document.getElementById('chev-'+id);
