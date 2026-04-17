@@ -765,43 +765,17 @@ function _resolveLineProd(l,allProds){
   })||null;
 }
 function _getLineSpec(l){
-  // Strategy: read from l.desc (has correct custom ppc baked in),
-  // then reformat to "Box: Xpcs x Yg" or "Piece: 1pc x Yg"
   var desc=l.desc||'';
   var di=desc.indexOf(' — ');
-  if(di!==-1){
-    var raw=desc.substring(di+3).trim();
-    // Formats seen:
-    // "Box (9pcs × 38g)" -> "Box: 9pcs x 38g"
-    // "Box: 9pcs x 38g"  -> already correct
-    // "Piece (38g)"       -> "Piece: 1pc x 38g"
-    // "Piece: 1pc x 38g" -> already correct
-    // Normalise × to x
-    raw=raw.replace(/×/g,'x').replace(/×/g,'x');
-    // Old parentheses format: "Box (9pcs x 38g)" -> "Box: 9pcs x 38g"
-    var mBox=raw.match(/^Box\s*\(([^)]+)\)$/);
-    if(mBox) return 'Box: '+mBox[1];
-    // Old piece format: "Piece (38g)" -> "Piece: 1pc x 38g"
-    var mPiece=raw.match(/^Piece\s*\(([^)]+)\)$/);
-    if(mPiece) return 'Piece: 1pc x '+mPiece[1];
-    // Already new format or unknown — return as-is
-    return raw;
-  }
-  // No desc spec — fall back to product catalogue
-  var unit=l.unit||'piece';
-  var allProds=_getAllProds();
-  var prod=_resolveLineProd(l,allProds);
-  if(prod){
-    var ppc=parseInt(prod.ppc||1,10);
-    var weight=prod.weight||'';
-    if(unit==='case'){
-      return 'Box: '+(ppc>1?ppc+'pcs':'1pc')+(weight?' x '+weight:'');
-    } else {
-      return 'Piece: 1pc'+(weight?' x '+weight:'');
-    }
-  }
-  return '';
+  if(di===-1) return '';
+  var raw=desc.substring(di+3).trim();
+  // Normalise × to x
+  raw=raw.replace(/×/g,'x');
+  // "Box (24pcs x 57g)" -> "Box: 24pcs x 57g"
+  raw=raw.replace(/^(Box|Piece)\s*\(([^)]+)\)$/,'$1: $2');
+  return raw;
 }
+
 function deductStockForInvoice(lines){
   var FB_URL='https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
   var allProds=_getAllProds();
@@ -1005,7 +979,7 @@ function renderInvCard(inv){
     return '<tr><td>'+(l.ret?'<span class="qv-ret">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
   }).join('');
   var tots='';
-  if(rt<0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+sb.toFixed(2)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+Math.abs(rt).toFixed(2)+'</span></div>';}
+  if(rt>0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+sb.toFixed(2)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+rt.toFixed(2)+'</span></div>';}
   var gstRateCard=getGSTRate(inv);
   if(gstRateCard!==null){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
   else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
@@ -1240,7 +1214,7 @@ function upF(lid,field,val){
 function renderTotals(){
   var s=sub(current.lines),r=rets(current.lines),g=s-r;
   var html='<div class="totals-block">';
-  if(r<0){html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div><div class="tot-row ret"><span>Returns</span><span class="mono">&#8722;$'+Math.abs(r).toFixed(2)+'</span></div>';}
+  if(r>0){html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div><div class="tot-row ret"><span>Returns</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
   var gstRate=getGSTRate(current);
   if(gstRate!==null){
     var gstAmt=g*(gstRate/100);
@@ -1394,7 +1368,7 @@ function getPDFCSS(){
 }
 
 function buildPDF(inv){
-  var s=sub(inv.lines),r=rets(inv.lines),g=s+r;
+  var s=sub(inv.lines),r=rets(inv.lines),g=s-r;
   var cfg=DB.settings;
   var useCo2=inv.company==='swits';
   var companyName=useCo2?(cfg.co2name||'SWITS'):(cfg.name||'Bee Events');
@@ -1410,7 +1384,7 @@ function buildPDF(inv){
     return '<tr><td>'+(l.ret?'<span class="pdf-ret-pill">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
   }).join('');
   var tots='';
-  if(r<0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+Math.abs(r).toFixed(2)+'</span></div>';}
+  if(r>0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
   var gstRatePDF=getGSTRate(inv);
   var grandTotal=g;
   if(gstRatePDF!==null){
@@ -1838,7 +1812,7 @@ function buildCSV(invoices,coLabel,label){
     ['Invoice No','Date','Customer','Order Number','Payment','Subtotal','Returns','GST','Total']
   ];
   invoices.forEach(function(inv){
-    var s=sub(inv.lines),r=rets(inv.lines),g=s+r;
+    var s=sub(inv.lines),r=rets(inv.lines),g=s-r;
     var gstRate=getGSTRate(inv);
     var gstAmt=gstRate?parseFloat((g*(gstRate/100)).toFixed(2)):0;
     var grandTot=parseFloat((g+gstAmt).toFixed(2));
