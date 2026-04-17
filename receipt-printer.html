@@ -354,7 +354,7 @@ function addItem(name='',qty='',price='',spec=''){
   const id='item_'+itemCount;
   const wrap=document.createElement('div');
   wrap.className='item-block item-data-block'; wrap.id=id;
-  wrap.innerHTML=`<div class="item-row"><input class="iname" type="text" placeholder="Item name" value="${esc(name)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><div style="padding:0 36px 0 0;margin-top:4px"><input class="ispec" type="text" placeholder="Unit+weight e.g. Box (9pcs × 38g)" value="${esc(spec)}" style="font-size:12px;color:#6b7a8d;"></div>`;
+  wrap.innerHTML=`<div class="item-row"><input class="iname" type="text" placeholder="Item name" value="${esc(name)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><input class="ispec" type="hidden" value="${esc(spec)}">`;
   wrap.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
   document.getElementById('itemsList').appendChild(wrap);
   refreshAll();
@@ -364,7 +364,7 @@ function addReturn(name='',qty='',price='',spec=''){
   const id='ret_'+returnCount;
   const wrap=document.createElement('div');
   wrap.className='item-block return-data-block'; wrap.id=id;
-  wrap.innerHTML=`<div class="item-row return-row"><input class="rname" type="text" placeholder="Returned item" value="${esc(name)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><div style="padding:0 36px 0 0;margin-top:4px"><input class="rspec" type="text" placeholder="Unit+weight e.g. Box (9pcs × 38g)" value="${esc(spec)}" style="font-size:12px;color:#6b7a8d;border-color:#f5c0bc;background:#fdf5f5"></div>`;
+  wrap.innerHTML=`<div class="item-row return-row"><input class="rname" type="text" placeholder="Returned item" value="${esc(name)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><input class="rspec" type="hidden" value="${esc(spec)}">`;
   wrap.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
   document.getElementById('returnsList').appendChild(wrap);
   refreshAll();
