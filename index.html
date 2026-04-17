@@ -2193,6 +2193,7 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
         localStorage.setItem('snack-products-v5', JSON.stringify(d));
         _buildPRODS();
         _buildDropdowns();
+        renderHome(); // re-render cards now that product specs are available
       }
     })
     .catch(function(){});
