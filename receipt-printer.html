@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bee Events · Receipt Printer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+    --border: #2e2e2e; --accent: #f5c518; --accent2: #ff6b35;
+    --text: #f0f0f0; --muted: #888; --danger: #e05252; --success: #52c97a;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding-bottom: 80px; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-weight: 600; font-size: 14px; color: #000; flex-shrink: 0; }
+  .hd-title { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.05em; }
+  .hd-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .bt-status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); cursor: pointer; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); transition: all 0.2s; }
+  .bt-status:hover { border-color: var(--accent); color: var(--text); }
+  .bt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+  .bt-dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .bt-dot.connecting { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .container { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+  .section-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .section-label { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  .section-body { padding: 16px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .field-row.full { grid-template-columns: 1fr; }
+  .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-family: var(--mono); letter-spacing: 0.05em; }
+  input, textarea, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 7px; font-family: var(--sans); font-size: 13px; transition: border-color 0.2s; -webkit-appearance: none; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 50px; }
+  select option { background: var(--surface2); }
+
+  .co-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .co-tab { flex: 1; padding: 8px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: var(--mono); font-size: 11px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .co-tab.active { border-color: var(--accent); color: var(--accent); background: #1e1c0a; }
+
+  .co-info { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.9; }
+  .co-info .co-name { color: var(--text); font-weight: 600; font-size: 13px; }
+
+  .gst-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .gst-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--muted); font-family: var(--mono); }
+  .gst-toggle input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); }
+  .gst-rate-wrap { display: none; align-items: center; gap: 4px; }
+  .gst-rate-wrap input { width: 55px; }
+  .gst-rate-wrap span { font-size: 13px; color: var(--muted); }
+  .gst-no-wrap { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .gst-no-wrap input { width: 140px; display: inline-block; }
+
+  .items-list { display: flex; flex-direction: column; gap: 8px; }
+  .item-row { display: grid; grid-template-columns: 1fr 52px 72px 30px; gap: 6px; align-items: center; }
+  .item-row.return-row input { border-color: #3a2020; background: #1e1515; }
+  .col-labels { display: grid; grid-template-columns: 1fr 52px 72px 30px; gap: 6px; margin-bottom: 6px; }
+  .col-labels span { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+
+  .btn-icon { width: 30px; height: 30px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; color: var(--muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .btn-icon:hover { border-color: var(--danger); color: var(--danger); }
+  .add-btn { width: 100%; padding: 8px; background: transparent; border: 1px dashed var(--border); border-radius: 7px; color: var(--muted); font-family: var(--mono); font-size: 12px; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .add-btn.ret:hover { border-color: var(--danger); color: var(--danger); }
+
+  .returns-toggle { display: flex; align-items: center; gap: 8px; padding: 12px 0 0 0; cursor: pointer; user-select: none; font-size: 13px; color: var(--muted); }
+  .returns-toggle input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent2); }
+  .returns-toggle:hover { color: var(--text); }
+  .return-section { margin-top: 12px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+  .totals-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .total-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  .total-line.returns { color: var(--danger); }
+  .total-line.grand { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--text); border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
+
+  .preview-wrap { background: #fff; border-radius: 4px; overflow: hidden; }
+  .receipt-preview { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.5; color: #111; background: #fff; padding: 16px 12px; white-space: pre-wrap; word-break: break-word; min-height: 80px; }
+
+  .print-btn { width: 100%; padding: 15px; background: var(--accent); border: none; border-radius: 10px; color: #000; font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .print-btn:hover { background: #ffd030; transform: translateY(-1px); }
+  .print-btn:active { transform: translateY(0); }
+  .print-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; transform: none; }
+
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 12px; font-family: var(--mono); margin-bottom: 12px; display: none; }
+  .msg.show { display: block; }
+  .msg.error { background: #2a1515; border: 1px solid var(--danger); color: var(--danger); }
+  .msg.success { background: #152a1e; border: 1px solid var(--success); color: var(--success); }
+  .msg.info { background: #1e1e10; border: 1px solid var(--accent); color: var(--accent); }
+
+  @media (max-width: 400px) {
+    .item-row, .col-labels { grid-template-columns: 1fr 44px 64px 28px; }
+    .field-row.three { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BE</div>
+  <div>
+    <div class="hd-title">Receipt Printer</div>
+    <div class="hd-sub" id="hd-co-name">Bee Events · DP80S</div>
+  </div>
+  <button class="bt-status" id="btBtn" onclick="connectBluetooth()">
+    <span class="bt-dot" id="btDot"></span>
+    <span id="btLabel">Connect</span>
+  </button>
+</header>
+
+<div class="container">
+
+  <div id="msgBox" class="msg"></div>
+
+  <!-- Company -->
+  <div class="section">
+    <div class="section-header"><span class="section-label">Company</span></div>
+    <div class="section-body">
+      <div class="co-tabs">
+        <div class="co-tab active" id="tab-bee"   onclick="selectCompany('bee')">Bee Events</div>
+        <div class="co-tab"        id="tab-swits" onclick="selectCompany('swits')">SWITS</div>
+      </div>
+
+      <div id="co-panel-bee" class="co-info">
+        <div class="co-name">BEE EVENTS</div>
+        <div>UEN: 53413307W</div>
+        <div>+65 8164 8864</div>
+        <div style="margin-top:4px;color:var(--muted);font-size:11px">GST: 0% (not registered)</div>
+      </div>
+
+      <div id="co-panel-swits" style="display:none">
+        <div class="co-info">
+          <div class="co-name">SWITS</div>
+          <div>UEN: 53521109X</div>
+          <div>+65 8164 8864</div>
+        </div>
+        <div class="gst-row">
+          <label class="gst-toggle">
+            <input type="checkbox" id="switsGstOn" onchange="onGstToggle()"> Enable GST
+          </label>
+          <div class="gst-rate-wrap" id="switsGstRateWrap">
+            <input type="number" id="switsGstRate" value="9" min="0" max="99" step="0.1" oninput="refreshAll()">
+            <span>%</span>
+          </div>
+          <div class="gst-no-wrap">
+            GST No.: <input type="text" id="switsGstNo" placeholder="TBC" oninput="refreshAll()">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Info -->
+  <div class="section">
+    <div class="section-header"><span class="section-label">Invoice Info</span></div>
+    <div class="section-body">
+      <div class="field-row three">
+        <div><label>Invoice No.</label><input type="text" id="invNo" placeholder="INV-0001" oninput="refreshAll()"></div>
+        <div><label>Order No.</label><input type="text" id="ordNo" placeholder="ORD-0001" oninput="refreshAll()"></div>
+        <div><label>Date</label><input type="text" id="invDate" oninput="refreshAll()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer -->
+  <div class="section">
+    <div class="section-header"><span class="section-label">Customer</span></div>
+    <div class="section-body">
+      <div class="field-row full"><div><label>Name</label><input type="text" id="custName" placeholder="e.g. Nelly Retro" oninput="refreshAll()"></div></div>
+      <div class="field-row full"><div><label>Address</label><textarea id="custAddr" placeholder="e.g. 1 Woodlands Square #02-18, Causeway Point" oninput="refreshAll()"></textarea></div></div>
+      <div class="field-row full"><div><label>Phone (optional)</label><input type="text" id="custPhone" placeholder="+65 XXXX XXXX" oninput="refreshAll()"></div></div>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Items Delivered</span>
+      <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">excl. returns</span>
+    </div>
+    <div class="section-body">
+      <div class="col-labels"><span>ITEM</span><span>QTY</span><span>UNIT $</span><span></span></div>
+      <div class="items-list" id="itemsList"></div>
+      <button class="add-btn" onclick="addItem()">+ Add item</button>
+
+      <label class="returns-toggle">
+        <input type="checkbox" id="hasReturns" onchange="toggleReturns()">
+        Include returns / deductions
+      </label>
+
+      <div class="return-section" id="returnSection" style="display:none">
+        <hr class="divider">
+        <div class="col-labels"><span style="color:var(--danger)">RETURN ITEM</span><span>QTY</span><span>UNIT $</span><span></span></div>
+        <div class="items-list" id="returnsList"></div>
+        <button class="add-btn ret" onclick="addReturn()">+ Add return</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Totals -->
+  <div class="totals-bar">
+    <div class="total-line returns" id="tReturnRow" style="display:none"><span>Returns</span><span id="tReturns">-$0.00</span></div>
+    <div class="total-line" id="tGstRow"><span id="tGstLabel">GST (0%)</span><span id="tGst">$0.00</span></div>
+    <div class="total-line grand"><span>TOTAL</span><span id="tTotal">$0.00</span></div>
+  </div>
+
+  <!-- Preview -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-label">Receipt Preview</span>
+      <button onclick="refreshAll()" style="background:none;border:none;color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;">↻ Refresh</button>
+    </div>
+    <div class="section-body" style="padding:12px">
+      <div class="preview-wrap"><div class="receipt-preview" id="receiptPreview">—</div></div>
+    </div>
+  </div>
+
+  <button class="print-btn" id="printBtn" onclick="printReceipt()">🖨 Print Receipt</button>
+
+</div>
+
+<script>
+// ─── Company data ─────────────────────────────────────────────────────────────
+const CO = {
+  bee: {
+    name: 'BEE EVENTS', uen: 'UEN: 53413307W',
+    addr: '', phone: '+65 8164 8864',
+    gst: false, gstRate: 0, gstNo: ''
+  },
+  swits: {
+    name: 'SWITS', uen: 'UEN: 53521109X',
+    addr: '', phone: '+65 8164 8864',
+    gst: false, gstRate: 9, gstNo: ''
+  }
+};
+
+let activeCo = 'bee';
+let btDevice = null, btChar = null;
+let itemCount = 0, returnCount = 0;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('invDate').value = new Date().toLocaleDateString('en-SG', {day:'2-digit',month:'short',year:'numeric'});
+  addItem();
+  loadFromURL();
+  refreshAll();
+});
+
+// ─── Company ──────────────────────────────────────────────────────────────────
+function selectCompany(co) {
+  activeCo = co;
+  document.getElementById('tab-bee').className   = 'co-tab' + (co==='bee'   ? ' active':'');
+  document.getElementById('tab-swits').className = 'co-tab' + (co==='swits' ? ' active':'');
+  document.getElementById('co-panel-bee').style.display   = co==='bee'   ? 'block':'none';
+  document.getElementById('co-panel-swits').style.display = co==='swits' ? 'block':'none';
+  document.getElementById('hd-co-name').textContent = (co==='bee' ? 'Bee Events' : 'SWITS') + ' · DP80S';
+  refreshAll();
+}
+
+function onGstToggle() {
+  const on = document.getElementById('switsGstOn').checked;
+  document.getElementById('switsGstRateWrap').style.display = on ? 'flex' : 'none';
+  refreshAll();
+}
+
+function getActiveGST() {
+  if (activeCo === 'bee') return { on: false, rate: 0, no: '' };
+  const on   = document.getElementById('switsGstOn').checked;
+  const rate = parseFloat(document.getElementById('switsGstRate').value) || 0;
+  const no   = document.getElementById('switsGstNo').value.trim();
+  return { on, rate, no };
+}
+
+// ─── URL params ───────────────────────────────────────────────────────────────
+function loadFromURL() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('co') === 'swits') selectCompany('swits');
+  if (p.get('inv'))     document.getElementById('invNo').value     = p.get('inv');
+  if (p.get('ord'))     document.getElementById('ordNo').value     = p.get('ord');
+  if (p.get('date'))    document.getElementById('invDate').value   = p.get('date');
+  if (p.get('cust'))    document.getElementById('custName').value  = p.get('cust');
+  if (p.get('addr'))    document.getElementById('custAddr').value  = p.get('addr');
+  if (p.get('phone'))   document.getElementById('custPhone').value = p.get('phone');
+  if (p.get('gst')==='1') { document.getElementById('switsGstOn').checked=true; onGstToggle(); }
+  if (p.get('gstrate')) document.getElementById('switsGstRate').value = p.get('gstrate');
+
+  if (p.get('items')) {
+    p.get('items').split('||').forEach((r,i) => {
+      const parts = r.split('|'); const name=decodeURIComponent(parts[0]||''),qty=parts[1]||'',price=parts[2]||'';
+      if (i===0) setTimeout(()=>{ const rows=document.querySelectorAll('.item-data-row'); if(rows[0]){rows[0].querySelector('.iname').value=name;rows[0].querySelector('.iqty').value=qty;rows[0].querySelector('.iprice').value=price;refreshAll();} },50);
+      else addItem(name,qty,price);
+    });
+  }
+  if (p.get('returns')) {
+    document.getElementById('hasReturns').checked = true; toggleReturns();
+    p.get('returns').split('||').forEach((r,i) => {
+      const parts = r.split('|'); const name=decodeURIComponent(parts[0]||''),qty=parts[1]||'',price=parts[2]||'';
+      if (i===0) setTimeout(()=>{ const rows=document.querySelectorAll('.return-data-row'); if(rows[0]){rows[0].querySelector('.rname').value=name;rows[0].querySelector('.rqty').value=qty;rows[0].querySelector('.rprice').value=price;refreshAll();} },80);
+      else addReturn(name,qty,price);
+    });
+  }
+}
+
+// ─── Items ────────────────────────────────────────────────────────────────────
+function addItem(name='',qty='',price='') {
+  itemCount++;
+  const id = 'item_'+itemCount;
+  const row = document.createElement('div');
+  row.className='item-row item-data-row'; row.id=id;
+  row.innerHTML=`<input class="iname" type="text" placeholder="Item name" value="${esc(name)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button>`;
+  row.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
+  document.getElementById('itemsList').appendChild(row);
+  refreshAll();
+}
+
+function addReturn(name='',qty='',price='') {
+  returnCount++;
+  const id = 'ret_'+returnCount;
+  const row = document.createElement('div');
+  row.className='item-row return-row return-data-row'; row.id=id;
+  row.innerHTML=`<input class="rname" type="text" placeholder="Returned item" value="${esc(name)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button>`;
+  row.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
+  document.getElementById('returnsList').appendChild(row);
+  refreshAll();
+}
+
+function removeRow(id) { const el=document.getElementById(id); if(el) el.remove(); refreshAll(); }
+function toggleReturns() {
+  const on=document.getElementById('hasReturns').checked;
+  document.getElementById('returnSection').style.display=on?'block':'none';
+  if(on && !document.querySelectorAll('.return-data-row').length) addReturn();
+  refreshAll();
+}
+function esc(v) { return String(v).replace(/"/g,'&quot;'); }
+function getItems() { return [...document.querySelectorAll('.item-data-row')].map(r=>({name:r.querySelector('.iname').value.trim(),qty:parseFloat(r.querySelector('.iqty').value)||0,price:parseFloat(r.querySelector('.iprice').value)||0})).filter(i=>i.name); }
+function getReturns() { return [...document.querySelectorAll('.return-data-row')].map(r=>({name:r.querySelector('.rname').value.trim(),qty:parseFloat(r.querySelector('.rqty').value)||0,price:parseFloat(r.querySelector('.rprice').value)||0})).filter(i=>i.name); }
+
+// ─── Refresh ──────────────────────────────────────────────────────────────────
+function refreshAll() {
+  const items   = getItems();
+  const withRet = document.getElementById('hasReturns').checked;
+  const returns = withRet ? getReturns() : [];
+  const gst     = getActiveGST();
+  const subtotal = items.reduce((s,i)=>s+i.qty*i.price,0);
+  const retTotal = returns.reduce((s,i)=>s+i.qty*i.price,0);
+  const afterRet = Math.max(0,subtotal-retTotal);
+  const gstAmt   = gst.on ? afterRet*gst.rate/100 : 0;
+  const grand    = afterRet+gstAmt;
+
+  document.getElementById('tReturnRow').style.display = retTotal>0 ? 'flex':'none';
+  document.getElementById('tReturns').textContent     = '-$'+retTotal.toFixed(2);
+  document.getElementById('tGstLabel').textContent    = 'GST ('+(gst.on?gst.rate:0)+'%)';
+  document.getElementById('tGst').textContent         = '$'+gstAmt.toFixed(2);
+  document.getElementById('tTotal').textContent       = '$'+grand.toFixed(2);
+
+  document.getElementById('receiptPreview').textContent =
+    buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAmt,grand);
+}
+
+// ─── Receipt builder ──────────────────────────────────────────────────────────
+function pad(s,len,L=false){ s=String(s); if(s.length>=len) return s.substring(0,len); const sp=' '.repeat(len-s.length); return L?s+sp:sp+s; }
+function ctr(s,w){ if(s.length>=w) return s.substring(0,w); return ' '.repeat(Math.floor((w-s.length)/2))+s; }
+function wrap(text,w,ind=''){ const out=[]; text.split('\n').forEach(l=>{ if((ind+l).length<=w){out.push(ind+l);return;} const wds=l.split(' ');let cur=ind; wds.forEach(wrd=>{if((cur+wrd).length>w){out.push(cur.trimEnd());cur=ind+wrd+' ';}else cur+=wrd+' ';}); if(cur.trim())out.push(cur.trimEnd()); }); return out; }
+
+function renderItemLine(L,name,qty,amt,W){
+  // Split desc into base name and spec e.g. "Cotton Candy — Box (14pcs x 25g)"
+  // Split on ' — ' to separate product name from unit/spec
+  const dashIdx = name.indexOf(' — ');
+  let baseName, spec;
+  if(dashIdx!==-1){ baseName=name.substring(0,dashIdx); spec=name.substring(dashIdx+3); }
+  else { baseName=name; spec=''; }
+  // Line 1: baseName left-padded to 18, qty and amt right-aligned
+  if(baseName.length<=18){
+    L.push(pad(baseName,18,true)+pad(qty,5)+pad(amt,9));
+  } else {
+    // name too long — print on own line, qty+amt on next
+    L.push(pad(baseName.substring(0,W),W,true));
+    L.push(pad('',18,true)+pad(qty,5)+pad(amt,9));
+  }
+  // Line 2: spec indented (unit type + weightage)
+  if(spec) L.push('  '+spec);
+}
+
+function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAmt,grand) {
+  const co      = CO[activeCo];
+  const invNo   = document.getElementById('invNo').value.trim();
+  const ordNo   = document.getElementById('ordNo').value.trim();
+  const invDate = document.getElementById('invDate').value.trim();
+  const custName= document.getElementById('custName').value.trim();
+  const custAddr= document.getElementById('custAddr').value.trim();
+  const custPhone=document.getElementById('custPhone').value.trim();
+  const W=32, D1='-'.repeat(W), D2='='.repeat(W);
+  const L=[];
+
+  // Company header
+  L.push(ctr(co.name,W));
+  L.push(ctr(co.uen,W));
+  if(co.addr) wrap(co.addr,W,'').forEach(l=>L.push(ctr(l.trim(),W)));
+  L.push(ctr(co.phone,W));
+  if(activeCo==='swits' && gst.on && gst.no) L.push(ctr('GST Reg: '+gst.no,W));
+  L.push(D1);
+
+  // Invoice / order / date
+  if(invNo)   L.push(pad('Invoice:',10,true)+' '+invNo);
+  if(ordNo)   L.push(pad('Order:',10,true)  +' '+ordNo);
+  if(invDate) L.push(pad('Date:',10,true)   +' '+invDate);
+  if(invNo||ordNo||invDate) L.push(D1);
+
+  // Customer
+  if(custName) L.push('To: '+custName);
+  if(custAddr) wrap(custAddr,W,'    ').forEach(l=>L.push(l));
+  if(custPhone) L.push('    '+custPhone);
+  if(custName||custAddr) L.push(D1);
+
+  // Items
+  L.push(pad('ITEM',18,true)+pad('QTY',5)+pad('AMT',9));
+  L.push(D1);
+  items.forEach(item=>{
+    const amt='$'+(item.qty*item.price).toFixed(2);
+    renderItemLine(L,item.name,item.qty,amt,W);
+  });
+
+  // Returns
+  if(withRet && returns.length>0){
+    L.push(D1);
+    L.push(ctr('-- RETURNS --',W));
+    L.push(D1);
+    returns.forEach(item=>{
+      const amt='-$'+(item.qty*item.price).toFixed(2);
+      renderItemLine(L,item.name,item.qty,amt,W);
+    });
+    L.push(D1);
+    L.push(pad('Deduction',23,true)+pad('-$'+retTotal.toFixed(2),9));
+  }
+
+  // GST + Total
+  L.push(D1);
+  const gstLabel = gst.on ? 'GST ('+gst.rate+'%)' : 'GST (0%)';
+  L.push(pad(gstLabel,23,true)+pad('$'+gstAmt.toFixed(2),9));
+  L.push(D2);
+  L.push(pad('TOTAL',23,true)+pad('$'+grand.toFixed(2),9));
+  L.push(D2);
+  L.push('');
+  L.push(ctr('Thank you!',W));
+  L.push('');
+  return L.join('\n');
+}
+
+// ─── Bluetooth ────────────────────────────────────────────────────────────────
+const KNOWN_PROFILES = [
+  {svc:'000018f0-0000-1000-8000-00805f9b34fb',chr:'00002af1-0000-1000-8000-00805f9b34fb',label:'Printer SPP'},
+  {svc:'6e400001-b5a3-f393-e0a9-e50e24dcca9e',chr:'6e400002-b5a3-f393-e0a9-e50e24dcca9e',label:'Nordic UART'},
+  {svc:'49535343-fe7d-4ae5-8fa9-9fafd205e455',chr:'49535343-8841-43f4-a8d4-ecbe34729bb3',label:'Peripage/ISP'},
+  {svc:'0000ff00-0000-1000-8000-00805f9b34fb',chr:'0000ff02-0000-1000-8000-00805f9b34fb',label:'BLE Serial FF02'},
+  {svc:'0000ff00-0000-1000-8000-00805f9b34fb',chr:'0000ff01-0000-1000-8000-00805f9b34fb',label:'BLE Serial FF01'},
+];
+
+async function connectBluetooth() {
+  if(btChar){disconnectBT();return;}
+  if(!navigator.bluetooth){showMsg('Web Bluetooth not supported. Use Chrome on Android.','error');return;}
+  setBTState('connecting','Connecting…');
+  try {
+    btDevice = await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:KNOWN_PROFILES.map(p=>p.svc)});
+    btDevice.addEventListener('gattserverdisconnected',onDisconnected);
+    const server = await btDevice.gatt.connect();
+
+    let found=false;
+    for(const prof of KNOWN_PROFILES){
+      try{ const svc=await server.getPrimaryService(prof.svc); btChar=await svc.getCharacteristic(prof.chr); setBTState('connected',btDevice.name||'Printer'); showMsg('Connected via '+prof.label+' — '+(btDevice.name||'printer'),'success'); found=true; break; }catch{}
+    }
+    if(!found){
+      showMsg('Scanning all services…','info');
+      try{
+        const svcs=await server.getPrimaryServices();
+        for(const svc of svcs){ const chars=await svc.getCharacteristics(); for(const chr of chars){ if(chr.properties.write||chr.properties.writeWithoutResponse){ btChar=chr; setBTState('connected',btDevice.name||'Printer'); showMsg('Auto-discovered char on '+svc.uuid.substring(0,8)+'…','success'); found=true; break; } } if(found)break; }
+      }catch(e2){showMsg('Auto-discovery failed: '+e2.message,'error');}
+    }
+    if(!found){showMsg('Connected but no writable char found.','info');setBTState('connected','?');}
+  }catch(e){
+    setBTState('','Connect');
+    if(!e.message.includes('cancelled')) showMsg('Could not connect: '+e.message,'error');
+    btDevice=null;btChar=null;
+  }
+}
+
+function disconnectBT(){if(btDevice&&btDevice.gatt.connected)btDevice.gatt.disconnect();btDevice=null;btChar=null;setBTState('','Connect');showMsg('Disconnected.','info');}
+function onDisconnected(){btDevice=null;btChar=null;setBTState('','Connect');}
+function setBTState(state,label){document.getElementById('btLabel').textContent=label;document.getElementById('btDot').className='bt-dot'+(state?' '+state:'');}
+
+// ─── ESC/POS ──────────────────────────────────────────────────────────────────
+function textToESCPOS(text){
+  const ESC=0x1B,GS=0x1D;
+  const bytes=new TextEncoder().encode(text);
+  return new Uint8Array([ESC,0x40,ESC,0x61,0x00,...bytes,ESC,0x64,0x04,GS,0x56,0x42,0x00]);
+}
+async function writeInChunks(chr,data,size=100){
+  for(let i=0;i<data.length;i+=size){ await chr.writeValue(data.slice(i,i+size)); await new Promise(r=>setTimeout(r,30)); }
+}
+
+// ─── Print ────────────────────────────────────────────────────────────────────
+async function printReceipt(){
+  if(!btChar){showMsg('Not connected. Tap Connect first.','error');return;}
+  if(!getItems().length){showMsg('Add at least one item before printing.','error');return;}
+  const btn=document.getElementById('printBtn');
+  btn.disabled=true;btn.textContent='Printing…';
+  try{
+    refreshAll();
+    await writeInChunks(btChar,textToESCPOS(document.getElementById('receiptPreview').textContent));
+    showMsg('Receipt sent to printer!','success');
+  }catch(e){showMsg('Print error: '+e.message,'error');}
+  finally{btn.disabled=false;btn.innerHTML='🖨 Print Receipt';}
+}
+
+function showMsg(text,type='info'){const el=document.getElementById('msgBox');el.textContent=text;el.className='msg show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),4000);}
+
+refreshAll();
+</script>
+</body>
+</html>
