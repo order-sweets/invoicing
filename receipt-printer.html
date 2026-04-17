@@ -86,9 +86,7 @@
   .add-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--surface2); }
   .add-btn.ret:hover { border-color: var(--danger); color: var(--danger); background: #fdf5f5; }
 
-  .returns-toggle { display: flex; align-items: center; gap: 8px; padding: 12px 0 0 0; cursor: pointer; user-select: none; font-size: 13px; color: var(--muted); }
-  .returns-toggle input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--navy2); }
-  .returns-toggle:hover { color: var(--text); }
+
   .return-section { margin-top: 12px; }
   .divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 
@@ -120,10 +118,12 @@
 <body>
 
 <header>
-  <div class="logo">BE</div>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--navy)"><path d="M6 2h12a1 1 0 011 1v4H5V3a1 1 0 011-1z"/><path d="M5 7v13a1 1 0 001 1h12a1 1 0 001-1V7"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+  </div>
   <div>
     <div class="hd-title">Receipt Printer</div>
-    <div class="hd-sub" id="hd-co-name">Bee Events · DP80S</div>
+    <div class="hd-sub">Bee Events &amp; SWITS</div>
   </div>
   <button class="bt-status" id="btBtn" onclick="connectBluetooth()">
     <span class="bt-dot" id="btDot"></span>
@@ -212,20 +212,14 @@
   <div class="section">
     <div class="section-header">
       <span class="section-label">Items Delivered</span>
-      <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">excl. returns</span>
     </div>
     <div class="section-body">
       <div class="col-labels"><span>ITEM</span><span>QTY</span><span>UNIT $</span><span></span></div>
       <div class="items-list" id="itemsList"></div>
       <button class="add-btn" onclick="addItem()">+ Add item</button>
 
-      <label class="returns-toggle">
-        <input type="checkbox" id="hasReturns" onchange="toggleReturns()">
-        Include returns / deductions
-      </label>
-
-      <div class="return-section" id="returnSection" style="display:none">
-        <hr class="divider">
+      <hr class="divider" id="returnDivider" style="display:none">
+      <div class="return-section" id="returnSection">
         <div class="col-labels"><span style="color:var(--danger)">RETURN ITEM</span><span>QTY</span><span>UNIT $</span><span></span></div>
         <div class="items-list" id="returnsList"></div>
         <button class="add-btn ret" onclick="addReturn()">+ Add return</button>
@@ -290,7 +284,6 @@ function selectCompany(co){
   document.getElementById('tab-swits').className ='co-tab'+(co==='swits'?' active':'');
   document.getElementById('co-panel-bee').style.display  =co==='bee'  ?'block':'none';
   document.getElementById('co-panel-swits').style.display=co==='swits'?'block':'none';
-  document.getElementById('hd-co-name').textContent=(co==='bee'?'Bee Events':'SWITS')+' · DP80S';
   refreshAll();
 }
 
@@ -340,58 +333,55 @@ function loadFromURL(){
     p.get('items').split('||').forEach((r,i)=>{
       const parts=r.split('|');
       const name=decodeURIComponent(parts[0]||''),qty=parts[1]||'',price=parts[2]||'';
-      if(i===0) setTimeout(()=>{const rows=document.querySelectorAll('.item-data-row');if(rows[0]){rows[0].querySelector('.iname').value=name;rows[0].querySelector('.iqty').value=qty;rows[0].querySelector('.iprice').value=price;refreshAll();}},50);
+      if(i===0) setTimeout(()=>{const rows=document.querySelectorAll('.item-data-block');if(rows[0]){rows[0].querySelector('.iname').value=name;rows[0].querySelector('.iqty').value=qty;rows[0].querySelector('.iprice').value=price;refreshAll();}},50);
       else addItem(name,qty,price);
     });
   }
   if(p.get('returns')){
-    document.getElementById('hasReturns').checked=true; toggleReturns();
+
     p.get('returns').split('||').forEach((r,i)=>{
       const parts=r.split('|');
       const name=decodeURIComponent(parts[0]||''),qty=parts[1]||'',price=parts[2]||'';
-      if(i===0) setTimeout(()=>{const rows=document.querySelectorAll('.return-data-row');if(rows[0]){rows[0].querySelector('.rname').value=name;rows[0].querySelector('.rqty').value=qty;rows[0].querySelector('.rprice').value=price;refreshAll();}},80);
+      if(i===0) setTimeout(()=>{const rows=document.querySelectorAll('.return-data-block');if(rows[0]){rows[0].querySelector('.rname').value=name;rows[0].querySelector('.rqty').value=qty;rows[0].querySelector('.rprice').value=price;refreshAll();}},80);
       else addReturn(name,qty,price);
     });
   }
 }
 
 // ── Items ─────────────────────────────────────────────────────────────────────
-function addItem(name='',qty='',price=''){
+function addItem(name='',qty='',price='',spec=''){
   itemCount++;
   const id='item_'+itemCount;
-  const row=document.createElement('div');
-  row.className='item-row item-data-row'; row.id=id;
-  row.innerHTML=`<input class="iname" type="text" placeholder="Item name" value="${esc(name)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button>`;
-  row.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
-  document.getElementById('itemsList').appendChild(row);
+  const wrap=document.createElement('div');
+  wrap.className='item-block item-data-block'; wrap.id=id;
+  wrap.innerHTML=`<div class="item-row"><input class="iname" type="text" placeholder="Item name" value="${esc(name)}"><input class="iqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="iprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><div style="padding:0 36px 0 0;margin-top:4px"><input class="ispec" type="text" placeholder="Unit+weight e.g. Box (9pcs × 38g)" value="${esc(spec)}" style="font-size:12px;color:#6b7a8d;"></div>`;
+  wrap.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
+  document.getElementById('itemsList').appendChild(wrap);
   refreshAll();
 }
-function addReturn(name='',qty='',price=''){
+function addReturn(name='',qty='',price='',spec=''){
   returnCount++;
   const id='ret_'+returnCount;
-  const row=document.createElement('div');
-  row.className='item-row return-row return-data-row'; row.id=id;
-  row.innerHTML=`<input class="rname" type="text" placeholder="Returned item" value="${esc(name)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button>`;
-  row.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
-  document.getElementById('returnsList').appendChild(row);
+  const wrap=document.createElement('div');
+  wrap.className='item-block return-data-block'; wrap.id=id;
+  wrap.innerHTML=`<div class="item-row return-row"><input class="rname" type="text" placeholder="Returned item" value="${esc(name)}"><input class="rqty" type="number" placeholder="1" min="0" value="${esc(qty)}" style="text-align:center"><input class="rprice" type="number" placeholder="0.00" min="0" step="0.01" value="${esc(price)}"><button class="btn-icon" onclick="removeRow('${id}')">×</button></div><div style="padding:0 36px 0 0;margin-top:4px"><input class="rspec" type="text" placeholder="Unit+weight e.g. Box (9pcs × 38g)" value="${esc(spec)}" style="font-size:12px;color:#6b7a8d;border-color:#f5c0bc;background:#fdf5f5"></div>`;
+  wrap.querySelectorAll('input').forEach(el=>el.addEventListener('input',refreshAll));
+  document.getElementById('returnsList').appendChild(wrap);
   refreshAll();
 }
 function removeRow(id){const el=document.getElementById(id);if(el)el.remove();refreshAll();}
 function toggleReturns(){
-  const on=document.getElementById('hasReturns').checked;
-  document.getElementById('returnSection').style.display=on?'block':'none';
-  if(on&&!document.querySelectorAll('.return-data-row').length) addReturn();
   refreshAll();
 }
 function esc(v){return String(v).replace(/"/g,'&quot;');}
-function getItems(){return[...document.querySelectorAll('.item-data-row')].map(r=>({name:r.querySelector('.iname').value.trim(),qty:parseFloat(r.querySelector('.iqty').value)||0,price:parseFloat(r.querySelector('.iprice').value)||0})).filter(i=>i.name);}
-function getReturns(){return[...document.querySelectorAll('.return-data-row')].map(r=>({name:r.querySelector('.rname').value.trim(),qty:parseFloat(r.querySelector('.rqty').value)||0,price:parseFloat(r.querySelector('.rprice').value)||0})).filter(i=>i.name);}
+function getItems(){return[...document.querySelectorAll('.item-data-block')].map(b=>({name:b.querySelector('.iname').value.trim(),qty:parseFloat(b.querySelector('.iqty').value)||0,price:parseFloat(b.querySelector('.iprice').value)||0,spec:(b.querySelector('.ispec')||{value:''}).value.trim()})).filter(i=>i.name);}
+function getReturns(){return[...document.querySelectorAll('.return-data-block')].map(b=>({name:b.querySelector('.rname').value.trim(),qty:parseFloat(b.querySelector('.rqty').value)||0,price:parseFloat(b.querySelector('.rprice').value)||0,spec:(b.querySelector('.rspec')||{value:''}).value.trim()})).filter(i=>i.name);}
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
 function refreshAll(){
   const items=getItems();
-  const withRet=document.getElementById('hasReturns').checked;
-  const returns=withRet?getReturns():[];
+  const withRet=true;
+  const returns=getReturns();
   const gst=getActiveGST();
   const subtotal=items.reduce((s,i)=>s+i.qty*i.price,0);
   const retTotal=returns.reduce((s,i)=>s+i.qty*i.price,0);
@@ -400,6 +390,7 @@ function refreshAll(){
   const grand=afterRet+gstAmt;
 
   document.getElementById('tReturnRow').style.display=retTotal>0?'flex':'none';
+  document.getElementById('returnDivider').style.display=returns.length>0?'block':'none';
   document.getElementById('tReturns').textContent='-$'+retTotal.toFixed(2);
   document.getElementById('tGstLabel').textContent='GST ('+(gst.on?gst.rate:0)+'%)';
   document.getElementById('tGst').textContent='$'+gstAmt.toFixed(2);
@@ -412,14 +403,14 @@ function pad(s,len,L=false){s=String(s);if(s.length>=len)return s.substring(0,le
 function ctr(s,w){if(s.length>=w)return s.substring(0,w);return' '.repeat(Math.floor((w-s.length)/2))+s;}
 function wrap(text,w,ind=''){const out=[];text.split('\n').forEach(l=>{if((ind+l).length<=w){out.push(ind+l);return;}const wds=l.split(' ');let cur=ind;wds.forEach(wrd=>{if((cur+wrd).length>w){out.push(cur.trimEnd());cur=ind+wrd+' ';}else cur+=wrd+' ';});if(cur.trim())out.push(cur.trimEnd());});return out;}
 
-function renderItemLine(L,name,qty,amt,W){
-  const dashIdx=name.indexOf(' \u2014 ');
-  let baseName,spec;
-  if(dashIdx!==-1){baseName=name.substring(0,dashIdx);spec=name.substring(dashIdx+3);}
-  else{baseName=name;spec='';}
+function renderItemLine(L,name,qty,amt,W,spec){
+  const dashIdx=name.indexOf(' — ');
+  let baseName,lineSpec;
+  if(dashIdx!==-1){baseName=name.substring(0,dashIdx);lineSpec=spec||name.substring(dashIdx+3);}
+  else{baseName=name;lineSpec=spec||'';}
   if(baseName.length<=18){L.push(pad(baseName,18,true)+pad(qty,5)+pad(amt,9));}
   else{L.push(pad(baseName.substring(0,W),W,true));L.push(pad('',18,true)+pad(qty,5)+pad(amt,9));}
-  if(spec) L.push('  '+spec);
+  if(lineSpec) L.push('  '+lineSpec);
 }
 
 function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAmt,grand){
@@ -457,7 +448,7 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
   L.push(pad('ITEM',18,true)+pad('QTY',5)+pad('AMT',9));
   L.push(D1);
   items.forEach(item=>{
-    renderItemLine(L,item.name,item.qty,'$'+(item.qty*item.price).toFixed(2),W);
+    renderItemLine(L,item.name,item.qty,'$'+(item.qty*item.price).toFixed(2),W,item.spec||'');
   });
 
   // Returns
@@ -466,7 +457,7 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
     L.push(ctr('-- RETURNS --',W));
     L.push(D1);
     returns.forEach(item=>{
-      renderItemLine(L,item.name,item.qty,'-$'+(item.qty*item.price).toFixed(2),W);
+      renderItemLine(L,item.name,item.qty,'-$'+(item.qty*item.price).toFixed(2),W,item.spec||'');
     });
     L.push(D1);
     L.push(pad('Deduction',23,true)+pad('-$'+retTotal.toFixed(2),9));
