@@ -135,6 +135,7 @@
 <div class="container">
 
   <div id="msgBox" class="msg"></div>
+  <div id="debugBox" style="background:#1a2e4a;color:#f5c518;font-family:monospace;font-size:11px;padding:10px 14px;border-radius:8px;margin-bottom:12px;display:none;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;"></div>
 
   <!-- Company -->
   <div class="section">
@@ -563,6 +564,7 @@ function textToESCPOS(text){
     ctx.fillText(line, MARGIN, MARGIN+i*LINE_HEIGHT);
   });
 
+  dbg('Canvas: '+canvas.width+'x'+canvas.height+' | lines: '+lines.length);
   // Convert canvas to 1-bit raster
   const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
   const w=canvas.width, h=canvas.height;
@@ -594,17 +596,31 @@ function textToESCPOS(text){
   return new Uint8Array(cmd);
 }
 
+function dbg(msg){
+  const el=document.getElementById('debugBox');
+  el.style.display='block';
+  el.textContent+=msg+'\n';
+  el.scrollTop=el.scrollHeight;
+  console.log('[RECEIPT]',msg);
+}
+
 async function writeInChunks(chr,data,size=512){
+  dbg('Total bytes: '+data.length+' | chunks: '+Math.ceil(data.length/size)+' | size: '+size);
+  dbg('writeWithoutResponse: '+chr.properties.writeWithoutResponse+' | write: '+chr.properties.write);
   for(let i=0;i<data.length;i+=size){
     const chunk=data.slice(i,i+size);
     try{
-      if(chr.properties.writeWithoutResponse) await chr.writeValueWithoutResponse(chunk);
-      else await chr.writeValue(chunk);
+      if(chr.properties.writeWithoutResponse){ await chr.writeValueWithoutResponse(chunk); }
+      else { await chr.writeValue(chunk); }
+      if(i===0) dbg('First chunk sent OK');
     }catch(e){
-      try{ await chr.writeValue(chunk); }catch(e2){ console.warn('write err',e2); }
+      dbg('ERR chunk '+i+': '+e.message);
+      try{ await chr.writeValue(chunk); dbg('Fallback writeValue OK'); }
+      catch(e2){ dbg('Fallback also failed: '+e2.message); }
     }
-    await new Promise(r=>setTimeout(r,20));
+    await new Promise(r=>setTimeout(r,30));
   }
+  dbg('All chunks sent.');
 }
 
 // ── Print ─────────────────────────────────────────────────────────────────────
