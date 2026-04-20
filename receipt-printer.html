@@ -604,23 +604,27 @@ function dbg(msg){
   console.log('[RECEIPT]',msg);
 }
 
-async function writeInChunks(chr,data,size=20){
-  dbg('Total bytes: '+data.length+' | chunks: '+Math.ceil(data.length/size)+' | size: '+size);
+async function writeInChunks(chr,data,size=512){
+  const totalChunks=Math.ceil(data.length/size);
+  dbg('Total bytes: '+data.length+' | chunks: '+totalChunks+' | size: '+size);
   dbg('writeWithoutResponse: '+chr.properties.writeWithoutResponse+' | write: '+chr.properties.write);
+  let chunkIdx=0;
   for(let i=0;i<data.length;i+=size){
     const chunk=data.slice(i,i+size);
     try{
       if(chr.properties.writeWithoutResponse){ await chr.writeValueWithoutResponse(chunk); }
       else { await chr.writeValue(chunk); }
-      if(i===0) dbg('First chunk sent OK');
+      if(chunkIdx===0) dbg('First chunk sent OK');
     }catch(e){
-      dbg('ERR chunk '+i+': '+e.message);
-      try{ await chr.writeValue(chunk); dbg('Fallback writeValue OK'); }
-      catch(e2){ dbg('Fallback also failed: '+e2.message); }
+      dbg('ERR chunk '+chunkIdx+': '+e.message);
+      try{ await chr.writeValue(chunk); }catch(e2){ dbg('Fallback failed: '+e2.message); }
     }
-    await new Promise(r=>setTimeout(r,80));
+    chunkIdx++;
+    // Burst: send 8 chunks then pause 300ms to let printer buffer clear
+    if(chunkIdx%8===0) await new Promise(r=>setTimeout(r,300));
+    else await new Promise(r=>setTimeout(r,10));
   }
-  dbg('All chunks sent.');
+  dbg('All '+chunkIdx+' chunks sent.');
 }
 
 // ── Print ─────────────────────────────────────────────────────────────────────
