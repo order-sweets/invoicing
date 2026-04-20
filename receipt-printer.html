@@ -608,20 +608,15 @@ function textToESCPOS(text){
     ESC_strips.push(ESC,0x2A,33,nL,nH,...sd,0x0A);
   }
 
-  // Send BOTH commands — GS v 0 first, then ESC * version
-  // Printer will use whichever it understands
+  // Send GS v 0 raster ONLY (Detonger DP80S "Graphic" mode).
+  // Sending dual commands (GS v 0 + ESC *) confuses the parser and
+  // causes the printer to feed blank paper.
   const cmd=[
     ESC,0x40,                            // init
-    // --- GS v 0 attempt ---
+    ESC,0x61,0x00,                       // left-align (some firmwares boot undefined)
     GS,0x76,0x30,0x00,xL,xH,yL,yH,
     ...raster,
-    ESC,0x64,0x02,
-    // --- ESC * attempt ---
-    ESC,0x33,0x18,                       // line spacing = 24 dots
-    ...ESC_strips,
-    ESC,0x32,                            // restore line spacing
-    ESC,0x64,0x05,
-    GS,0x56,0x42,0x99
+    ESC,0x64,0x05                        // feed 5 lines (no cutter on DP80S)
   ];
   dbg('cmd built: GSv0 raster='+raster.length+' ESC* strips='+Math.ceil(h/STRIP)+' total='+cmd.length);
   return new Uint8Array(cmd);
@@ -635,7 +630,7 @@ function dbg(msg){
   console.log('[RECEIPT]',msg);
 }
 
-async function writeInChunks(chr,data,size=512){
+async function writeInChunks(chr,data,size=180){
   const totalChunks=Math.ceil(data.length/size);
   dbg('Total bytes: '+data.length+' | chunks: '+totalChunks+' | size: '+size);
   dbg('writeWithoutResponse: '+chr.properties.writeWithoutResponse+' | write: '+chr.properties.write);
