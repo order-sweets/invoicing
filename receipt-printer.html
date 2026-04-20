@@ -540,13 +540,71 @@ function onDisconnected(){btDevice=null;btChar=null;setBTState('','Connect');}
 function setBTState(state,label){document.getElementById('btLabel').textContent=label;document.getElementById('btDot').className='bt-dot'+(state?' '+state:'');}
 
 // ── ESC/POS ───────────────────────────────────────────────────────────────────
+// ── Render receipt text to ESC/POS raster image ─────────────────────────────
 function textToESCPOS(text){
-  const ESC=0x1B,GS=0x1D;
-  const bytes=new TextEncoder().encode(text);
-  return new Uint8Array([ESC,0x40,ESC,0x61,0x00,...bytes,ESC,0x64,0x04,GS,0x56,0x42,0x00]);
+  const ESC=0x1B, GS=0x1D;
+  const PRINT_WIDTH_PX=576; // 72mm * 8dots/mm = 576 dots
+  const FONT_SIZE=24;
+  const LINE_HEIGHT=28;
+  const MARGIN=8;
+
+  // Draw text onto canvas
+  const canvas=document.createElement('canvas');
+  const lines=text.split('\n');
+  canvas.width=PRINT_WIDTH_PX;
+  canvas.height=LINE_HEIGHT*lines.length+MARGIN*2;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#000000';
+  ctx.font=FONT_SIZE+'px "Courier New", Courier, monospace';
+  ctx.textBaseline='top';
+  lines.forEach((line,i)=>{
+    ctx.fillText(line, MARGIN, MARGIN+i*LINE_HEIGHT);
+  });
+
+  // Convert canvas to 1-bit raster
+  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const w=canvas.width, h=canvas.height;
+  const bytesPerRow=Math.ceil(w/8);
+  const raster=new Uint8Array(bytesPerRow*h);
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const idx=(y*w+x)*4;
+      const r=imgData.data[idx], g=imgData.data[idx+1], b=imgData.data[idx+2];
+      const bright=(r+g+b)/3;
+      if(bright<128){ // dark pixel = print dot
+        const byteIdx=y*bytesPerRow+Math.floor(x/8);
+        raster[byteIdx]|=(0x80>>(x%8));
+      }
+    }
+  }
+
+  // Build ESC/POS raster command: GS v 0
+  // GS v 0 m xL xH yL yH [data]
+  const xL=bytesPerRow&0xFF, xH=(bytesPerRow>>8)&0xFF;
+  const yL=h&0xFF, yH=(h>>8)&0xFF;
+  const cmd=[
+    ESC,0x40,                          // init
+    GS,0x76,0x30,0x00,xL,xH,yL,yH,   // raster image
+    ...raster,
+    ESC,0x64,0x04,                     // feed 4 lines
+    GS,0x56,0x42,0x99                  // cut (using Loyverse cutter cmd)
+  ];
+  return new Uint8Array(cmd);
 }
-async function writeInChunks(chr,data,size=20){
-  for(let i=0;i<data.length;i+=size){await chr.writeValue(data.slice(i,i+size));await new Promise(r=>setTimeout(r,60));}
+
+async function writeInChunks(chr,data,size=512){
+  for(let i=0;i<data.length;i+=size){
+    const chunk=data.slice(i,i+size);
+    try{
+      if(chr.properties.writeWithoutResponse) await chr.writeValueWithoutResponse(chunk);
+      else await chr.writeValue(chunk);
+    }catch(e){
+      try{ await chr.writeValue(chunk); }catch(e2){ console.warn('write err',e2); }
+    }
+    await new Promise(r=>setTimeout(r,20));
+  }
 }
 
 // ── Print ─────────────────────────────────────────────────────────────────────
