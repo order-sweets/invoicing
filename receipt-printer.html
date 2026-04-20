@@ -582,22 +582,48 @@ function textToESCPOS(text){
     }
   }
 
-  // GS v 0 — raster bit image
-  // Format: GS 0x76 0x30 m xL xH yL yH d1..dk
-  // m=0 (normal), xL/xH = bytesPerRow, yL/yH = height
+  // Try both GS v 0 AND ESC * — build both and pick based on printer response
+  // GS v 0: xL/xH=bytesPerRow, yL/yH=height
   const xL=bytesPerRow&0xFF, xH=(bytesPerRow>>8)&0xFF;
   const yL=h&0xFF, yH=(h>>8)&0xFF;
 
+  // ESC * mode 33 (24-dot double density): nL/nH = number of COLUMNS (dots wide)
+  const cols=bytesPerRow*8; // number of dot columns
+  const nL=cols&0xFF, nH=(cols>>8)&0xFF;
+  const ESC_strips=[];
+  const STRIP=24;
+  for(let y=0;y<h;y+=STRIP){
+    const sd=[];
+    for(let x=0;x<cols;x++){
+      let b0=0,b1=0,b2=0;
+      for(let d=0;d<8;d++){
+        const r0=y+d, r1=y+8+d, r2=y+16+d;
+        const bx=Math.floor(x/8), bit=0x80>>(x%8);
+        if(r0<h&&(raster[r0*bytesPerRow+bx]&bit)) b0|=(0x80>>d);
+        if(r1<h&&(raster[r1*bytesPerRow+bx]&bit)) b1|=(0x80>>d);
+        if(r2<h&&(raster[r2*bytesPerRow+bx]&bit)) b2|=(0x80>>d);
+      }
+      sd.push(b0,b1,b2);
+    }
+    ESC_strips.push(ESC,0x2A,33,nL,nH,...sd,0x0A);
+  }
+
+  // Send BOTH commands — GS v 0 first, then ESC * version
+  // Printer will use whichever it understands
   const cmd=[
-    ESC,0x40,                            // init printer
-    ESC,0x61,0x01,                       // center align
-    GS,0x76,0x30,0x00,xL,xH,yL,yH,     // GS v 0 raster image command
-    ...raster,                            // image data
-    ESC,0x61,0x00,                       // left align
-    ESC,0x64,0x05,                       // feed 5 lines
-    GS,0x56,0x42,0x99                    // partial cut
+    ESC,0x40,                            // init
+    // --- GS v 0 attempt ---
+    GS,0x76,0x30,0x00,xL,xH,yL,yH,
+    ...raster,
+    ESC,0x64,0x02,
+    // --- ESC * attempt ---
+    ESC,0x33,0x18,                       // line spacing = 24 dots
+    ...ESC_strips,
+    ESC,0x32,                            // restore line spacing
+    ESC,0x64,0x05,
+    GS,0x56,0x42,0x99
   ];
-  dbg('GS v 0 cmd: xL='+xL+' xH='+xH+' yL='+yL+' yH='+yH+' raster='+raster.length+' total='+cmd.length);
+  dbg('cmd built: GSv0 raster='+raster.length+' ESC* strips='+Math.ceil(h/STRIP)+' total='+cmd.length);
   return new Uint8Array(cmd);
 }
 
