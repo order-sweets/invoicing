@@ -255,7 +255,16 @@
     </div>
   </div>
 
-  <button class="print-btn" id="printBtn" onclick="printReceipt()">🖨 Print Receipt</button>
+  <div style="display:flex;gap:10px;">
+    <button class="print-btn" id="shareBtn" onclick="shareReceipt()" style="flex:1;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share Receipt
+    </button>
+    <button class="print-btn" id="printBtn" onclick="printReceipt()" style="flex:1;background:var(--surface);color:var(--navy);border:2px solid var(--navy);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      BT Print
+    </button>
+  </div>
 
 </div>
 
@@ -608,15 +617,20 @@ function textToESCPOS(text){
     ESC_strips.push(ESC,0x2A,33,nL,nH,...sd,0x0A);
   }
 
-  // Send GS v 0 raster ONLY (Detonger DP80S "Graphic" mode).
-  // Sending dual commands (GS v 0 + ESC *) confuses the parser and
-  // causes the printer to feed blank paper.
+  // Send BOTH commands — GS v 0 first, then ESC * version
+  // Printer will use whichever it understands
   const cmd=[
     ESC,0x40,                            // init
-    ESC,0x61,0x00,                       // left-align (some firmwares boot undefined)
+    // --- GS v 0 attempt ---
     GS,0x76,0x30,0x00,xL,xH,yL,yH,
     ...raster,
-    ESC,0x64,0x05                        // feed 5 lines (no cutter on DP80S)
+    ESC,0x64,0x02,
+    // --- ESC * attempt ---
+    ESC,0x33,0x18,                       // line spacing = 24 dots
+    ...ESC_strips,
+    ESC,0x32,                            // restore line spacing
+    ESC,0x64,0x05,
+    GS,0x56,0x42,0x99
   ];
   dbg('cmd built: GSv0 raster='+raster.length+' ESC* strips='+Math.ceil(h/STRIP)+' total='+cmd.length);
   return new Uint8Array(cmd);
@@ -630,7 +644,7 @@ function dbg(msg){
   console.log('[RECEIPT]',msg);
 }
 
-async function writeInChunks(chr,data,size=180){
+async function writeInChunks(chr,data,size=512){
   const totalChunks=Math.ceil(data.length/size);
   dbg('Total bytes: '+data.length+' | chunks: '+totalChunks+' | size: '+size);
   dbg('writeWithoutResponse: '+chr.properties.writeWithoutResponse+' | write: '+chr.properties.write);
@@ -676,6 +690,56 @@ async function printReceipt(){
     showMsg('Receipt sent to printer!','success');
   }catch(e){showMsg('Print error: '+e.message,'error');}
   finally{btn.disabled=false;btn.innerHTML='🖨 Print Receipt';}
+}
+
+// ── Share receipt as image ────────────────────────────────────────────────────
+async function shareReceipt(){
+  const items=getItems();
+  if(!items.length){showMsg('Add at least one item before sharing.','error');return;}
+  refreshAll();
+  const text=document.getElementById('receiptPreview').textContent;
+  const lines=text.split('\n');
+
+  // Render to canvas
+  const FONT_SIZE=22;
+  const LINE_HEIGHT=26;
+  const MARGIN=16;
+  const WIDTH=576;
+  const canvas=document.createElement('canvas');
+  canvas.width=WIDTH;
+  canvas.height=LINE_HEIGHT*lines.length+MARGIN*2;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#000000';
+  ctx.font=FONT_SIZE+'px "Courier New",Courier,monospace';
+  ctx.textBaseline='top';
+  lines.forEach((line,i)=>{
+    ctx.fillText(line,MARGIN,MARGIN+i*LINE_HEIGHT);
+  });
+
+  // Convert to blob and share
+  canvas.toBlob(async(blob)=>{
+    const file=new File([blob],'receipt.png',{type:'image/png'});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({
+          files:[file],
+          title:'Receipt',
+        });
+      }catch(e){
+        if(!e.message.includes('cancelled')) showMsg('Share failed: '+e.message,'error');
+      }
+    } else {
+      // Fallback: download the image
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='receipt.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      showMsg('Downloaded as receipt.png — open it in the ESC POS Print app.','info');
+    }
+  },'image/png');
 }
 
 function showMsg(text,type='info'){const el=document.getElementById('msgBox');el.textContent=text;el.className='msg show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),4000);}
