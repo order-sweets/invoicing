@@ -582,16 +582,42 @@ function textToESCPOS(text){
     }
   }
 
-  // Build ESC/POS raster command: GS v 0
-  // GS v 0 m xL xH yL yH [data]
-  const xL=bytesPerRow&0xFF, xH=(bytesPerRow>>8)&0xFF;
-  const yL=h&0xFF, yH=(h>>8)&0xFF;
+  // Build using ESC * (bit image) — line by line
+  // ESC * m nL nH [data] — m=33 (24-dot double density)
+  // We send image as series of 24-dot-high strips
+  const ESC_INIT=[ESC,0x40];
+  const LINE_SPACING_24=[ESC,0x33,0x18]; // set line spacing to 24 dots
+  const LINE_SPACING_DEFAULT=[ESC,0x32];  // restore default line spacing
+
+  const strips=[];
+  const STRIP_H=24; // 24 dots per strip (ESC * mode 33)
+  const nL=bytesPerRow&0xFF, nH=(bytesPerRow>>8)&0xFF;
+
+  for(let y=0;y<h;y+=STRIP_H){
+    const stripData=[];
+    // For each column in this strip, pack 3 bytes (24 bits)
+    for(let x=0;x<bytesPerRow*8;x++){
+      let b0=0,b1=0,b2=0;
+      for(let dot=0;dot<8;dot++){
+        const row0=y+dot;
+        const row1=y+8+dot;
+        const row2=y+16+dot;
+        if(row0<h){ const bi=row0*bytesPerRow+Math.floor(x/8); if(raster[bi]&(0x80>>(x%8))) b0|=(0x80>>dot); }
+        if(row1<h){ const bi=row1*bytesPerRow+Math.floor(x/8); if(raster[bi]&(0x80>>(x%8))) b1|=(0x80>>dot); }
+        if(row2<h){ const bi=row2*bytesPerRow+Math.floor(x/8); if(raster[bi]&(0x80>>(x%8))) b2|=(0x80>>dot); }
+      }
+      stripData.push(b0,b1,b2);
+    }
+    strips.push(ESC,0x2A,33,nL,nH,...stripData,0x0A);
+  }
+
   const cmd=[
-    ESC,0x40,                          // init
-    GS,0x76,0x30,0x00,xL,xH,yL,yH,   // raster image
-    ...raster,
-    ESC,0x64,0x04,                     // feed 4 lines
-    GS,0x56,0x42,0x99                  // cut (using Loyverse cutter cmd)
+    ...ESC_INIT,
+    ...LINE_SPACING_24,
+    ...strips,
+    ...LINE_SPACING_DEFAULT,
+    ESC,0x64,0x04,        // feed 4 lines
+    GS,0x56,0x42,0x99     // cut
   ];
   return new Uint8Array(cmd);
 }
