@@ -693,7 +693,7 @@ async function printReceipt(){
   finally{btn.disabled=false;btn.innerHTML='🖨 Print Receipt';}
 }
 
-// ── Share receipt as PNG image ───────────────────────────────────────────────
+// ── Share receipt as PDF ─────────────────────────────────────────────────────
 async function shareReceipt(){
   const items=getItems();
   if(!items.length){showMsg('Add at least one item before sharing.','error');return;}
@@ -705,12 +705,11 @@ async function shareReceipt(){
   const text=document.getElementById('receiptPreview').textContent;
   const lines=text.split('\n');
 
-  // Render at 2x for sharpness — 576px = 80mm @ 203dpi, so exact printer resolution
-  const SCALE=2;
-  const FONT_SIZE=22*SCALE;
-  const LINE_HEIGHT=28*SCALE;
-  const MARGIN=16*SCALE;
-  const WIDTH=576*SCALE;
+  // Render receipt to canvas at high res
+  const FONT_SIZE=28;
+  const LINE_HEIGHT=34;
+  const MARGIN=20;
+  const WIDTH=576;
   const canvas=document.createElement('canvas');
   canvas.width=WIDTH;
   canvas.height=LINE_HEIGHT*lines.length+MARGIN*2;
@@ -724,27 +723,45 @@ async function shareReceipt(){
     ctx.fillText(line,MARGIN,MARGIN+i*LINE_HEIGHT);
   });
 
-  canvas.toBlob(async(blob)=>{
-    const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Receipt';
-    btn.disabled=false; btn.innerHTML=SHARE_ICON;
+  const imgData=canvas.toDataURL('image/png');
 
-    const file=new File([blob],'receipt.png',{type:'image/png'});
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      try{
-        await navigator.share({files:[file], title:'Receipt'});
-      }catch(e){
-        if(!e.message.includes('cancelled')) showMsg('Share failed: '+e.message,'error');
-      }
-    } else {
-      // Fallback: download
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url; a.download='receipt.png';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showMsg('Saved as receipt.png — open in WePrint to print.','info');
+  // PDF: 80mm wide, full receipt height — WePrint prints at exact dimensions
+  const MM_WIDTH=80;
+  // 1px = 25.4/203 mm (203dpi printer), canvas width = 576px = 72mm
+  // scale: MM_WIDTH/72 * canvas height in mm
+  const PX_TO_MM=25.4/203;
+  const MM_HEIGHT=Math.ceil(canvas.height*PX_TO_MM*(MM_WIDTH/(WIDTH*PX_TO_MM)));
+
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({
+    orientation:'portrait',
+    unit:'mm',
+    format:[MM_WIDTH, MM_HEIGHT]  // exact receipt size
+  });
+  // Place image to fill page exactly
+  pdf.addImage(imgData,'PNG',0,0,MM_WIDTH,MM_HEIGHT,undefined,'FAST');
+
+  const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Receipt';
+
+  const pdfBlob=pdf.output('blob');
+  const pdfFile=new File([pdfBlob],'receipt.pdf',{type:'application/pdf'});
+
+  btn.disabled=false; btn.innerHTML=SHARE_ICON;
+
+  if(navigator.share && navigator.canShare && navigator.canShare({files:[pdfFile]})){
+    try{
+      await navigator.share({files:[pdfFile], title:'Receipt'});
+    }catch(e){
+      if(!e.message.includes('cancelled')) showMsg('Share failed: '+e.message,'error');
     }
-  },'image/png');
+  } else {
+    const url=URL.createObjectURL(pdfBlob);
+    const a=document.createElement('a');
+    a.href=url; a.download='receipt.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showMsg('Downloaded receipt.pdf','info');
+  }
 }
 
 function showMsg(text,type='info'){const el=document.getElementById('msgBox');el.textContent=text;el.className='msg show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),4000);}
