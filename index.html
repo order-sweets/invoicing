@@ -781,8 +781,8 @@ function _getLineSpec(l){
   // "Box 36pcs x 46.7g" -> "Box: 36pcs x 46.7g" (missing colon)
   raw=raw.replace(/^Box\s+([0-9])/,'Box: $1');
   raw=raw.replace(/^Piece\s+([0-9])/,'Piece: $1');
-  // "Piece: 38g" -> "Piece: 1pc x 38g" (missing 1pc x)
-  raw=raw.replace(/^Piece:\s*([0-9])/,'Piece: 1pc x $1');
+  // "Piece: 38g" -> "Piece: 1pc x 38g" (only if 1pc not already present)
+  if(/^Piece:\s*[0-9]/.test(raw)&&!/^Piece:\s*1pc/i.test(raw)) raw=raw.replace(/^Piece:\s*/,'Piece: 1pc x ');
   // "Piece: 1pc x 38g" is correct — leave as-is
   return raw;
 }
