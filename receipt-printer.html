@@ -704,27 +704,25 @@ async function shareReceipt(){
   const text=document.getElementById('receiptPreview').textContent;
   const lines=text.split('\n');
 
-  // Render receipt to canvas at high res
-  const FONT_SIZE=28;
-  const LINE_HEIGHT=34;
-  const MARGIN=20;
+  // Render receipt to canvas — smaller font, generous padding for sharpness
+  const FONT_SIZE=22;
+  const LINE_HEIGHT=27;
+  const PADDING=40; // equal padding all sides
   const WIDTH=576;
   const canvas=document.createElement('canvas');
   canvas.width=WIDTH;
-  canvas.height=LINE_HEIGHT*lines.length+MARGIN*2;
+  canvas.height=LINE_HEIGHT*lines.length+PADDING*2;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  // Draw text multiple times to make it darker/bolder for thermal printing
   ctx.font=FONT_SIZE+'px "Courier New",Courier,monospace';
   ctx.textBaseline='top';
   ctx.fillStyle='#000000';
   lines.forEach((line,i)=>{
-    const y=MARGIN+i*LINE_HEIGHT;
-    // Draw 3 times — slight offsets to simulate bold/dark
-    ctx.fillText(line,MARGIN,y);
-    ctx.fillText(line,MARGIN+0.5,y);
-    ctx.fillText(line,MARGIN,y+0.5);
+    const y=PADDING+i*LINE_HEIGHT;
+    ctx.fillText(line,PADDING,y);
+    ctx.fillText(line,PADDING+0.5,y);
+    ctx.fillText(line,PADDING,y+0.5);
   });
 
   const imgData=canvas.toDataURL('image/png');
