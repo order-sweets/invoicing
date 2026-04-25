@@ -705,12 +705,12 @@ async function shareReceipt(){
   const lines=text.split('\n');
 
   // Render receipt to canvas — smaller font, generous padding for sharpness
-  const FONT_SIZE=22;
-  const LINE_HEIGHT=27;
+  const FONT_SIZE=25;
+  const LINE_HEIGHT=30;
   const PADDING=40; // equal padding all sides
   const WIDTH=576;
   const canvas=document.createElement('canvas');
-  canvas.width=WIDTH;
+  canvas.width=WIDTH+PADDING*2; // extra width so text area + padding = total width
   canvas.height=LINE_HEIGHT*lines.length+PADDING*2;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
@@ -732,7 +732,7 @@ async function shareReceipt(){
   // 1px = 25.4/203 mm (203dpi printer), canvas width = 576px = 72mm
   // scale: MM_WIDTH/72 * canvas height in mm
   const PX_TO_MM=25.4/203;
-  const MM_HEIGHT=Math.ceil(canvas.height*PX_TO_MM*(MM_WIDTH/(WIDTH*PX_TO_MM)));
+  const MM_HEIGHT=Math.ceil(canvas.height*PX_TO_MM*(MM_WIDTH/(canvas.width*PX_TO_MM)));
 
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF({
