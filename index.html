@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- invoice_v3 | built: 2026-04-16 | DO NOT REPLACE WITH OLDER FILE -->
+<!-- invoice_v3 | built: 2026-04-26 | DO NOT REPLACE WITH OLDER FILE -->
 <html lang="en" translate="no">
 <head>
 <meta charset="UTF-8">
@@ -149,7 +149,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
 .card{background:var(--paper);border:1.5px solid var(--border-md);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px;box-shadow:var(--sh);min-width:0;width:100%;}
 .card-hd{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);gap:6px;flex-wrap:wrap;}
-.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#555;}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#111;}
 .card-body{padding:14px;}
 
 /* FORM */
@@ -218,33 +218,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 /* ── PDF DOC (A4/A5/A6 optimised) ── */
 .pdf-doc{padding:32px 40px;font-family:'DM Sans',sans-serif;color:#1C1B18;font-size:14px;}
 .pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
-.pdf-brand-name{font-family:'DM Serif Display',serif;font-size:28px;color:#1C1B18;}
-.pdf-brand-sub{font-size:12px;color:#78766E;margin-top:4px;line-height:1.7;}
+.pdf-brand-name{font-family:'DM Sans',sans-serif;font-size:28px;font-weight:700;color:#111;}
+.pdf-brand-sub{font-size:12px;color:#111;margin-top:4px;line-height:1.7;}
 .pdf-inv-box{text-align:right;}
-.pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#78766E;}
+.pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#111;}
 .pdf-inv-box .num{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:#C8501F;margin:2px 0;}
-.pdf-inv-box .dt{font-size:10px;color:#78766E;}
+.pdf-inv-box .dt{font-size:19px;color:#111;font-weight:700;margin-top:4px;}
 .pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;padding:13px 15px;background:#F3F1EC;border-radius:9px;}
-.pm-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}
+.pm-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#111;font-weight:700;margin-bottom:3px;}
 .pm-val{font-size:14px;font-weight:700;line-height:1.4;}
-.pm-sub{font-size:11px;color:#78766E;margin-top:1px;line-height:1.4;}
+.pm-sub{font-size:11px;color:#111;margin-top:1px;line-height:1.4;}
 .pdf-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;}
-.pdf-tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;padding:8px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
+.pdf-tbl th{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:#111;padding:8px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}
 .pdf-tbl th.r{text-align:right;}
-.pdf-tbl td{padding:8px 8px;border-bottom:1px solid #EFEEE9;font-size:13px;vertical-align:top;}
-.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-weight:600;font-size:13px;}
+.pdf-tbl td{padding:8px 8px;border-bottom:1px solid #EFEEE9;font-size:14px;vertical-align:top;}
+.pdf-tbl td.r{text-align:right;font-family:'DM Mono',monospace;font-size:14px;}
 .pdf-ret-pill{font-size:8px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;vertical-align:middle;}
 .pdf-neg{color:#B91C1C;}
 .pdf-tots{display:flex;justify-content:flex-end;margin-bottom:14px;}
-.pdf-tots-inner{width:180px;}
-.ptr{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
-.ptr.dim{color:#78766E;}.ptr.ret{color:#B91C1C;}
+.pdf-tots-inner{width:260px;}
+.ptr{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;}
+.ptr.dim{color:#111;}.ptr.ret{color:#B91C1C;}
 .ptr.grand{font-size:16px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
 .ptr .m{font-family:'DM Mono',monospace;}
 .pdf-notes{margin-top:16px;padding-top:13px;border-top:1px solid #E0DED8;}
-.pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:4px;}
-.pdf-notes .val{font-size:13px;color:#555;line-height:1.6;}
-.pdf-footer{margin-top:24px;padding-top:11px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#ABA9A1;}
+.pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#111;font-weight:700;margin-bottom:4px;}
+.pdf-notes .val{font-size:13px;color:#111;line-height:1.6;}
+.pdf-footer{margin-top:24px;padding-top:11px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#111;}
 
 /* ── TOAST ── */
 .toast{position:fixed;bottom:16px;right:16px;background:var(--ink);color:#fff;padding:8px 15px;border-radius:9px;font-size:12px;font-weight:600;z-index:999;opacity:0;transform:translateY(5px);transition:all .18s;pointer-events:none;max-width:280px;}
@@ -328,10 +328,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Pending Orders <span id="pending-badge" style="display:none;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
         <button class="sec-tab" id="tab-quotations" onclick="switchTab('quotations')">Quotations</button>
         <button class="sec-tab" id="tab-completed" onclick="switchTab('completed')">Invoiced</button>
+        <button class="sec-tab" id="tab-sales" onclick="switchTab('sales')">Sales</button>
       </div>
 
       <!-- Filter bar -->
-      <div class="filter-bar">
+      <div class="filter-bar" id="filter-bar">
         <input type="text" id="filter-name" placeholder="Search customer/order no./Inv/Quo" oninput="renderHome()" style="min-width:240px;">
         <select id="filter-month" onchange="renderHome()">
           <option value="">All months</option>
@@ -457,7 +458,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 </button>
                 <button class="btn btn-ghost" onclick="downloadPDF()">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Download PDF
+                  Download
                 </button>
                 <button class="btn btn-ghost" onclick="sharePDF(current)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -601,17 +602,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
     <div class="pdf-bar">
       <div class="pdf-bar-title" id="pdf-bar-title">Preview</div>
       <div class="pdf-bar-btns">
-        <button class="btn btn-accent btn-sm" onclick="downloadPDF()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download PDF
-        </button>
-        <button class="btn btn-ghost btn-sm" onclick="sharePDF(_pdfInv||current)">
+        <button class="btn btn-accent btn-sm" onclick="sharePDF(_pdfInv||current)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Share PDF
         </button>
         <button class="btn btn-ghost btn-sm" onclick="doPrint()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Print
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadPDF()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
         </button>
         <button class="pdf-close" onclick="closePDF()">&#x2715;</button>
       </div>
@@ -771,8 +772,18 @@ function _getLineSpec(l){
   var raw=desc.substring(di+3).trim();
   // Normalise × to x
   raw=raw.replace(/×/g,'x');
+  // Fix all known formats into "Box: Xpcs x Yg" or "Piece: 1pc x Yg"
   // "Box (24pcs x 57g)" -> "Box: 24pcs x 57g"
   raw=raw.replace(/^(Box|Piece)\s*\(([^)]+)\)$/,'$1: $2');
+  // "Box x 36pcs x 46.7g" -> "Box: 36pcs x 46.7g" (old buggy format)
+  raw=raw.replace(/^Box\s+x\s+/,'Box: ');
+  raw=raw.replace(/^Piece\s+x\s+/,'Piece: ');
+  // "Box 36pcs x 46.7g" -> "Box: 36pcs x 46.7g" (missing colon)
+  raw=raw.replace(/^Box\s+([0-9])/,'Box: $1');
+  raw=raw.replace(/^Piece\s+([0-9])/,'Piece: $1');
+  // "Piece: 38g" -> "Piece: 1pc x 38g" (missing 1pc x)
+  raw=raw.replace(/^Piece:\s*([0-9])/,'Piece: 1pc x $1');
+  // "Piece: 1pc x 38g" is correct — leave as-is
   return raw;
 }
 
@@ -922,6 +933,7 @@ function switchTab(tab){
   document.getElementById('tab-pending').classList.toggle('active',tab==='pending');
   document.getElementById('tab-completed').classList.toggle('active',tab==='completed');
   var qt=document.getElementById('tab-quotations');if(qt)qt.classList.toggle('active',tab==='quotations');
+  var st=document.getElementById('tab-sales');if(st)st.classList.toggle('active',tab==='sales');
   renderHome();
 }
 
@@ -938,8 +950,11 @@ function matchesFilter(name,date,num){
 function renderHome(){
   var db=document.getElementById('dual-banner');if(db)db.style.display=DB.settings.dual?'block':'none';
   var massBar=document.getElementById('mass-bar');
+  var filterBar=document.getElementById('filter-bar');
   var selAll=document.getElementById('sel-all');
-  if(massBar)massBar.style.display='flex';
+  var isSales=activeTab==='sales';
+  if(massBar)massBar.style.display=isSales?'none':'flex';
+  if(filterBar)filterBar.style.display=isSales?'none':'flex';
   if(selAll){selAll.checked=false;selAll.indeterminate=false;}
   var selCount=document.getElementById('sel-count');if(selCount)selCount.textContent='';
   var el=document.getElementById('home-body');
@@ -960,12 +975,99 @@ function renderHome(){
     if(!qlist.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>No quotations yet.<br>Create one from the sidebar.</p></div>';return;}
     el.innerHTML=qlist.slice().reverse().map(function(q){return renderQuoCard(q);}).join('');
     return;
+  } else if(activeTab==='sales'){
+    el.innerHTML=renderSalesTab();
+    return;
   } else {
     var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
     el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
   }
 }
+
+// ── SALES TALLY ─────────────────────────────────────────────────────────────
+function renderSalesTab(){
+  var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var now=new Date();
+  // Build filter UI state from data attributes or defaults
+  var wrap=document.getElementById('home-body');
+  var selMo=wrap._salMo!==undefined?wrap._salMo:now.getMonth();
+  var selYr=wrap._salYr!==undefined?wrap._salYr:now.getFullYear();
+  var viewAll=wrap._salAll||false;
+
+  // Collect all years from invoices
+  var years=[];
+  DB.invoices.forEach(function(inv){if(inv.date){var y=new Date(inv.date).getFullYear();if(years.indexOf(y)<0)years.push(y);}});
+  years.sort(function(a,b){return b-a;});
+  if(years.indexOf(now.getFullYear())<0)years.unshift(now.getFullYear());
+
+  // Filter invoices
+  var filtered=DB.invoices.filter(function(inv){
+    if(!inv.date)return false;
+    var d=new Date(inv.date);
+    if(d.getFullYear()!==selYr)return false;
+    if(!viewAll&&d.getMonth()!==selMo)return false;
+    return true;
+  });
+
+  // Tally by company
+  var beeTot=0,swTot=0,beeCount=0,swCount=0;
+  filtered.forEach(function(inv){
+    var g=grand(inv.lines);
+    if(inv.company==='swits'){swTot+=g;swCount++;}
+    else{beeTot+=g;beeCount++;}
+  });
+  var total=beeTot+swTot;
+
+  // Month buttons
+  var moBtns=MONTHS.map(function(m,i){
+    var active=!viewAll&&i===selMo;
+    return '<button onclick="setSalesMo('+i+')" style="padding:4px 8px;border-radius:6px;border:1px solid '+(active?'var(--navy)':'var(--border)')+';background:'+(active?'var(--navy)':'transparent')+';color:'+(active?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);cursor:pointer;">'+m+'</button>';
+  }).join('');
+
+  // Year buttons
+  var yrBtns='<select onchange="setSalesYr(parseInt(this.value))" style="padding:6px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;margin-bottom:12px;">'+years.map(function(y){return '<option value="'+y+'"'+(y===selYr?' selected':'')+'>'+y+'</option>';}).join('')+'</select>';
+
+  var allBtn='<button onclick="setSalesAll()" style="padding:4px 10px;border-radius:6px;border:1px solid '+(viewAll?'var(--navy)':'var(--border)')+';background:'+(viewAll?'var(--navy)':'transparent')+';color:'+(viewAll?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;">Full Year</button>';
+
+  function row(label,val,count,color){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">'      +'<div><div style="font-weight:600;font-size:14px;color:'+color+';">'+label+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">'+count+' invoice'+(count!==1?'s':'')+'</div></div>'      +'<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:'+color+';">$'+val.toFixed(2)+'</div>'      +'</div>';
+  }
+
+  return '<div style="padding:16px;">'+yrBtns    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">'+moBtns+allBtn+'</div>'    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">'    +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">'+(viewAll?selYr+' Total':MONTHS[selMo]+' '+selYr)+'</div>'    +row('Bee Events',beeTot,beeCount,'var(--accent)')    +row('SWITS',swTot,swCount,'#3b82f6')    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 0 0;">'    +'<div style="font-weight:700;font-size:15px;">Combined Total</div>'    +'<div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--navy);">$'+total.toFixed(2)+'</div>'    +'</div>'    +'</div>'    +'</div>';
+}
+
+function setSalesMo(mo){
+  var el=document.getElementById('home-body');
+  el._salMo=mo; el._salAll=false;
+  el.innerHTML=renderSalesTab();
+}
+function setSalesYr(yr){
+  var el=document.getElementById('home-body');
+  el._salYr=yr;
+  el.innerHTML=renderSalesTab();
+}
+function setSalesAll(){
+  var el=document.getElementById('home-body');
+  el._salAll=true;
+  el.innerHTML=renderSalesTab();
+}
+function setSalesMo(mo){
+  var el=document.getElementById('home-body');
+  el._salMo=mo; el._salAll=false;
+  el.innerHTML=renderSalesTab();
+}
+function setSalesYr(yr){
+  var el=document.getElementById('home-body');
+  el._salYr=yr;
+  el.innerHTML=renderSalesTab();
+}
+function setSalesAll(){
+  var el=document.getElementById('home-body');
+  el._salAll=true;
+  el.innerHTML=renderSalesTab();
+}
+
 
 function renderInvCard(inv){
   var g=grand(inv.lines);
@@ -983,31 +1085,21 @@ function renderInvCard(inv){
   var gstRateCard=getGSTRate(inv);
   if(gstRateCard!==null){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
   else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
-  return '<div class="inv-card-item">'
-    +'<div class="inv-card-header">'
-      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'
-      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'
-        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'
-        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'
-        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'
-      +'</div>'
-      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'
-      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
-      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'
-      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'
-      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'
-    +'</div>'
-    +'</div>'
-    +'<div class="inv-card-body" id="ic-'+inv.id+'">'
-      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
-      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'
-      +'<div class="inv-card-actions">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'</div>'    +'</div>'    +'</div>';
+  return '<div class="inv-card-item" style="border-left:4px solid '+(inv.paid?'#10b981':'#f87171')+';">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;transition:all 0.2s;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'✓':'✗')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
 }
 
+function togglePaid(id){
+  var inv=DB.invoices.find(function(i){return i.id===id;});
+  if(!inv)return;
+  inv.paid=!inv.paid;
+  persist();renderHome();
+  toast(inv.paid?'Marked as paid ✓':'Marked as unpaid');
+}
 window.deleteInvoice=function(id){
   DB.invoices=DB.invoices.filter(function(i){return i.id!==id;});
   persist();renderHome();toast('Deleted.');
 };
+
 function openReceiptPrinter(id){
   var inv=DB.invoices.find(function(i){return i.id===id;});
   if(!inv){toast('Invoice not found.');return;}
@@ -1293,6 +1385,12 @@ function confirmInvoice(){
     persist();
     toast('\u2713 '+splitNums.join(' + '),4000);
     gotoHome();switchTab('completed');
+    // Offer to print both in one go
+    var printBoth=confirm('Split invoices confirmed!\n\nOpen both PDFs for printing now?');
+    if(printBoth){
+      if(beelines.length) setTimeout(function(){doPrintInv(DB.invoices.find(function(i){return i.id===beeinv.id;}));},300);
+      if(swlines.length)  setTimeout(function(){doPrintInv(DB.invoices.find(function(i){return i.id===swinv.id;}));},800);
+    }
     return;
   }
 
@@ -1335,33 +1433,33 @@ function delInvoice(){
 // ══ PDF ══
 function getPDFCSS(){
   return '*{box-sizing:border-box;margin:0;padding:0;}'
-    +'body{font-family:"DM Sans",sans-serif;color:#1C1B18;background:#fff;}'
+    +'body{font-family:"DM Sans",sans-serif;color:#111;background:#fff;}'
     +'.pdf-doc{padding:30px 38px;}'
     +'.pdf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}'
-    +'.pdf-brand-name{font-family:"DM Serif Display",serif;font-size:28px;}'
-    +'.pdf-brand-sub{font-size:12px;color:#78766E;margin-top:4px;line-height:1.7;}'
-    +'.pdf-inv-box{text-align:right;}.pdf-inv-box .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;}'
-    +'.pdf-inv-box .num{font-size:17px;font-weight:700;font-family:"DM Mono",monospace;color:#C8501F;margin:2px 0;}'
-    +'.pdf-inv-box .dt{font-size:10px;color:#78766E;}'
+    +'.pdf-brand-name{font-family:"DM Sans",sans-serif;font-size:28px;font-weight:700;}'
+    +'.pdf-brand-sub{font-size:13px;color:#111;margin-top:4px;line-height:1.7;}'
+    +'.pdf-inv-box{text-align:right;}.pdf-inv-box .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#111;}'
+    +'.pdf-inv-box .num{font-size:18px;font-weight:700;font-family:"DM Mono",monospace;color:#C8501F;margin:2px 0;}'
+    +'.pdf-inv-box .dt{font-size:19px;color:#111;font-weight:700;margin-top:4px;}'
     +'.pdf-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;padding:12px 14px;background:#F3F1EC;border-radius:8px;}'
-    +'.pm-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#78766E;font-weight:700;margin-bottom:3px;}'
-    +'.pm-val{font-size:12px;font-weight:700;line-height:1.4;}'
-    +'.pm-sub{font-size:11px;color:#78766E;margin-top:1px;}'
+    +'.pm-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#111;font-weight:700;margin-bottom:3px;}'
+    +'.pm-val{font-size:13px;font-weight:700;line-height:1.4;}'
+    +'.pm-sub{font-size:12px;color:#111;margin-top:1px;}'
     +'.pdf-tbl{width:100%;border-collapse:collapse;margin-bottom:14px;}'
-    +'.pdf-tbl th{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#78766E;padding:6px 8px;border-bottom:1.5px solid #E0DED8;text-align:left;font-weight:700;}'
-    +'.pdf-tbl th.r{text-align:right;}.pdf-tbl td{padding:6px 8px;border-bottom:1px solid #EFEEE9;font-size:11px;}'
-    +'.pdf-tbl td.r{text-align:right;font-family:"DM Mono",monospace;font-weight:600;}'
-    +'.pdf-ret-pill{font-size:8px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;}'
+    +'.pdf-tbl th{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#111;padding:7px 8px;border-bottom:1.5px solid #ccc;text-align:left;font-weight:700;}'
+    +'.pdf-tbl th.r{text-align:right;}.pdf-tbl td{padding:7px 8px;border-bottom:1px solid #ddd;font-size:14px;}'
+    +'.pdf-tbl td.r{text-align:right;font-family:"DM Mono",monospace;}'
+    +'.pdf-ret-pill{font-size:9px;font-weight:700;background:#FEE2E2;color:#B91C1C;padding:1px 4px;border-radius:4px;text-transform:uppercase;margin-left:3px;}'
     +'.pdf-neg{color:#B91C1C;}'
-    +'.pdf-tots{display:flex;justify-content:flex-end;margin-bottom:12px;}.pdf-tots-inner{width:170px;}'
-    +'.ptr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;}'
-    +'.ptr.dim{color:#78766E;}.ptr.ret{color:#B91C1C;}'
-    +'.ptr.grand{font-size:13px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}'
+    +'.pdf-tots{display:flex;justify-content:flex-end;margin-bottom:12px;}.pdf-tots-inner{width:260px;}'
+    +'.ptr{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;}'
+    +'.ptr.dim{color:#111;}.ptr.ret{color:#B91C1C;}'
+    +'.ptr.grand{font-size:16px;font-weight:700;border-top:1.5px solid #111;padding-top:7px;margin-top:4px;}'
     +'.ptr .m{font-family:"DM Mono",monospace;}'
-    +'.pdf-notes{margin-top:16px;padding-top:12px;border-top:1px solid #E0DED8;}'
-    +'.pdf-notes .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#78766E;font-weight:700;margin-bottom:4px;}'
-    +'.pdf-notes .val{font-size:11px;color:#555;line-height:1.6;}'
-    +'.pdf-footer{margin-top:22px;padding-top:10px;border-top:1px solid #E0DED8;text-align:center;font-size:10px;color:#ABA9A1;}'
+    +'.pdf-notes{margin-top:16px;padding-top:12px;border-top:1px solid #ccc;}'
+    +'.pdf-notes-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#111;font-weight:700;margin-bottom:4px;}'
+    +'.pdf-notes-val{font-size:12px;color:#111;line-height:1.6;}'
+    +'.pdf-footer{margin-top:22px;padding-top:10px;border-top:1px solid #ccc;text-align:center;font-size:11px;color:#111;}'
     +'@media print{@page{size:A4;margin:12mm;}}'
     +'@media print and (max-width:148mm){@page{size:A5;margin:8mm;}}'
     +'@media print and (max-width:105mm){@page{size:A6;margin:6mm;}}';
@@ -1375,14 +1473,21 @@ function buildPDF(inv){
   var brandSub2=useCo2?[cfg.co2phone,cfg.co2email,(cfg.co2addr||'').replace(/\n/g,'<br>')].filter(Boolean).join('<br>'):[(cfg.phone),(cfg.email),(cfg.addr||'').replace(/\n/g,'<br>')].filter(Boolean).join('<br>');
   var docLabel=inv.isQuotation?'Quotation':'Invoice';
   var quoRefLine=inv.quoRef?'<div class="pm-sub">From Quotation: '+esc(inv.quoRef)+'</div>':'';
-  var rows=inv.lines.map(function(l){
-    var t=l.q*(l.ret?-1:1)*l.p;
-    var spec=_getLineSpec(l);
-    var descParts=l.desc.split(' — ');
-    var baseName=descParts[0];
-    var specHtml=spec?'<div style="font-size:11px;color:#3a3834;margin-top:2px;font-style:italic;">'+esc(spec)+'</div>':'';
-    return '<tr><td>'+(l.ret?'<span class="pdf-ret-pill">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
-  }).join('');
+  var delivLines=inv.lines.filter(function(l){return !l.ret;});
+  var retLines=inv.lines.filter(function(l){return l.ret;});
+  function buildRows(lines){
+    return lines.map(function(l){
+      var t=l.q*(l.ret?-1:1)*l.p;
+      var spec=_getLineSpec(l);
+      var descParts=l.desc.split(' — ');
+      var baseName=descParts[0];
+      var specHtml=spec?'<div style="font-size:12px;color:#111;margin-top:2px;">'+esc(spec)+'</div>':'';
+      return '<tr><td>'+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+    }).join('');
+  }
+  var delivRows=buildRows(delivLines);
+  var retRows=retLines.length?'<tr><td colspan="4" style="padding-top:14px;padding-bottom:4px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#B91C1C;border-top:1px solid #eee;">Returns</td></tr>'+buildRows(retLines):'';
+  var rows=delivRows+retRows;
   var tots='';
   if(r>0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
   var gstRatePDF=getGSTRate(inv);
@@ -1401,7 +1506,7 @@ function buildPDF(inv){
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
-      +(inv.ref?'<div><div class="pm-lbl">'+(inv._refLabel||'Order Number')+'</div><div class="pm-val">'+esc(inv.ref)+'</div><div class="pm-sub">Payment: '+esc(inv.pay)+'</div></div>':'<div><div class="pm-lbl">Payment</div><div class="pm-val">'+esc(inv.pay)+'</div></div>')
+      +(inv.ref?'<div><div class="pm-sub"><strong>Order No.</strong> '+esc(inv.ref)+'</div><div class="pm-sub"><strong>Payment:</strong> '+esc(inv.pay)+'</div></div>':'<div><div class="pm-sub"><strong>Payment:</strong> '+esc(inv.pay)+'</div></div>')
     +'</div>'
     +'<table class="pdf-tbl"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
@@ -1447,7 +1552,7 @@ function downloadInvFile(inv){
   w.document.close();
   toast('Print dialog opening — choose "Save as PDF" to download.');
 }
-function doPrint(){if(!current){toast('No invoice open.');return;}readEditor();doPrintInv(current);}
+function doPrint(){var inv=_pdfInv||current;if(!inv){toast('No invoice open.');return;}if(current&&!_pdfInv)readEditor();doPrintInv(inv);}
 function downloadPDF(){var inv=current||_pdfInv;if(!inv){toast('No invoice open.');return;}if(current)readEditor();realDownloadPDF(inv);}
 function downloadInv(id){var inv=DB.invoices.find(function(i){return i.id===id;});if(inv)realDownloadPDF(inv);}
 
@@ -1809,7 +1914,7 @@ function buildCSV(invoices,coLabel,label){
     ['Period',label||'All'],
     ['Generated',new Date().toLocaleDateString('en-SG')],
     [],
-    ['Invoice No','Date','Customer','Order Number','Payment','Subtotal','Returns','GST','Total']
+    ['Invoice No','Date','Customer','Order Number','Company','Payment','Subtotal','Returns','GST','Total']
   ];
   invoices.forEach(function(inv){
     var s=sub(inv.lines),r=rets(inv.lines),g=s-r;
@@ -1821,11 +1926,13 @@ function buildCSV(invoices,coLabel,label){
       inv.date||'',
       (inv.custName||'')+(inv.outlet?' - '+inv.outlet:''),
       inv.ref||'',
+      inv.company==='swits'?'SWITS':'Bee Events',
       inv.pay||'',
       s.toFixed(2),
       r<0?r.toFixed(2):'0.00',
       gstAmt?gstAmt.toFixed(2):'0.00',
-      grandTot.toFixed(2)
+      grandTot.toFixed(2),
+      inv.paid?'Yes':'No'
     ]);
   });
   // Summary row
