@@ -725,29 +725,18 @@ async function shareReceipt(){
     ctx.fillText(line,PADDING,y+0.5);
   });
 
-  const imgData=canvas.toDataURL('image/png');
-
-  // PDF: 80mm wide, full receipt height — WePrint prints at exact dimensions
-  const MM_WIDTH=80;
-  // 1px = 25.4/203 mm (203dpi printer), canvas width = 576px = 72mm
-  // scale: MM_WIDTH/72 * canvas height in mm
-  const PX_TO_MM=25.4/203;
-  const MM_HEIGHT=Math.ceil(canvas.height*PX_TO_MM*(MM_WIDTH/(canvas.width*PX_TO_MM)));
-
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF({
-    orientation:'portrait',
-    unit:'mm',
-    format:[MM_WIDTH, MM_HEIGHT]  // exact receipt size
-  });
-  // Place image to fill page exactly
-  pdf.addImage(imgData,'PNG',0,0,MM_WIDTH,MM_HEIGHT,undefined,'FAST');
-
-  const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Receipt';
-
   const DOWNLOAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
   btn.disabled=false; btn.innerHTML=DOWNLOAD_ICON;
 
+  // Download as PNG — open in WePrint from Downloads/Gallery
+  canvas.toBlob((blob)=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='receipt.png';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showMsg('Saved as receipt.png — open in WePrint to print.','info');
+  },'image/png');
   // Always download as PNG — open in WePrint from gallery/files
   canvas.toBlob((blob)=>{
     const url=URL.createObjectURL(blob);
