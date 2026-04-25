@@ -716,9 +716,9 @@ async function shareReceipt(){
   octx.font=FONT_STR;
   const maxTextW=lines.reduce((mx,l)=>Math.max(mx,octx.measureText(l).width),0);
 
-  // Canvas sized to text + equal padding on all sides
+  // Canvas locked to 435px wide with equal padding
   const canvas=document.createElement('canvas');
-  canvas.width=Math.ceil(maxTextW)+PAD*2;
+  canvas.width=435;
   canvas.height=LINE_HEIGHT*lines.length+PAD*2;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
