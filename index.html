@@ -1022,7 +1022,7 @@ function renderSalesTab(){
   // Month buttons
   var moBtns=MONTHS.map(function(m,i){
     var active=!viewAll&&i===selMo;
-    return '<button onclick="setSalesMo('+i+')" style="padding:4px 8px;border-radius:6px;border:1px solid '+(active?'var(--navy)':'var(--border)')+';background:'+(active?'var(--navy)':'transparent')+';color:'+(active?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);cursor:pointer;">'+m+'</button>';
+    return '<button onclick="setSalesMo('+i+')" style="padding:4px 8px;border-radius:6px;border:1px solid '+(active?'#1a2e4a':'#dde3ea')+';background:'+(active?'#1a2e4a':'transparent')+';color:'+(active?'#ffffff':'#6b7a8d')+';font-size:11px;font-family:var(--mono);cursor:pointer;">'+m+'</button>';
   }).join('');
 
   // Year buttons
