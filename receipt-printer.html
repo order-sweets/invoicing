@@ -704,25 +704,33 @@ async function shareReceipt(){
   const text=document.getElementById('receiptPreview').textContent;
   const lines=text.split('\n');
 
-  // Render receipt to canvas — smaller font, generous padding for sharpness
-  const FONT_SIZE=25;
-  const LINE_HEIGHT=30;
-  const PADDING=40; // equal padding all sides
-  const WIDTH=576;
+  // Render receipt — measure actual text width, add equal padding on all sides
+  const FONT_SIZE=22;
+  const LINE_HEIGHT=27;
+  const PAD=30; // equal padding all sides
+  const FONT_STR=FONT_SIZE+'px "Courier New",Courier,monospace';
+
+  // First pass: measure max text width
+  const offscreen=document.createElement('canvas');
+  const octx=offscreen.getContext('2d');
+  octx.font=FONT_STR;
+  const maxTextW=lines.reduce((mx,l)=>Math.max(mx,octx.measureText(l).width),0);
+
+  // Canvas sized to text + equal padding on all sides
   const canvas=document.createElement('canvas');
-  canvas.width=WIDTH+PADDING*2; // extra width so text area + padding = total width
-  canvas.height=LINE_HEIGHT*lines.length+PADDING*2;
+  canvas.width=Math.ceil(maxTextW)+PAD*2;
+  canvas.height=LINE_HEIGHT*lines.length+PAD*2;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.font=FONT_SIZE+'px "Courier New",Courier,monospace';
+  ctx.font=FONT_STR;
   ctx.textBaseline='top';
   ctx.fillStyle='#000000';
   lines.forEach((line,i)=>{
-    const y=PADDING+i*LINE_HEIGHT;
-    ctx.fillText(line,PADDING,y);
-    ctx.fillText(line,PADDING+0.5,y);
-    ctx.fillText(line,PADDING,y+0.5);
+    const y=PAD+i*LINE_HEIGHT;
+    ctx.fillText(line,PAD,y);
+    ctx.fillText(line,PAD+0.5,y);
+    ctx.fillText(line,PAD,y+0.5);
   });
 
   const DOWNLOAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
