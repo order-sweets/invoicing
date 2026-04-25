@@ -506,8 +506,7 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
   L.push(pad('TOTAL',23,true)+pad('$'+grand.toFixed(2),9));
   L.push(D2);
   L.push('');
-  L.push(ctr(signOff,W));
-  L.push('');
+  if(signOff) L.push(ctr(signOff,W));
   return L.join('\n');
 }
 
@@ -563,7 +562,7 @@ function textToESCPOS(text){
   const canvas=document.createElement('canvas');
   const lines=text.split('\n');
   canvas.width=PRINT_WIDTH_PX;
-  canvas.height=LINE_HEIGHT*lines.length+MARGIN*2;
+  canvas.height=LINE_HEIGHT*lines.length+MARGIN;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -716,11 +715,16 @@ async function shareReceipt(){
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#000000';
+  // Draw text multiple times to make it darker/bolder for thermal printing
   ctx.font=FONT_SIZE+'px "Courier New",Courier,monospace';
   ctx.textBaseline='top';
+  ctx.fillStyle='#000000';
   lines.forEach((line,i)=>{
-    ctx.fillText(line,MARGIN,MARGIN+i*LINE_HEIGHT);
+    const y=MARGIN+i*LINE_HEIGHT;
+    // Draw 3 times — slight offsets to simulate bold/dark
+    ctx.fillText(line,MARGIN,y);
+    ctx.fillText(line,MARGIN+0.5,y);
+    ctx.fillText(line,MARGIN,y+0.5);
   });
 
   const imgData=canvas.toDataURL('image/png');
