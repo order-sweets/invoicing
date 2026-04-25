@@ -258,8 +258,8 @@
 
   <div style="display:flex;gap:10px;">
     <button class="print-btn" id="shareBtn" onclick="shareReceipt()" style="flex:1;">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      Share Receipt
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
     </button>
     <button class="print-btn" id="printBtn" onclick="printReceipt()" style="flex:1;background:var(--surface);color:var(--navy);border:2px solid var(--navy);">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -747,25 +747,18 @@ async function shareReceipt(){
 
   const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share Receipt';
 
-  const pdfBlob=pdf.output('blob');
-  const pdfFile=new File([pdfBlob],'receipt.pdf',{type:'application/pdf'});
+  const DOWNLOAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
+  btn.disabled=false; btn.innerHTML=DOWNLOAD_ICON;
 
-  btn.disabled=false; btn.innerHTML=SHARE_ICON;
-
-  if(navigator.share && navigator.canShare && navigator.canShare({files:[pdfFile]})){
-    try{
-      await navigator.share({files:[pdfFile], title:'Receipt'});
-    }catch(e){
-      if(!e.message.includes('cancelled')) showMsg('Share failed: '+e.message,'error');
-    }
-  } else {
-    const url=URL.createObjectURL(pdfBlob);
+  // Always download as PNG — open in WePrint from gallery/files
+  canvas.toBlob((blob)=>{
+    const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url; a.download='receipt.pdf';
+    a.href=url; a.download='receipt.png';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showMsg('Downloaded receipt.pdf','info');
-  }
+    showMsg('Saved as receipt.png — open in WePrint to print.','info');
+  },'image/png');
 }
 
 function showMsg(text,type='info'){const el=document.getElementById('msgBox');el.textContent=text;el.className='msg show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),4000);}
