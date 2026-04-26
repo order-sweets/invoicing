@@ -1085,7 +1085,7 @@ function renderInvCard(inv){
   var gstRateCard=getGSTRate(inv);
   if(gstRateCard!==null){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
   else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
-  return '<div class="inv-card-item" style="border-left:4px solid '+(inv.paid?'#10b981':'#f87171')+';">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;transition:all 0.2s;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'✓':'✗')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
+  return '<div class="inv-card-item" style="border-left:4px solid '+(inv.paid?'#10b981':'#f87171')+';">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
 }
 
 function togglePaid(id){
@@ -1093,7 +1093,14 @@ function togglePaid(id){
   if(!inv)return;
   inv.paid=!inv.paid;
   persist();renderHome();
-  toast(inv.paid?'Marked as paid ✓':'Marked as unpaid');
+  toast(inv.paid?'Marked as paid $':'Marked as unpaid ❗');
+}
+function toggleDelivered(id){
+  var inv=DB.invoices.find(function(i){return i.id===id;});
+  if(!inv)return;
+  inv.delivered=!inv.delivered;
+  persist();renderHome();
+  toast(inv.delivered?'Delivered ✅':'Undelivered ⏳');
 }
 window.deleteInvoice=function(id){
   DB.invoices=DB.invoices.filter(function(i){return i.id!==id;});
@@ -1574,7 +1581,7 @@ function realDownloadPDF(inv){
   var renderEl=container.querySelector('#_pdf_render');
   setTimeout(function(){
     html2canvas(renderEl,{
-      scale:2,
+      scale:1.5,
       useCORS:true,
       backgroundColor:'#ffffff',
       width:794,
@@ -1582,7 +1589,7 @@ function realDownloadPDF(inv){
       logging:false
     }).then(function(canvas){
       document.body.removeChild(container);
-      var imgData=canvas.toDataURL('image/png');
+      var imgData=canvas.toDataURL('image/jpeg',0.9);
       var {jsPDF}=window.jspdf;
       var pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
       var pdfW=pdf.internal.pageSize.getWidth();
@@ -1618,10 +1625,10 @@ function sharePDF(inv){
   toast('Generating PDF...');
   var renderEl=container.querySelector('#_pdf_share');
   setTimeout(function(){
-    html2canvas(renderEl,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
+    html2canvas(renderEl,{scale:1.5,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
     .then(function(canvas){
       document.body.removeChild(container);
-      var imgData=canvas.toDataURL('image/png');
+      var imgData=canvas.toDataURL('image/jpeg',0.9);
       var {jsPDF}=window.jspdf;
       var pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
       var pdfW=pdf.internal.pageSize.getWidth();
@@ -1966,11 +1973,11 @@ function invToPDFBlob(inv){
     iframe.contentDocument.close();
     setTimeout(function(){
       var inner=iframe.contentDocument.body;
-      html2canvas(inner,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794})
+      html2canvas(inner,{scale:1.5,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794})
         .then(function(canvas){
           var {jsPDF}=window.jspdf;
           var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-          var imgData=canvas.toDataURL('image/png');
+          var imgData=canvas.toDataURL('image/jpeg',0.9);
           var pdfW=pdf.internal.pageSize.getWidth();
           var pdfH=(canvas.height*pdfW)/canvas.width;
           var pageH=pdf.internal.pageSize.getHeight();
