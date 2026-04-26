@@ -1581,7 +1581,7 @@ function realDownloadPDF(inv){
   var renderEl=container.querySelector('#_pdf_render');
   setTimeout(function(){
     html2canvas(renderEl,{
-      scale:1.5,
+      scale:2,
       useCORS:true,
       backgroundColor:'#ffffff',
       width:794,
@@ -1589,7 +1589,7 @@ function realDownloadPDF(inv){
       logging:false
     }).then(function(canvas){
       document.body.removeChild(container);
-      var imgData=canvas.toDataURL('image/jpeg',0.9);
+      var imgData=canvas.toDataURL('image/jpeg',0.95);
       var {jsPDF}=window.jspdf;
       var pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
       var pdfW=pdf.internal.pageSize.getWidth();
@@ -1625,10 +1625,10 @@ function sharePDF(inv){
   toast('Generating PDF...');
   var renderEl=container.querySelector('#_pdf_share');
   setTimeout(function(){
-    html2canvas(renderEl,{scale:1.5,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
+    html2canvas(renderEl,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794,logging:false})
     .then(function(canvas){
       document.body.removeChild(container);
-      var imgData=canvas.toDataURL('image/jpeg',0.9);
+      var imgData=canvas.toDataURL('image/jpeg',0.95);
       var {jsPDF}=window.jspdf;
       var pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
       var pdfW=pdf.internal.pageSize.getWidth();
@@ -1973,11 +1973,11 @@ function invToPDFBlob(inv){
     iframe.contentDocument.close();
     setTimeout(function(){
       var inner=iframe.contentDocument.body;
-      html2canvas(inner,{scale:1.5,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794})
+      html2canvas(inner,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:794,windowWidth:794})
         .then(function(canvas){
           var {jsPDF}=window.jspdf;
           var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-          var imgData=canvas.toDataURL('image/jpeg',0.9);
+          var imgData=canvas.toDataURL('image/jpeg',0.95);
           var pdfW=pdf.internal.pageSize.getWidth();
           var pdfH=(canvas.height*pdfW)/canvas.width;
           var pageH=pdf.internal.pageSize.getHeight();
