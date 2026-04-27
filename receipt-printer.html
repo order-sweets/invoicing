@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bee Events · Receipt Printer</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;700&display=swap');
 
   :root {
     --bg: #f0f4f8;
@@ -92,7 +92,7 @@
   .total-line.grand { font-family: var(--mono); font-size: 17px; font-weight: 600; color: var(--accent); border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px; margin-top: 2px; }
 
   .preview-wrap { background: #fff; border-radius: 4px; border: 1px solid var(--border); overflow: hidden; }
-  .receipt-preview { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; line-height: 1.5; color: #111; background: #fff; padding: 16px 12px; white-space: pre-wrap; word-break: break-word; min-height: 80px; display: flex; flex-direction: column; align-items: center; }
+  .receipt-preview { font-family: 'Roboto Mono', monospace; font-size: 11.5px; line-height: 1.5; color: #111; background: #fff; padding: 16px 12px; white-space: pre-wrap; word-break: break-word; min-height: 80px; display: flex; flex-direction: column; align-items: center; }
 
   .print-btn { width: 100%; padding: 15px; background: var(--navy); border: none; border-radius: 10px; color: var(--accent); font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; border: 2px solid var(--navy); }
   .print-btn:hover { background: var(--navy2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,46,74,0.2); }
@@ -704,22 +704,17 @@ async function shareReceipt(){
   const text=document.getElementById('receiptPreview').textContent;
   const lines=text.split('\n');
 
-  // Render receipt — measure actual text width, add equal padding on all sides
-  const FONT_SIZE=22;
-  const LINE_HEIGHT=27;
-  const PAD=30; // equal padding all sides
-  const FONT_STR=FONT_SIZE+'px "Courier New",Courier,monospace';
+  // Render receipt at EXACT printer resolution
+  // DP80S: 72mm @ 203dpi = 576 dots wide
+  const PRINTER_W=576;
+  const FONT_SIZE=13;
+  const LINE_HEIGHT=19;
+  const VERT_PAD=16; // top/bottom padding
+  const FONT_STR='500 '+FONT_SIZE+'px "Roboto Mono",monospace';
 
-  // First pass: measure max text width
-  const offscreen=document.createElement('canvas');
-  const octx=offscreen.getContext('2d');
-  octx.font=FONT_STR;
-  const maxTextW=lines.reduce((mx,l)=>Math.max(mx,octx.measureText(l).width),0);
-
-  // Canvas locked to 435px wide with equal padding
   const canvas=document.createElement('canvas');
-  canvas.width=435;
-  canvas.height=LINE_HEIGHT*lines.length+PAD*2;
+  canvas.width=PRINTER_W;
+  canvas.height=LINE_HEIGHT*lines.length+VERT_PAD*2;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -727,25 +722,16 @@ async function shareReceipt(){
   ctx.textBaseline='top';
   ctx.fillStyle='#000000';
   lines.forEach((line,i)=>{
-    const y=PAD+i*LINE_HEIGHT;
-    ctx.fillText(line,PAD,y);
-    ctx.fillText(line,PAD+0.5,y);
-    ctx.fillText(line,PAD,y+0.5);
+    const y=VERT_PAD+i*LINE_HEIGHT;
+    ctx.fillText(line,4,y);
+    ctx.fillText(line,4.5,y);
+    ctx.fillText(line,4,y+0.5);
   });
 
   const DOWNLOAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
   btn.disabled=false; btn.innerHTML=DOWNLOAD_ICON;
 
   // Download as PNG — open in WePrint from Downloads/Gallery
-  canvas.toBlob((blob)=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download='receipt.png';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showMsg('Saved as receipt.png — open in WePrint to print.','info');
-  },'image/png');
-  // Always download as PNG — open in WePrint from gallery/files
   canvas.toBlob((blob)=>{
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
