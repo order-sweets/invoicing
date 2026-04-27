@@ -827,6 +827,65 @@ function deductStockForInvoice(lines){
     });
 }
 
+// Adjusts stock based on DIFF between old and new invoice lines
+// Returns are completely ignored (paper-only deduction)
+function adjustStockForInvoiceEdit(oldLines, newLines){
+  var FB_URL='https://store-and-invoicing-default-rtdb.asia-southeast1.firebasedatabase.app';
+  var allProds=_getAllProds();
+
+  function buildPiecesMap(lines){
+    var map={};
+    lines.forEach(function(l){
+      if(l.ret)return; // skip returns — paper only
+      var matched=_resolveLineProd(l,allProds);
+      if(!matched)return;
+      var pid=matched.id;
+      var ppc=parseInt(matched.ppc||1,10);
+      var pieces=(l.unit==='case')?parseInt(l.q,10)*ppc:parseInt(l.q,10);
+      map[pid]=(map[pid]||0)+pieces;
+    });
+    return map;
+  }
+
+  var oldMap=buildPiecesMap(oldLines);
+  var newMap=buildPiecesMap(newLines);
+
+  // Build delta: positive = need to deduct more, negative = need to restore
+  var delta={};
+  var allPids=Object.keys(Object.assign({},oldMap,newMap));
+  allPids.forEach(function(pid){
+    var diff=(newMap[pid]||0)-(oldMap[pid]||0);
+    if(diff!==0)delta[pid]=diff;
+  });
+
+  if(!Object.keys(delta).length)return; // no stock change needed
+
+  fetch(FB_URL+'/store/inv.json')
+    .then(function(r){return r.json();})
+    .then(function(fbInv){
+      var localInv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+      var inv=Object.assign({},localInv,fbInv||{});
+      Object.keys(delta).forEach(function(pid){
+        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
+        inv[pid]=Math.max(0,current-delta[pid]); // deduct if positive, restore if negative
+      });
+      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+      return fetch(FB_URL+'/store/inv.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(inv)
+      });
+    })
+    .catch(function(){
+      var inv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
+      Object.keys(delta).forEach(function(pid){
+        var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
+        inv[pid]=Math.max(0,current-delta[pid]);
+      });
+      localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
+    });
+}
+
 window.deletePendingOrder=function(oid){
   if(!confirm('Remove this order from Pending?'))return;
   DB.pending=DB.pending.filter(function(o){return o.id!==oid;});
@@ -1406,9 +1465,17 @@ function confirmInvoice(){
   var inv=JSON.parse(JSON.stringify(current));
   inv.confirmed=true;
   var existing=DB.invoices.findIndex(function(i){return i.id===inv.id;});
-  if(existing>=0)DB.invoices[existing]=inv;else DB.invoices.push(inv);
-  removePending();
-  deductStockForInvoice(inv.lines);
+  if(existing>=0){
+    // Re-confirming existing invoice — only adjust stock diff, not full deduction
+    var oldLines=DB.invoices[existing].lines||[];
+    DB.invoices[existing]=inv;
+    adjustStockForInvoiceEdit(oldLines,inv.lines);
+  } else {
+    // New invoice — full deduction (excluding returns)
+    DB.invoices.push(inv);
+    removePending();
+    deductStockForInvoice(inv.lines);
+  }
   persist();
   toast('\u2713 '+current.num+' confirmed!',3000);
   gotoHome();
