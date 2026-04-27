@@ -707,13 +707,19 @@ async function shareReceipt(){
   // Render receipt at EXACT printer resolution
   // DP80S: 72mm @ 203dpi = 576 dots wide
   const PRINTER_W=576;
-  const FONT_SIZE=13;
-  const LINE_HEIGHT=19;
+  const FONT_SIZE=20;
+  const LINE_HEIGHT=26;
   const VERT_PAD=16; // top/bottom padding
   const FONT_STR='500 '+FONT_SIZE+'px "Roboto Mono",monospace';
 
+  // Fixed 500px canvas, each line centred individually — always equal left/right margins
+  const CANVAS_W=500;
+  const measurer=document.createElement('canvas');
+  const mctx=measurer.getContext('2d');
+  mctx.font=FONT_STR;
+
   const canvas=document.createElement('canvas');
-  canvas.width=PRINTER_W;
+  canvas.width=CANVAS_W;
   canvas.height=LINE_HEIGHT*lines.length+VERT_PAD*2;
   const ctx=canvas.getContext('2d');
   ctx.fillStyle='#ffffff';
@@ -723,9 +729,11 @@ async function shareReceipt(){
   ctx.fillStyle='#000000';
   lines.forEach((line,i)=>{
     const y=VERT_PAD+i*LINE_HEIGHT;
-    ctx.fillText(line,4,y);
-    ctx.fillText(line,4.5,y);
-    ctx.fillText(line,4,y+0.5);
+    const lw=mctx.measureText(line).width;
+    const x=Math.floor((CANVAS_W-lw)/2); // centre each line
+    ctx.fillText(line,x,y);
+    ctx.fillText(line,x+0.5,y);
+    ctx.fillText(line,x,y+0.5);
   });
 
   const DOWNLOAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
