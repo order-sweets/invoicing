@@ -396,7 +396,8 @@ function refreshAll(){
   document.getElementById('tGstLabel').textContent='GST ('+(gst.on?gst.rate:0)+'%)';
   document.getElementById('tGst').textContent='$'+gstAmt.toFixed(2);
   document.getElementById('tTotal').textContent='$'+grand.toFixed(2);
-  document.getElementById('receiptPreview').textContent=buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAmt,grand);
+  var rawReceipt=buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAmt,grand);
+  document.getElementById('receiptPreview').textContent=rawReceipt.replace(/^~c~/gm,'');
 }
 
 // ── Receipt builder ───────────────────────────────────────────────────────────
@@ -448,11 +449,11 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
   const W=32,D1='-'.repeat(W),D2='='.repeat(W);
   const L=[];
 
-  // Company header
-  L.push(ctr(co.name,W));
-  L.push(ctr(co.uen,W));
-  L.push(ctr(co.phone,W));
-  if(gst.on&&gst.no) L.push(ctr('GST Reg: '+gst.no,W));
+  // Company header — use ~c~ prefix to tag as centre-aligned
+  L.push('~c~'+co.name);
+  L.push('~c~'+co.uen);
+  L.push('~c~'+co.phone);
+  if(gst.on&&gst.no) L.push('~c~'+'GST Reg: '+gst.no);
   L.push(D1);
 
   // Invoice / order / date
@@ -477,7 +478,7 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
   // Returns — always shown if present
   if(returns.length>0){
     L.push(D1);
-    L.push(ctr('-- RETURNS --',W));
+    L.push('-- RETURNS --');
     L.push(D1);
     returns.forEach(item=>{
       renderItemLine(L,item.name,item.qty,'-$'+(item.qty*item.price).toFixed(2),W,item.spec||'');
@@ -496,14 +497,14 @@ function buildReceipt(items,returns,withRet,gst,subtotal,retTotal,afterRet,gstAm
   if(signOff){
     signOff.split('\n').forEach(function(sl){
       if(!sl.trim()){L.push('');return;}
-      // wrap long lines
-      if(sl.length<=W){L.push(ctr(sl,W));return;}
+      // wrap long lines — sign-off is centred
+      if(sl.length<=W){L.push('~c~'+sl.trim());return;}
       var words=sl.split(' '),cur='';
       words.forEach(function(w){
-        if(cur&&(cur+' '+w).length>W){L.push(ctr(cur.trim(),W));cur=w;}
+        if(cur&&(cur+' '+w).length>W){L.push('~c~'+cur.trim());cur=w;}
         else cur=(cur?cur+' ':'')+w;
       });
-      if(cur.trim())L.push(ctr(cur.trim(),W));
+      if(cur.trim())L.push('~c~'+cur.trim());
     });
   }
   L.push('');
@@ -712,11 +713,15 @@ async function shareReceipt(){
   const VERT_PAD=16; // top/bottom padding
   const FONT_STR='500 '+FONT_SIZE+'px "Roboto Mono",monospace';
 
-  // Fixed 500px canvas, each line centred individually — always equal left/right margins
-  const CANVAS_W=500;
+  // Fixed canvas — left-aligned at fixed x offset
+  // The receipt text builder (buildReceipt) already handles its own centering via ctr()
+  // Canvas width = max text width + equal padding both sides
   const measurer=document.createElement('canvas');
   const mctx=measurer.getContext('2d');
   mctx.font=FONT_STR;
+  const maxW=Math.ceil(lines.reduce((mx,l)=>Math.max(mx,mctx.measureText(l).width),0));
+  const HPAD=30; // equal left/right padding
+  const CANVAS_W=maxW+HPAD*2;
 
   const canvas=document.createElement('canvas');
   canvas.width=CANVAS_W;
@@ -729,11 +734,16 @@ async function shareReceipt(){
   ctx.fillStyle='#000000';
   lines.forEach((line,i)=>{
     const y=VERT_PAD+i*LINE_HEIGHT;
-    const lw=mctx.measureText(line).width;
-    const x=Math.floor((CANVAS_W-lw)/2); // centre each line
-    ctx.fillText(line,x,y);
-    ctx.fillText(line,x+0.5,y);
-    ctx.fillText(line,x,y+0.5);
+    const isCentre=line.startsWith('~c~');
+    const text=isCentre?line.substring(3):line;
+    let x=HPAD;
+    if(isCentre){
+      const lw=mctx.measureText(text).width;
+      x=Math.floor((CANVAS_W-lw)/2);
+    }
+    ctx.fillText(text,x,y);
+    ctx.fillText(text,x+0.5,y);
+    ctx.fillText(text,x,y+0.5);
   });
 
   const DOWNLOAD_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download';
