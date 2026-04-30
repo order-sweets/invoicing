@@ -1552,15 +1552,19 @@ function buildPDF(inv){
   function buildRows(lines){
     return lines.map(function(l){
       var t=l.q*(l.ret?-1:1)*l.p;
-      var spec=_getLineSpec(l);
-      var descParts=l.desc.split(' — ');
-      var baseName=descParts[0];
-      var specHtml=spec?'<div style="font-size:9px;color:#111;margin-top:2px;">'+esc(spec)+'</div>':'';
-      return '<tr><td>'+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' pdf-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+      var baseName=l.desc.split(' — ')[0];
+      var packSize=_getLineSpec(l);
+      return '<tr>'
+        +'<td style="font-size:11px;">'+(l.ret?'<span class="pdf-ret-pill">Return</span> ':'')+esc(baseName)+'</td>'
+        +'<td style="font-size:11px;color:#555;">'+esc(packSize)+'</td>'
+        +'<td class="r" style="font-size:11px;">'+l.q+'</td>'
+        +'<td class="r" style="font-size:11px;">$'+l.p.toFixed(2)+'</td>'
+        +'<td class="r'+(t<0?' pdf-neg':'')+'" style="font-size:11px;">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td>'
+        +'</tr>';
     }).join('');
   }
   var delivRows=buildRows(delivLines);
-  var retRows=retLines.length?'<tr><td colspan="4" style="padding-top:14px;padding-bottom:4px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#B91C1C;border-top:1px solid #eee;">Returns</td></tr>'+buildRows(retLines):'';
+  var retRows=retLines.length?'<tr><td colspan="5" style="padding-top:14px;padding-bottom:4px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#B91C1C;border-top:1px solid #eee;">Returns</td></tr>'+buildRows(retLines):'';
   var rows=delivRows+retRows;
   var tots='';
   if(r>0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
@@ -1582,7 +1586,7 @@ function buildPDF(inv){
       +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
       +(inv.ref?'<div><div class="pm-sub"><strong>Order No.</strong> '+esc(inv.ref)+'</div><div class="pm-sub"><strong>Payment:</strong> '+esc(inv.pay)+'</div></div>':'<div><div class="pm-sub"><strong>Payment:</strong> '+esc(inv.pay)+'</div></div>')
     +'</div>'
-    +'<table class="pdf-tbl"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<table class="pdf-tbl"><thead><tr><th style="width:38%">Item</th><th style="width:22%">Pack Size</th><th class="r" style="width:8%">Qty</th><th class="r" style="width:16%">Unit Price</th><th class="r" style="width:16%">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
     +(function(){var n=useCo2?(cfg.co2notes||''):(cfg.notes||'');return n?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'';}())
     +'</div>';
