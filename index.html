@@ -1041,6 +1041,7 @@ function renderHome(){
     var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
     el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
+    _attachSwipe();
   }
 }
 
@@ -1144,7 +1145,7 @@ function renderInvCard(inv){
   var gstRateCard=getGSTRate(inv);
   if(gstRateCard!==null){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
   else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
-  return '<div class="inv-card-item" style="border-left:4px solid '+(inv.paid?'#10b981':'#f87171')+';">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
+  return '<div class="inv-card-item" id="icard-'+inv.id+'" style="border-left:'+(inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)')+';transition:border .2s;">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
 }
 
 function togglePaid(id){
@@ -1160,6 +1161,46 @@ function toggleDelivered(id){
   inv.delivered=!inv.delivered;
   persist();renderHome();
   toast(inv.delivered?'Delivered ✅':'Undelivered ⏳');
+}
+function toggleFlag(id){
+  var inv=DB.invoices.find(function(i){return i.id===id;});
+  if(!inv)return;
+  inv.flagged=!inv.flagged;
+  persist();
+  var card=document.getElementById('icard-'+id);
+  if(card)card.style.borderLeft=inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)';
+  toast(inv.flagged?'Flagged':'Flag removed');
+}
+function _attachSwipe(){
+  document.querySelectorAll('.inv-card-item').forEach(function(card){
+    if(card._swipeAttached)return;
+    card._swipeAttached=true;
+    card.addEventListener('dblclick',function(e){
+      if(e.target.closest('button')||e.target.closest('input'))return;
+      var id=card.id.replace('icard-','');
+      toggleFlag(id);
+    });
+    var startX=0,startY=0,swiping=false;
+    card.addEventListener('touchstart',function(e){
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+      swiping=true;
+    },{passive:true});
+    card.addEventListener('touchmove',function(e){
+      var dy=Math.abs(e.touches[0].clientY-startY);
+      if(dy>10)swiping=false;
+    },{passive:true});
+    card.addEventListener('touchend',function(e){
+      if(!swiping)return;
+      var dx=e.changedTouches[0].clientX-startX;
+      var dy=Math.abs(e.changedTouches[0].clientY-startY);
+      if(Math.abs(dx)>50&&dy<30){
+        var id=card.id.replace('icard-','');
+        toggleFlag(id);
+      }
+      swiping=false;
+    },{passive:true});
+  });
 }
 window.deleteInvoice=function(id){
   DB.invoices=DB.invoices.filter(function(i){return i.id!==id;});
