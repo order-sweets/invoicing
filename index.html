@@ -1555,7 +1555,7 @@ function buildPDF(inv){
       var baseName=l.desc.split(' — ')[0];
       var packSize=_getLineSpec(l);
       return '<tr>'
-        +'<td style="font-size:11px;">'+(l.ret?'<span class="pdf-ret-pill">Return</span> ':'')+esc(baseName)+'</td>'
+        +'<td style="font-size:11px;">'+esc(baseName)+'</td>'
         +'<td style="font-size:11px;color:#555;">'+esc(packSize)+'</td>'
         +'<td class="r" style="font-size:11px;">'+l.q+'</td>'
         +'<td class="r" style="font-size:11px;">$'+l.p.toFixed(2)+'</td>'
