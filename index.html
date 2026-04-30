@@ -1180,26 +1180,7 @@ function _attachSwipe(){
       var id=card.id.replace('icard-','');
       toggleFlag(id);
     });
-    var startX=0,startY=0,swiping=false;
-    card.addEventListener('touchstart',function(e){
-      startX=e.touches[0].clientX;
-      startY=e.touches[0].clientY;
-      swiping=true;
-    },{passive:true});
-    card.addEventListener('touchmove',function(e){
-      var dy=Math.abs(e.touches[0].clientY-startY);
-      if(dy>10)swiping=false;
-    },{passive:true});
-    card.addEventListener('touchend',function(e){
-      if(!swiping)return;
-      var dx=e.changedTouches[0].clientX-startX;
-      var dy=Math.abs(e.changedTouches[0].clientY-startY);
-      if(Math.abs(dx)>50&&dy<30){
-        var id=card.id.replace('icard-','');
-        toggleFlag(id);
-      }
-      swiping=false;
-    },{passive:true});
+
   });
 }
 window.deleteInvoice=function(id){
