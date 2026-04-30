@@ -557,7 +557,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
       <button class="pdf-close" onclick="closeExportModal()">&#x2715;</button>
     </div>
     <div style="padding:20px;">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Download all invoices as individual PDFs + a summary CSV, bundled into a ZIP file. Filter by month and year for tax records.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Filter by month, year and company, then download.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
         <div class="mf">
           <label>Month</label>
@@ -588,10 +588,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         </div>
       </div>
       <div id="exp-count" style="font-size:12px;color:var(--muted);margin-bottom:16px;padding:8px 12px;background:var(--surface2);border-radius:7px;"></div>
-      <button class="confirm-btn" id="exp-btn" onclick="runExport()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download ZIP
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="confirm-btn" id="exp-btn-csv" onclick="runExportCSV()" style="flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          CSV Only
+        </button>
+        <button class="btn btn-ghost btn-lg" id="exp-btn-zip" onclick="runExport()" style="flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          ZIP + PDFs
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1994,13 +2000,11 @@ function updateExpCount(){
   if(!el)return;
   if(!list.length){
     el.textContent='No invoices found for the selected period.';
-    document.getElementById('exp-btn').disabled=true;
-    document.getElementById('exp-btn').style.opacity='0.5';
+    ['exp-btn-csv','exp-btn-zip'].forEach(function(id){var b=document.getElementById(id);if(b){b.disabled=true;b.style.opacity='0.5';}});
   } else {
     var total=list.reduce(function(s,inv){return s+grand(inv.lines);},0);
     el.textContent=list.length+' invoice'+(list.length>1?'s':'')+' · Total $'+total.toFixed(2);
-    document.getElementById('exp-btn').disabled=false;
-    document.getElementById('exp-btn').style.opacity='1';
+    ['exp-btn-csv','exp-btn-zip'].forEach(function(id){var b=document.getElementById(id);if(b){b.disabled=false;b.style.opacity='1';}});
   }
 }
 document.addEventListener('change',function(e){
@@ -2090,6 +2094,25 @@ function invToPDFBlob(inv){
   });
 }
 
+function runExportCSV(){
+  var invoices=getExpInvoices();
+  if(!invoices.length){toast('No invoices to export.');return;}
+  var mo=document.getElementById('exp-month').value;
+  var yr=document.getElementById('exp-year').value;
+  var co=document.getElementById('exp-company').value;
+  var monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var label=(yr||'All')+(mo?'_'+monthNames[parseInt(mo)-1]:'')+(co?'_'+(co==='bee'?'BeeEvents':'SWITS'):'');
+  var coLabel=co==='bee'?'Bee Events':co==='swits'?'SWITS':'All Companies';
+  var csv=buildCSV(invoices,coLabel,label);
+  var blob=new Blob([csv],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='Invoices_'+label+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},5000);
+  toast('✓ CSV downloaded!');
+  closeExportModal();
+}
 function runExport(){
   var invoices=getExpInvoices();
   if(!invoices.length){toast('No invoices to export.');return;}
@@ -2101,7 +2124,7 @@ function runExport(){
   var coLabel=co==='bee'?'Bee Events':co==='swits'?'SWITS':'All Companies';
   var zipName=(co==='bee'?'BeeEvents':co==='swits'?'SWITS':'BOTH')+'_Invoices_'+label+'.zip';
 
-  var btn=document.getElementById('exp-btn');
+  var btn=document.getElementById('exp-btn-zip');
   btn.textContent='Generating…';btn.disabled=true;
   toast('Building ZIP — this may take a moment…',8000);
 
@@ -2121,7 +2144,7 @@ function runExport(){
         document.body.appendChild(a);a.click();
         document.body.removeChild(a);
         setTimeout(function(){URL.revokeObjectURL(url);},10000);
-        btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download ZIP';
+        btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ZIP + PDFs';
         btn.disabled=false;btn.style.opacity='1';
         toast('✓ '+zipName+' downloaded!',4000);
         closeExportModal();
