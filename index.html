@@ -379,6 +379,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                   <datalist id="cust-list"></datalist>
                 </div>
                 <div class="mf">
+                  <label>Phone</label>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:13px;font-weight:600;color:var(--text-muted);white-space:nowrap;">+65</span>
+                    <input type="tel" id="f-phone" placeholder="9123 4567" maxlength="9" inputmode="numeric" style="flex:1;" oninput="fmtInvPhone(this)">
+                  </div>
+                </div>
+                <div class="mf full" id="f-outlet-wrap" style="display:none;">
+                  <label>Outlet</label>
+                  <select id="f-outlet" onchange="onOutletChange()">
+                    <option value="">— No specific outlet —</option>
+                  </select>
+                </div>
+                <div class="mf">
                   <label>Company</label>
                   <select id="f-company" onchange="onCompanyChange()">
                     <option value="bee">Bee Events</option>
@@ -1036,7 +1049,7 @@ function renderHome(){
       var itemRows=(o.items||[]).map(function(it){var t=(it.qty*it.price).toFixed(2);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+Number(it.price).toFixed(2)+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');
       var notes=o.notes?'<div style="margin-top:8px;padding:8px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--muted);"><strong>Notes:</strong> '+esc(o.notes)+'</div>':'';
       var addr=o.addr?'<div style="margin-top:6px;font-size:12px;color:var(--muted);">📍 '+esc(o.addr)+'</div>':'';
-      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'</div></div>';   }).join('');
+      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+(o.custPhone||o.phone?'<div class="oc-meta" style="color:var(--text-muted);">📞 +65 '+esc((o.custPhone||o.phone||'').replace(/\s/g,'').replace(/(\d{4})(\d+)/,'$1 $2'))+'</div>':'')+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'</div></div>';   }).join('');
     el.innerHTML='<div class="order-list">'+html+'</div>';
   } else if(activeTab==='quotations'){
     var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
@@ -1225,7 +1238,7 @@ function toggleCard(id){
 
 // ══ NEW / GENERATE ══
 function newInvoice(){
-  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',date:new Date().toISOString().split('T')[0],ref:'',pay:'Cash on Delivery',lines:[],confirmed:false};
+  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',phone:'',date:new Date().toISOString().split('T')[0],ref:'',pay:'Cash on Delivery',lines:[],confirmed:false};
   current.lines.push({id:'l_'+Date.now(),desc:'',q:1,p:0,ret:false});
   loadEditor();
   document.getElementById('btn-del').style.display='none';
@@ -1266,6 +1279,7 @@ function generateFromOrder(orderId){
   if(!o)return;
   current={
     id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
+    phone:o.custPhone||o.phone||'',
     date:o.date,ref:o.id,pay:'Cash on Delivery',
     lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,pid:it.pid||'',unit:it.unit||'piece',desc:_richDesc(it),q:it.qty,p:it.price,ret:false};}),
     confirmed:false,_sourceOrderId:o.id
@@ -1297,6 +1311,27 @@ function loadEditor(){
   document.getElementById('f-addr').value = current.addr||'';
   document.getElementById('f-ref').value = current.ref||'';
   document.getElementById('f-pay').value = current.pay||'Cash on Delivery';
+  // Populate phone
+  var fphn=document.getElementById('f-phone');
+  if(fphn){var pd=(current.phone||'').replace(/\D/g,'').slice(0,8);fphn.value=pd.length>4?pd.slice(0,4)+' '+pd.slice(4):pd;}
+  // Populate outlet dropdown
+  var outWrap=document.getElementById('f-outlet-wrap');
+  var outSel=document.getElementById('f-outlet');
+  var cust=KNOWN_CUSTOMERS[current.custName||''];
+  var outlets=cust&&cust.outlets?cust.outlets:[];
+  if(outlets.length>0){
+    outSel.innerHTML='<option value="">— No specific outlet —</option>'+outlets.map(function(o,i){
+      return '<option value="'+i+'">'+esc(o.name)+(o.address||o.addr?' — '+esc(o.address||o.addr):'')+'</option>';
+    }).join('');
+    // Try to match saved outlet name back to index
+    var savedOutlet=current.outlet||'';
+    var matchIdx=outlets.findIndex(function(o){return o.name===savedOutlet;});
+    outSel.value=matchIdx>=0?String(matchIdx):'';
+    outWrap.style.display='';
+  } else {
+    outSel.innerHTML='<option value="">— No specific outlet —</option>';
+    outWrap.style.display='none';
+  }
   renderLines();
 }
 
@@ -1305,10 +1340,51 @@ function onCompanyChange(){
   if(fco)current.company=fco.value;
   renderTotals();
 }
+function fmtInvPhone(inp){
+  var digits=inp.value.replace(/\D/g,'').slice(0,8);
+  inp.value=digits.length>4?digits.slice(0,4)+' '+digits.slice(4):digits;
+}
+
+function onOutletChange(){
+  var sel=document.getElementById('f-outlet');
+  var cust=KNOWN_CUSTOMERS[document.getElementById('f-cust-name').value.trim()];
+  if(!cust||!sel)return;
+  var idx=parseInt(sel.value);
+  if(!isNaN(idx)&&cust.outlets&&cust.outlets[idx]){
+    document.getElementById('f-addr').value=cust.outlets[idx].address||cust.outlets[idx].addr||'';
+  } else {
+    document.getElementById('f-addr').value=cust.address||cust.addr||'';
+  }
+}
+
 function onCustNameInput(){
   var name=document.getElementById('f-cust-name').value.trim();
   var cust=KNOWN_CUSTOMERS[name];
-  if(cust){document.getElementById('f-addr').value=cust.addr||'';}
+  var outWrap=document.getElementById('f-outlet-wrap');
+  var outSel=document.getElementById('f-outlet');
+  if(cust){
+    // Phone
+    var ph=document.getElementById('f-phone');
+    if(ph){ph.value='';if(cust.phone){var d=cust.phone.replace(/\D/g,'').slice(0,8);ph.value=d.length>4?d.slice(0,4)+' '+d.slice(4):d;}}
+    // Outlets
+    var outlets=cust.outlets||[];
+    if(outlets.length>0){
+      outSel.innerHTML='<option value="">— No specific outlet —</option>'+outlets.map(function(o,i){
+        return '<option value="'+i+'">'+esc(o.name)+(o.address||o.addr?' — '+esc(o.address||o.addr):'')+'</option>';
+      }).join('');
+      outWrap.style.display='';
+      // Auto-select if only one outlet
+      if(outlets.length===1){outSel.value='0';onOutletChange();}
+      else{document.getElementById('f-addr').value=cust.address||cust.addr||'';}
+    } else {
+      outWrap.style.display='none';
+      outSel.innerHTML='<option value="">— No specific outlet —</option>';
+      document.getElementById('f-addr').value=cust.address||cust.addr||'';
+    }
+  } else {
+    outWrap.style.display='none';
+    outSel.innerHTML='<option value="">— No specific outlet —</option>';
+  }
   current.custName=name;
 }
 
@@ -1423,7 +1499,15 @@ function readEditor(){
   current.custName=document.getElementById('f-cust-name').value.trim();
   var fco2=document.getElementById('f-company');if(fco2)current.company=fco2.value;
   current.addr=document.getElementById('f-addr').value.trim();
-  current.outlet='';
+  // Read outlet from dropdown
+  var outSel=document.getElementById('f-outlet');
+  var cust=KNOWN_CUSTOMERS[current.custName]||null;
+  var outlets=cust&&cust.outlets?cust.outlets:[];
+  var outIdx=outSel&&outSel.value!==''?parseInt(outSel.value):null;
+  current.outlet=(outIdx!==null&&outlets[outIdx])?outlets[outIdx].name:'';
+  // Read phone
+  var fphn=document.getElementById('f-phone');
+  current.phone=fphn?fphn.value.replace(/\s/g,'').trim():'';
   current.date=document.getElementById('f-date').value;
   current.ref=document.getElementById('f-ref').value.trim();
   var rl=document.getElementById('f-ref-label');if(rl)current._refLabel=rl.value.trim()||'Order Number';
@@ -1615,7 +1699,7 @@ function buildPDF(inv){
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub2+'</div></div>'
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
     +'<div class="pdf-meta">'
-      +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div></div>'
+      +'<div><div class="pm-lbl">Bill To</div><div class="pm-val">'+esc(inv.custName||'—')+'</div>'+(inv.outlet?'<div class="pm-sub">'+esc(inv.outlet)+'</div>':'')+'<div class="pm-sub">'+esc(inv.addr||'')+'</div>'+(inv.phone?'<div class="pm-sub">Tel: +65 '+esc(inv.phone.replace(/\s/g,'').replace(/(\d{4})(\d+)/,'$1 $2'))+'</div>':'')+'</div>'
       +(inv.ref?'<div><div class="pm-sub"><strong>Order No.</strong> '+esc(inv.ref)+'</div><div class="pm-sub"><strong>Payment:</strong> '+esc(inv.pay)+'</div></div>':'<div><div class="pm-sub"><strong>Payment:</strong> '+esc(inv.pay)+'</div></div>')
     +'</div>'
     +'<table class="pdf-tbl"><thead><tr><th style="width:38%">Item</th><th style="width:22%">Pack Size</th><th class="r" style="width:8%">Qty</th><th class="r" style="width:16%">Unit Price</th><th class="r" style="width:16%">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
@@ -1875,7 +1959,7 @@ function doWA(inv){
 // -- QUOTATION --
 function nextQuoNum(){DB.quoCounter++;persist();return "QUO-"+String(DB.quoCounter).padStart(4,"0");}
 function newQuotation(){
-  current={id:"quo_"+Date.now(),num:null,isQuotation:true,company:"bee",custName:"",addr:"",outlet:"",
+  current={id:"quo_"+Date.now(),num:null,isQuotation:true,company:"bee",custName:"",addr:"",outlet:"",phone:"",
     date:new Date().toISOString().split("T")[0],ref:"",pay:"",lines:[],confirmed:false};
   current.lines.push({id:'l_'+Date.now(),desc:'',q:1,p:0,ret:false});
   loadEditor();
