@@ -899,6 +899,8 @@ window.deletePendingOrder=function(oid){
   storeOrders=storeOrders.map(function(o){return o.id===oid?Object.assign({},o,{status:'done'}):o;});
   localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
   persist();renderHome();
+  if(window._invFbDebouncedPush)window._invFbDebouncedPush();
+  if(window.syncPendingToStore)window.syncPendingToStore();
 };
 window.toggleOrderCard=function(id){
   var body=document.getElementById(id);
@@ -986,6 +988,7 @@ function deleteSelected(){
       storeOrders=storeOrders.map(function(o){return o.id===id?Object.assign({},o,{status:'done'}):o;});
       localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
     });
+    if(window.syncPendingToStore)window.syncPendingToStore();
   } else if(activeTab==='quotations'){
     DB.quotations=DB.quotations.filter(function(q){return ids.indexOf(q.id)<0;});
   } else if(activeTab==='completed'){
@@ -1445,6 +1448,7 @@ function confirmInvoice(){
       storeOrders=storeOrders.map(function(o){return o.id===oid?Object.assign({},o,{status:'done'}):o;});
       localStorage.setItem('snack-orders-v1',JSON.stringify(storeOrders));
     });
+    if(window.syncPendingToStore)window.syncPendingToStore();
   }
 
   if(DB.settings.dual===true){
@@ -2195,6 +2199,13 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
   var _pushTimer = null;
   var _pushInFlight = false;
   var _pushQueued = false;
+  var _initialInvoiceLoaded = false;
+  var _initialStoreLoaded = false;
+  var _lastInvoiceState = '';
+  var _lastPendingState = '';
+  var _storePollTimer = null;
+  var _storeReconnectTimer = null;
+  var _storeFetchInFlight = false;
 
   function fbStatus(msg, colour) {
     var el = document.getElementById('fb-status');
@@ -2221,37 +2232,156 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     };
   }
 
+  function stableStringify(value) {
+    try { return JSON.stringify(value == null ? null : value); }
+    catch (e) { return 'null'; }
+  }
+
+  function freshUrl(path) {
+    return FB_URL + path + (path.indexOf('?') === -1 ? '?' : '&') + '_ts=' + Date.now();
+  }
+
+  function fetchFreshJson(path) {
+    return fetch(freshUrl(path), {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' }
+    }).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function parseOrderStamp(order) {
+    if (!order || typeof order !== 'object') return 0;
+    var vals = [order.updatedAt, order.createdAt, order.timestamp, order.ts, order.date];
+    for (var i = 0; i < vals.length; i++) {
+      var raw = vals[i];
+      if (raw == null || raw === '') continue;
+      if (typeof raw === 'number' && isFinite(raw)) return raw;
+      var parsed = Date.parse(raw);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  }
+
+  function normalizePendingOrders(list) {
+    if (!Array.isArray(list)) return [];
+    var byId = {};
+    list.forEach(function(item, index) {
+      if (!item || typeof item !== 'object') return;
+      var normalized = Object.assign({}, item);
+      var rawId = normalized.id || normalized.orderId || normalized.ref || normalized.createdAt || normalized.ts || ('pending_' + index);
+      normalized.id = String(rawId);
+      byId[normalized.id] = normalized;
+    });
+    return Object.keys(byId).map(function(id){ return byId[id]; }).sort(function(a, b) {
+      var diff = parseOrderStamp(b) - parseOrderStamp(a);
+      if (diff) return diff;
+      return String(b.id).localeCompare(String(a.id));
+    });
+  }
+
+  function buildInvoiceState(data) {
+    return {
+      invoices:   data.invoices.length   ? data.invoices   : null,
+      quotations: data.quotations.length ? data.quotations : null,
+      counter:    data.counter,
+      quoCounter: data.quoCounter,
+      settings:   data.settings || {}
+    };
+  }
+
+  function buildPendingState(data) {
+    return normalizePendingOrders(data.pending || []);
+  }
+
+  function syncReady() {
+    return _initialInvoiceLoaded && _initialStoreLoaded;
+  }
+
+  function fetchInvoiceSnapshot() {
+    return fetchFreshJson('/invoice.json').then(function(d){
+      if (d) applyInvData(d);
+      return d;
+    });
+  }
+
+  function fetchStorePending() {
+    if (_storeFetchInFlight) return Promise.resolve();
+    _storeFetchInFlight = true;
+    return fetchFreshJson('/store/pendingOrders.json')
+      .then(function(d){
+        applyStorePending(d || []);
+        return d;
+      })
+      .finally(function(){
+        _storeFetchInFlight = false;
+      });
+  }
+
+  function scheduleStorePoll(delay) {
+    clearTimeout(_storePollTimer);
+    _storePollTimer = setTimeout(function(){
+      fetchStorePending().catch(function(){}).finally(function(){
+        scheduleStorePoll(document.hidden ? 60000 : 15000);
+      });
+    }, delay);
+  }
+
   function fbPush() {
     if (_applyingRemote) return;
+    if (!syncReady()) { _pushQueued = true; return; }
     if (_pushInFlight) { _pushQueued = true; return; }
     _pushInFlight = true;
     _pushQueued = false;
     _pushTimer = null;
     var pushId = _deviceId + '_' + Date.now();
     _lastPushId = pushId;
-    fbStatus('Saving...', 'orange');
     var data = getLocalData();
-    var p1 = fetch(FB_URL + '/invoice.json', {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        invoices:   data.invoices.length   ? data.invoices   : null,
-        quotations: data.quotations.length ? data.quotations : null,
-        pending:    data.pending.length    ? data.pending    : null,
-        counter:    data.counter,
-        quoCounter: data.quoCounter,
-        settings:   data.settings,
-        _pushId:    pushId,
-        _deviceId:  _deviceId,
-        _v:         Date.now()
-      })
-    });
-    var p2 = fetch(FB_URL + '/store/pendingOrders.json', {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(data.pending.length ? data.pending : null)
-    });
-    Promise.all([p1, p2]).then(function(){
+    var invoiceState = buildInvoiceState(data);
+    var pendingState = buildPendingState(data);
+    var invoiceStateStr = stableStringify(invoiceState);
+    var pendingStateStr = stableStringify(pendingState);
+    var jobs = [];
+    var pushedInvoice = false;
+    var pushedPending = false;
+
+    if (invoiceStateStr !== _lastInvoiceState) {
+      pushedInvoice = true;
+      jobs.push(fetch(FB_URL + '/invoice.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          invoices:   invoiceState.invoices,
+          quotations: invoiceState.quotations,
+          counter:    invoiceState.counter,
+          quoCounter: invoiceState.quoCounter,
+          settings:   invoiceState.settings,
+          _pushId:    pushId,
+          _deviceId:  _deviceId,
+          _v:         Date.now()
+        })
+      }));
+    }
+
+    if (pendingStateStr !== _lastPendingState) {
+      pushedPending = true;
+      jobs.push(fetch(FB_URL + '/store/pendingOrders.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(pendingState.length ? pendingState : null)
+      }));
+    }
+
+    if (!jobs.length) {
+      _pushInFlight = false;
+      return;
+    }
+
+    fbStatus('Saving...', 'orange');
+    Promise.all(jobs).then(function(){
+      if (pushedInvoice) _lastInvoiceState = invoiceStateStr;
+      if (pushedPending) _lastPendingState = pendingStateStr;
       fbStatus('Saved', '#38a169');
     }).catch(function(){
       fbStatus('Save failed', '#e53e3e');
@@ -2261,13 +2391,9 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
         _pushQueued = false;
         fbPush();
       } else {
-        // Re-fetch after push to catch any changes from other devices
-        // that arrived while our push was in flight (SSE events were skipped)
         setTimeout(function(){
-          fetch(FB_URL + '/invoice.json')
-            .then(function(r){ return r.json(); })
-            .then(function(d){ if(d) applyInvData(d); })
-            .catch(function(){});
+          fetchInvoiceSnapshot().catch(function(){});
+          fetchStorePending().catch(function(){});
         }, 300);
       }
     });
@@ -2279,24 +2405,24 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     _pushTimer = setTimeout(fbPush, 150);
   }
   window._invFbDebouncedPush = debouncedPush;
+  // syncPendingToStore: called after deletions to push updated pending list
+  // back to /store/pendingOrders so polling/SSE don't re-add deleted orders.
+  window.syncPendingToStore = function() {
+    var pending = DB.pending;
+    fetch(FB_URL + '/store/pendingOrders.json', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(pending.length ? pending : null)
+    }).catch(function(){});
+  };
 
-  // Apply remote invoice data. Only skip our own echo (_pushId match).
-  // Never guard on _pushTimer - that caused the "stops after a few deletes" bug.
   function applyInvData(d) {
     if (!d) return;
-    // Skip our own echo
     if (d._pushId && d._pushId === _lastPushId) return;
 
     var counter    = d.counter    != null ? parseInt(d.counter)    : null;
     var quoCounter = d.quoCounter != null ? parseInt(d.quoCounter) : null;
     var settings   = d.settings   || {};
-
-    // Firebase omits keys entirely when their value is null/empty.
-    // So a missing key means "was deleted/emptied" - treat same as null = use [].
-    // Only skip a field if the entire snapshot has never included it
-    // (i.e. counter is absent too, meaning this is a partial/unrelated update).
-    // We use the presence of _pushId as the signal that this is a full invoice snapshot.
-    var isFullSnapshot = Object.prototype.hasOwnProperty.call(d, '_pushId');
 
     _applyingRemote = true;
     try {
@@ -2308,20 +2434,15 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
         DB.quoCounter = quoCounter;
         localStorage.setItem('beinv-quo-counter', String(quoCounter));
       }
-      // Remote wins fully. Firebase omits keys when empty (same as null) = use [].
-      // Only apply arrays if this is a full invoice snapshot (has _pushId).
-      if (isFullSnapshot) {
-        DB.invoices = d.invoices || [];
-        localStorage.setItem('beinv-invoices', JSON.stringify(DB.invoices));
-        DB.quotations = d.quotations || [];
-        localStorage.setItem('beinv-quotations', JSON.stringify(DB.quotations));
-        DB.pending = d.pending || [];
-        localStorage.setItem('beinv-pending', JSON.stringify(DB.pending));
-      }
+      DB.invoices = Array.isArray(d.invoices) ? d.invoices : [];
+      localStorage.setItem('beinv-invoices', JSON.stringify(DB.invoices));
+      DB.quotations = Array.isArray(d.quotations) ? d.quotations : [];
+      localStorage.setItem('beinv-quotations', JSON.stringify(DB.quotations));
       if (settings && Object.keys(settings).length) {
         Object.assign(DB.settings, settings);
         localStorage.setItem('beinv-settings', JSON.stringify(DB.settings));
       }
+      _lastInvoiceState = stableStringify(buildInvoiceState(getLocalData()));
       if (window.updateBadge) updateBadge();
       if (window.renderHome) renderHome();
     } finally {
@@ -2329,12 +2450,15 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     }
   }
 
-  // Apply pending orders from /store node. Remote fully wins.
   function applyStorePending(remotePending) {
+    var normalized = normalizePendingOrders(remotePending || []);
+    var nextState = stableStringify(normalized);
+    if (nextState === _lastPendingState && stableStringify(DB.pending) === nextState) return;
     _applyingRemote = true;
     try {
-      DB.pending = remotePending || [];
+      DB.pending = normalized;
       localStorage.setItem('beinv-pending', JSON.stringify(DB.pending));
+      _lastPendingState = nextState;
       if (window.updateBadge) updateBadge();
       if (window.renderHome) renderHome();
     } finally {
@@ -2342,8 +2466,7 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
     }
   }
 
-  function fbListen() {
-    // Watch /invoice node
+  function listenInvoice() {
     try {
       var esInv = new EventSource(FB_URL + '/invoice.json');
       var firstInv = true;
@@ -2358,19 +2481,17 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
         } catch(err) { fbStatus('Sync error', '#e53e3e'); }
       });
       esInv.addEventListener('patch', function(e) {
-        fetch(FB_URL + '/invoice.json')
-          .then(function(r){ return r.json(); })
-          .then(function(d){ applyInvData(d); })
-          .catch(function(){});
+        fetchInvoiceSnapshot().catch(function(){});
       });
       esInv.onerror = function() {
         fbStatus('Offline', '#e53e3e');
         esInv.close();
-        setTimeout(fbListen, 5000);
+        setTimeout(listenInvoice, 5000);
       };
     } catch(err) {}
+  }
 
-    // Watch /store/pendingOrders for new WhatsApp orders
+  function listenStorePending() {
     try {
       var esStore = new EventSource(FB_URL + '/store/pendingOrders.json');
       esStore.addEventListener('put', function(e) {
@@ -2379,26 +2500,52 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
           applyStorePending(msg.data || []);
         } catch(err) {}
       });
-      esStore.onerror = function() { esStore.close(); };
+      esStore.addEventListener('patch', function() {
+        fetchStorePending().catch(function(){});
+      });
+      esStore.onerror = function() {
+        esStore.close();
+        clearTimeout(_storeReconnectTimer);
+        _storeReconnectTimer = setTimeout(function(){
+          fetchStorePending().catch(function(){});
+          listenStorePending();
+        }, 5000);
+      };
     } catch(err) {}
   }
 
-  // Initial load: fetch both nodes, then start SSE
   fbStatus('Syncing...', 'orange');
-  var gotInv = false; var gotStore = false;
   function onBothLoaded() {
-    if (gotInv && gotStore) { fbStatus('Synced', '#38a169'); fbListen(); }
+    if (!syncReady()) return;
+    _lastInvoiceState = stableStringify(buildInvoiceState(getLocalData()));
+    _lastPendingState = stableStringify(buildPendingState(getLocalData()));
+    fbStatus('Synced', '#38a169');
+    listenInvoice();
+    listenStorePending();
+    scheduleStorePoll(15000);
+    if (_pushQueued) {
+      _pushQueued = false;
+      fbPush();
+    }
   }
-  fetch(FB_URL + '/invoice.json')
-    .then(function(r){ return r.json(); })
-    .then(function(d){ if(d) applyInvData(d); })
+  fetchInvoiceSnapshot()
     .catch(function(){})
-    .finally(function(){ gotInv = true; onBothLoaded(); });
-  fetch(FB_URL + '/store/pendingOrders.json')
-    .then(function(r){ return r.json(); })
-    .then(function(d){ applyStorePending(d || []); })
+    .finally(function(){ _initialInvoiceLoaded = true; onBothLoaded(); });
+  fetchStorePending()
     .catch(function(){})
-    .finally(function(){ gotStore = true; onBothLoaded(); });
+    .finally(function(){ _initialStoreLoaded = true; onBothLoaded(); });
+
+  window.addEventListener('focus', function(){ fetchStorePending().catch(function(){}); });
+  window.addEventListener('pageshow', function(){ fetchStorePending().catch(function(){}); });
+  window.addEventListener('online', function(){
+    fbStatus('Reconnected', '#38a169');
+    fetchInvoiceSnapshot().catch(function(){});
+    fetchStorePending().catch(function(){});
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) fetchStorePending().catch(function(){});
+    scheduleStorePoll(document.hidden ? 60000 : 15000);
+  });
 
   // Load products from Firebase so stock deduction works cross-device
   fetch(FB_URL + '/store/products.json')
