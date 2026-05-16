@@ -1148,8 +1148,17 @@ function _sdGetState(){
     cust:wrap._sdCust||'',
     outlet:wrap._sdOutlet||'',
     view:wrap._sdView||'products',
-    retOpen:wrap._sdRetOpen||false
+    retOpen:wrap._sdRetOpen||false,
+    sortCol:wrap._sdSortCol||'revenue',
+    sortDir:wrap._sdSortDir||'desc'
   };
+}
+
+function thSort(col,align,label,s,TH){
+  var active=s.sortCol===col;
+  var arrow=active?(s.sortDir==='asc'?'↑':'↓'):'↕';
+  var arrowColor=active?'var(--navy)':'#ccc';
+  return '<th onclick="setSdSort(\''+col+'\')" style="'+TH+'text-align:'+align+';cursor:pointer;user-select:none;">'    +label+' <span style="font-size:9px;color:'+arrowColor+';">'+arrow+'</span></th>';
 }
 
 function renderSalesDetailTab(){
@@ -1230,13 +1239,13 @@ function renderSalesDetailTab(){
 
   // ── Products table ──
   var prodEntries=Object.keys(prodMap).map(function(k){return prodMap[k];});
-  // Sort: by product name, then Box before Piece, then revenue desc
+  // Sort by selected column
   prodEntries.sort(function(a,b){
-    var nc=a.name.localeCompare(b.name);
-    if(nc!==0)return nc;
-    var sa=a.spec==='Box'?0:a.spec==='Piece'?1:2;
-    var sb=b.spec==='Box'?0:b.spec==='Piece'?1:2;
-    return sa-sb||b.revenue-a.revenue;
+    var dir=s.sortDir==='asc'?1:-1;
+    if(s.sortCol==='name'){return dir*a.name.localeCompare(b.name)||a.spec.localeCompare(b.spec);}
+    if(s.sortCol==='qty'){return dir*(a.units-b.units)||a.name.localeCompare(b.name);}
+    // default: revenue
+    return dir*(a.revenue-b.revenue)||a.name.localeCompare(b.name);
   });
   var totUnits=0,totRev=0;
   var prodBody=prodEntries.length
@@ -1261,10 +1270,7 @@ function renderSalesDetailTab(){
   var salesTable=s.view==='products'
     ?'<table style="width:100%;border-collapse:collapse;">'
       +'<thead><tr>'
-      +'<th style="'+TH+'text-align:left;">Product</th>'
-      +'<th style="'+TH+'text-align:left;">Type</th>'
-      +'<th style="'+TH+'text-align:center;">Qty</th>'
-      +'<th style="'+TH+'text-align:right;">Revenue</th>'
+      +thSort('name','left','Product',s,TH)      +'<th style="'+TH+'text-align:left;">Type</th>'      +thSort('qty','center','Qty',s,TH)      +thSort('revenue','right','Revenue',s,TH)
       +'</tr></thead><tbody>'+prodBody+'</tbody>'
       +(prodEntries.length?'<tfoot><tr style="background:var(--surface);">'
         +'<td style="'+ft()+'">Total</td>'
@@ -1415,6 +1421,16 @@ function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;e
 function setSdOutlet(o){var el=document.getElementById('home-body');el._sdOutlet=o;el.innerHTML=renderSalesDetailTab();}
 function setSdView(v){var el=document.getElementById('home-body');el._sdView=v;el.innerHTML=renderSalesDetailTab();}
 function setSdRetOpen(open){var el=document.getElementById('home-body');el._sdRetOpen=open;el.innerHTML=renderSalesDetailTab();}
+function setSdSort(col){
+  var el=document.getElementById('home-body');
+  if(el._sdSortCol===col){
+    el._sdSortDir=el._sdSortDir==='desc'?'asc':'desc';
+  } else {
+    el._sdSortCol=col;
+    el._sdSortDir='desc';
+  }
+  el.innerHTML=renderSalesDetailTab();
+}
 
 function exportSalesDetailCSV(){
   var wrap=document.getElementById('home-body');
