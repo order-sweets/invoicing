@@ -1199,9 +1199,12 @@ function renderSalesDetailTab(){
     (inv.lines||[]).forEach(function(l){
       if(l.ret)return;
       var name=l.desc.split(' \u2014 ')[0].trim();
-      if(!prodMap[name])prodMap[name]={units:0,revenue:0};
-      prodMap[name].units+=l.q;
-      prodMap[name].revenue+=l.q*l.p;
+      var rawSpec=_getLineSpec(l);
+      var spec=rawSpec?(/^Box/i.test(rawSpec)?'Box':/^Piece/i.test(rawSpec)?'Piece':rawSpec):'';
+      var pkey=name+'\u0000'+(spec||'');
+      if(!prodMap[pkey])prodMap[pkey]={name:name,spec:spec,units:0,revenue:0};
+      prodMap[pkey].units+=l.q;
+      prodMap[pkey].revenue+=l.q*l.p;
       custSalesMap[key].units+=l.q;
       custSalesMap[key].revenue+=l.q*l.p;
     });
@@ -1226,13 +1229,25 @@ function renderSalesDetailTab(){
   function ft(a,mono,extra){return 'padding:6px 8px;font-size:11px;font-weight:700;'+(a?'text-align:'+a+';':'')+(mono?'font-family:var(--mono);':'')+(extra||'');}
 
   // ── Products table ──
-  var prodEntries=Object.keys(prodMap).map(function(k){return{name:k,units:prodMap[k].units,revenue:prodMap[k].revenue};});
-  prodEntries.sort(function(a,b){return b.revenue-a.revenue;});
+  var prodEntries=Object.keys(prodMap).map(function(k){return prodMap[k];});
+  // Sort: by product name, then Box before Piece, then revenue desc
+  prodEntries.sort(function(a,b){
+    var nc=a.name.localeCompare(b.name);
+    if(nc!==0)return nc;
+    var sa=a.spec==='Box'?0:a.spec==='Piece'?1:2;
+    var sb=b.spec==='Box'?0:b.spec==='Piece'?1:2;
+    return sa-sb||b.revenue-a.revenue;
+  });
   var totUnits=0,totRev=0;
   var prodBody=prodEntries.length
     ?prodEntries.map(function(p){totUnits+=p.units;totRev+=p.revenue;
-        return '<tr style="'+TR+'"><td style="'+td()+'">'+esc(p.name)+'</td><td style="'+td('center',true)+'">'+p.units+'</td><td style="'+td('right',true)+'">$'+p.revenue.toFixed(2)+'</td></tr>';}).join('')
-    :'<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
+        return '<tr style="'+TR+'">'
+          +'<td style="'+td()+'">'+esc(p.name)+'</td>'
+          +'<td style="'+td()+';color:var(--muted);font-size:10px;">'+esc(p.spec||'\u2014')+'</td>'
+          +'<td style="'+td('center',true)+'">'+p.units+'</td>'
+          +'<td style="'+td('right',true)+'">$'+p.revenue.toFixed(2)+'</td>'
+          +'</tr>';}).join('')
+    :'<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
 
   // ── Customers table ──
   var custEntries=Object.keys(custSalesMap).map(function(k){return custSalesMap[k];});
@@ -1247,11 +1262,13 @@ function renderSalesDetailTab(){
     ?'<table style="width:100%;border-collapse:collapse;">'
       +'<thead><tr>'
       +'<th style="'+TH+'text-align:left;">Product</th>'
-      +'<th style="'+TH+'text-align:center;">Units Sold</th>'
+      +'<th style="'+TH+'text-align:left;">Type</th>'
+      +'<th style="'+TH+'text-align:center;">Qty</th>'
       +'<th style="'+TH+'text-align:right;">Revenue</th>'
       +'</tr></thead><tbody>'+prodBody+'</tbody>'
       +(prodEntries.length?'<tfoot><tr style="background:var(--surface);">'
         +'<td style="'+ft()+'">Total</td>'
+        +'<td></td>'
         +'<td style="'+ft('center',true)+'">'+totUnits+'</td>'
         +'<td style="'+ft('right',true)+';color:var(--navy);">$'+totRev.toFixed(2)+'</td>'
         +'</tr></tfoot>':'')
@@ -1419,13 +1436,13 @@ function exportSalesDetailCSV(){
 
   if(s.view==='products'){
     var pm={};
-    filtered.forEach(function(inv){(inv.lines||[]).forEach(function(l){if(l.ret)return;var n=l.desc.split(' \u2014 ')[0].trim();if(!pm[n])pm[n]={units:0,revenue:0};pm[n].units+=l.q;pm[n].revenue+=l.q*l.p;});});
-    salesRows.push(['Product','Units Sold','Revenue']);
-    var pe=Object.keys(pm).map(function(k){return{name:k,units:pm[k].units,revenue:pm[k].revenue};});
-    pe.sort(function(a,b){return b.revenue-a.revenue;});
-    pe.forEach(function(p){salesRows.push([p.name,p.units,p.revenue.toFixed(2)]);});
+    filtered.forEach(function(inv){(inv.lines||[]).forEach(function(l){if(l.ret)return;var n=l.desc.split(' \u2014 ')[0].trim();var rs=_getLineSpec(l);var sp=rs?(/^Box/i.test(rs)?'Box':/^Piece/i.test(rs)?'Piece':rs):'';var pk=n+'\u0000'+sp;if(!pm[pk])pm[pk]={name:n,spec:sp,units:0,revenue:0};pm[pk].units+=l.q;pm[pk].revenue+=l.q*l.p;});});
+    salesRows.push(['Product','Type','Qty','Revenue']);
+    var pe=Object.keys(pm).map(function(k){return pm[k];});
+    pe.sort(function(a,b){var nc=a.name.localeCompare(b.name);if(nc!==0)return nc;var sa=a.spec==='Box'?0:1;var sb=b.spec==='Box'?0:1;return sa-sb;});
+    pe.forEach(function(p){salesRows.push([p.name,p.spec||'—',p.units,p.revenue.toFixed(2)]);});
     var tu=pe.reduce(function(s,p){return s+p.units;},0),tr=pe.reduce(function(s,p){return s+p.revenue;},0);
-    salesRows.push(['TOTAL',tu,tr.toFixed(2)]);
+    salesRows.push(['TOTAL','',tu,tr.toFixed(2)]);
   } else {
     var cm={};
     filtered.forEach(function(inv){var cn=inv.custName||'Unknown';if(!cm[cn])cm[cn]={units:0,revenue:0,invoices:0};cm[cn].invoices++;(inv.lines||[]).forEach(function(l){if(l.ret)return;cm[cn].units+=l.q;cm[cn].revenue+=l.q*l.p;});});
