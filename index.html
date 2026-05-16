@@ -329,6 +329,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         <button class="sec-tab" id="tab-quotations" onclick="switchTab('quotations')">Quotations</button>
         <button class="sec-tab" id="tab-completed" onclick="switchTab('completed')">Invoiced</button>
         <button class="sec-tab" id="tab-sales" onclick="switchTab('sales')">Sales</button>
+        <button class="sec-tab" id="tab-salesdetail" onclick="switchTab('salesdetail')">Sales Detail</button>
       </div>
 
       <!-- Filter bar -->
@@ -1015,6 +1016,7 @@ function switchTab(tab){
   document.getElementById('tab-completed').classList.toggle('active',tab==='completed');
   var qt=document.getElementById('tab-quotations');if(qt)qt.classList.toggle('active',tab==='quotations');
   var st=document.getElementById('tab-sales');if(st)st.classList.toggle('active',tab==='sales');
+  var sd=document.getElementById('tab-salesdetail');if(sd)sd.classList.toggle('active',tab==='salesdetail');
   renderHome();
 }
 
@@ -1033,7 +1035,7 @@ function renderHome(){
   var massBar=document.getElementById('mass-bar');
   var filterBar=document.getElementById('filter-bar');
   var selAll=document.getElementById('sel-all');
-  var isSales=activeTab==='sales';
+  var isSales=activeTab==='sales'||activeTab==='salesdetail';
   if(massBar)massBar.style.display=isSales?'none':'flex';
   if(filterBar)filterBar.style.display=isSales?'none':'flex';
   if(selAll){selAll.checked=false;selAll.indeterminate=false;}
@@ -1049,7 +1051,8 @@ function renderHome(){
       var itemRows=(o.items||[]).map(function(it){var t=(it.qty*it.price).toFixed(2);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+Number(it.price).toFixed(2)+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');
       var notes=o.notes?'<div style="margin-top:8px;padding:8px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--muted);"><strong>Notes:</strong> '+esc(o.notes)+'</div>':'';
       var addr=o.addr?'<div style="margin-top:6px;font-size:12px;color:var(--muted);">📍 '+esc(o.addr)+'</div>':'';
-      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+(o.custPhone||o.phone?'<div class="oc-meta" style="color:var(--text-muted);">📞 +65 '+esc((o.custPhone||o.phone||'').replace(/\s/g,'').replace(/(\d{4})(\d+)/,'$1 $2'))+'</div>':'')+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+notes+'</div></div>';   }).join('');
+      var phone=(o.custPhone||o.phone)?'<div style="margin-top:4px;font-size:12px;color:var(--muted);">📞 +65 '+esc((o.custPhone||o.phone||'').replace(/\s/g,'').replace(/(\d{4})(\d+)/,'$1 $2'))+'</div>':'';
+      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+phone+notes+'</div></div>';   }).join('');
     el.innerHTML='<div class="order-list">'+html+'</div>';
   } else if(activeTab==='quotations'){
     var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
@@ -1058,6 +1061,9 @@ function renderHome(){
     return;
   } else if(activeTab==='sales'){
     el.innerHTML=renderSalesTab();
+    return;
+  } else if(activeTab==='salesdetail'){
+    el.innerHTML=renderSalesDetailTab();
     return;
   } else {
     var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
@@ -1134,22 +1140,278 @@ function setSalesAll(){
   el._salAll=true;
   el.innerHTML=renderSalesTab();
 }
-function setSalesMo(mo){
-  var el=document.getElementById('home-body');
-  el._salMo=mo; el._salAll=false;
-  el.innerHTML=renderSalesTab();
-}
-function setSalesYr(yr){
-  var el=document.getElementById('home-body');
-  el._salYr=yr;
-  el.innerHTML=renderSalesTab();
-}
-function setSalesAll(){
-  var el=document.getElementById('home-body');
-  el._salAll=true;
-  el.innerHTML=renderSalesTab();
+
+// ── SALES DETAIL TAB ────────────────────────────────────────────────────────
+function _sdGetState(){
+  var wrap=document.getElementById('home-body');
+  var now=new Date();
+  return {
+    mo:  wrap._sdMo!==undefined?wrap._sdMo:now.getMonth(),
+    yr:  wrap._sdYr!==undefined?wrap._sdYr:now.getFullYear(),
+    all: wrap._sdAll||false,
+    cust:wrap._sdCust||'',
+    view:wrap._sdView||'products',
+    retOpen:wrap._sdRetOpen||false
+  };
 }
 
+function renderSalesDetailTab(){
+  var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var now=new Date();
+  var s=_sdGetState();
+
+  // Collect years
+  var years=[];
+  DB.invoices.forEach(function(inv){if(inv.date){var y=new Date(inv.date).getFullYear();if(years.indexOf(y)<0)years.push(y);}});
+  years.sort(function(a,b){return b-a;});
+  if(years.indexOf(now.getFullYear())<0)years.unshift(now.getFullYear());
+
+  // Collect unique customers
+  var custSet={};
+  DB.invoices.forEach(function(inv){if(inv.custName)custSet[inv.custName]=1;});
+  var custs=Object.keys(custSet).sort();
+
+  // Filter invoices
+  var filtered=DB.invoices.filter(function(inv){
+    if(!inv.date)return false;
+    var d=new Date(inv.date);
+    if(d.getFullYear()!==s.yr)return false;
+    if(!s.all&&d.getMonth()!==s.mo)return false;
+    if(s.cust&&inv.custName!==s.cust)return false;
+    return true;
+  });
+
+  // ── Aggregate SALES (exclude returns) ──
+  var prodMap={},custSalesMap={};
+  filtered.forEach(function(inv){
+    var cn=inv.custName||'Unknown';
+    if(!custSalesMap[cn])custSalesMap[cn]={units:0,revenue:0,invoices:0};
+    custSalesMap[cn].invoices++;
+    (inv.lines||[]).forEach(function(l){
+      if(l.ret)return;
+      var name=l.desc.split(' \u2014 ')[0].trim();
+      if(!prodMap[name])prodMap[name]={units:0,revenue:0};
+      prodMap[name].units+=l.q;
+      prodMap[name].revenue+=l.q*l.p;
+      custSalesMap[cn].units+=l.q;
+      custSalesMap[cn].revenue+=l.q*l.p;
+    });
+  });
+
+  // ── Aggregate RETURNS ──
+  var retList=[];
+  filtered.forEach(function(inv){
+    (inv.lines||[]).forEach(function(l){
+      if(!l.ret)return;
+      retList.push({date:inv.date,num:inv.num||'',cust:inv.custName||'',product:l.desc.split(' \u2014 ')[0].trim(),qty:l.q,value:l.q*l.p});
+    });
+  });
+  retList.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+
+  var periodLabel=s.all?s.yr+' (Full Year)':MONTHS[s.mo]+' '+s.yr;
+
+  // ── Shared style helpers ──
+  var TH='padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap;';
+  var TR='border-bottom:1px solid var(--border);';
+  function td(a,mono,extra){return 'padding:9px 10px;font-size:13px;'+(a?'text-align:'+a+';':'')+(mono?'font-family:var(--mono);':'')+(extra||'');}
+  function ft(a,mono,extra){return 'padding:10px 10px;font-size:13px;font-weight:700;'+(a?'text-align:'+a+';':'')+(mono?'font-family:var(--mono);':'')+(extra||'');}
+
+  // ── Products table ──
+  var prodEntries=Object.keys(prodMap).map(function(k){return{name:k,units:prodMap[k].units,revenue:prodMap[k].revenue};});
+  prodEntries.sort(function(a,b){return b.revenue-a.revenue;});
+  var totUnits=0,totRev=0;
+  var prodBody=prodEntries.length
+    ?prodEntries.map(function(p){totUnits+=p.units;totRev+=p.revenue;
+        return '<tr style="'+TR+'"><td style="'+td()+'">'+esc(p.name)+'</td><td style="'+td('center',true)+'">'+p.units+'</td><td style="'+td('right',true)+'">$'+p.revenue.toFixed(2)+'</td></tr>';}).join('')
+    :'<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
+
+  // ── Customers table ──
+  var custEntries=Object.keys(custSalesMap).map(function(k){return{name:k,units:custSalesMap[k].units,revenue:custSalesMap[k].revenue,invoices:custSalesMap[k].invoices};});
+  custEntries.sort(function(a,b){return b.revenue-a.revenue;});
+  var cTotUnits=0,cTotRev=0;
+  var custBody=custEntries.length
+    ?custEntries.map(function(c){cTotUnits+=c.units;cTotRev+=c.revenue;
+        return '<tr style="'+TR+'"><td style="'+td()+'">'+esc(c.name)+'</td><td style="'+td('center',true)+'">'+c.units+'</td><td style="'+td('right',true)+'">$'+c.revenue.toFixed(2)+'</td><td style="'+td('center',true)+';color:var(--muted);">'+c.invoices+'</td></tr>';}).join('')
+    :'<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
+
+  var salesTable=s.view==='products'
+    ?'<table style="width:100%;border-collapse:collapse;">'
+      +'<thead><tr>'
+      +'<th style="'+TH+'text-align:left;">Product</th>'
+      +'<th style="'+TH+'text-align:center;">Units Sold</th>'
+      +'<th style="'+TH+'text-align:right;">Revenue</th>'
+      +'</tr></thead><tbody>'+prodBody+'</tbody>'
+      +(prodEntries.length?'<tfoot><tr style="background:var(--surface);">'
+        +'<td style="'+ft()+'">Total</td>'
+        +'<td style="'+ft('center',true)+'">'+totUnits+'</td>'
+        +'<td style="'+ft('right',true)+';color:var(--navy);">$'+totRev.toFixed(2)+'</td>'
+        +'</tr></tfoot>':'')
+      +'</table>'
+    :'<table style="width:100%;border-collapse:collapse;">'
+      +'<thead><tr>'
+      +'<th style="'+TH+'text-align:left;">Customer</th>'
+      +'<th style="'+TH+'text-align:center;">Units</th>'
+      +'<th style="'+TH+'text-align:right;">Revenue</th>'
+      +'<th style="'+TH+'text-align:center;">Invoices</th>'
+      +'</tr></thead><tbody>'+custBody+'</tbody>'
+      +(custEntries.length?'<tfoot><tr style="background:var(--surface);">'
+        +'<td style="'+ft()+'">Total</td>'
+        +'<td style="'+ft('center',true)+'">'+cTotUnits+'</td>'
+        +'<td style="'+ft('right',true)+';color:var(--navy);">$'+cTotRev.toFixed(2)+'</td>'
+        +'<td style="'+ft('center',true)+';color:var(--muted);">'+custEntries.length+' customers</td>'
+        +'</tr></tfoot>':'')
+      +'</table>';
+
+  // ── Returns table ──
+  var retTotUnits=0,retTotVal=0;
+  var retBody=retList.length
+    ?retList.map(function(r){retTotUnits+=r.qty;retTotVal+=r.value;
+        return '<tr style="'+TR+'">'
+          +'<td style="'+td(null,false,'color:var(--muted);font-size:12px;')+'">'+esc(fmtDate(r.date))+'</td>'
+          +'<td style="'+td()+'">'+esc(r.cust)+'</td>'
+          +'<td style="'+td()+'">'+esc(r.product)+'</td>'
+          +'<td style="'+td('center',true)+'">'+r.qty+'</td>'
+          +'<td style="'+td('right',true)+';color:#dc2626;">$'+r.value.toFixed(2)+'</td>'
+          +'<td style="'+td(null,true,'font-size:12px;color:var(--muted);')+'">'+esc(r.num)+'</td>'
+          +'</tr>';}).join('')
+    :'<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted);">No returns for this period.</td></tr>';
+
+  var retTable='<table style="width:100%;border-collapse:collapse;">'
+    +'<thead><tr>'
+    +'<th style="'+TH+'text-align:left;">Date</th>'
+    +'<th style="'+TH+'text-align:left;">Customer</th>'
+    +'<th style="'+TH+'text-align:left;">Product</th>'
+    +'<th style="'+TH+'text-align:center;">Qty</th>'
+    +'<th style="'+TH+'text-align:right;">Value</th>'
+    +'<th style="'+TH+'text-align:left;">Invoice</th>'
+    +'</tr></thead><tbody>'+retBody+'</tbody>'
+    +(retList.length?'<tfoot><tr style="background:#fff5f5;">'
+      +'<td colspan="4" style="'+ft()+';color:#dc2626;">Total Returned</td>'
+      +'<td style="'+ft('center',true)+';color:#dc2626;">'+retTotUnits+'</td>'
+      +'<td style="'+ft('right',true)+';color:#dc2626;">$'+retTotVal.toFixed(2)+'</td>'
+      +'<td></td>'
+      +'</tr></tfoot>':'')
+    +'</table>';
+
+  // ── Build HTML ──
+  var yrSel='<select onchange="setSdYr(parseInt(this.value))" style="padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;">'
+    +years.map(function(y){return '<option value="'+y+'"'+(y===s.yr?' selected':'')+'>'+y+'</option>';}).join('')+'</select>';
+
+  var custSel='<select onchange="setSdCust(this.value)" style="padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-size:12px;cursor:pointer;max-width:160px;">'
+    +'<option value="">All Customers</option>'
+    +custs.map(function(c){return '<option value="'+esc(c)+'"'+(c===s.cust?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select>';
+
+  var moBtns=MONTHS.map(function(m,i){
+    var active=!s.all&&i===s.mo;
+    return '<button onclick="setSdMo('+i+')" style="padding:3px 7px;border-radius:6px;border:1px solid '+(active?'#0f2548':'var(--border)')+';background:'+(active?'#0f2548':'transparent')+';color:'+(active?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);cursor:pointer;">'+m+'</button>';
+  }).join('');
+
+  var allBtn='<button onclick="setSdAll()" style="padding:3px 9px;border-radius:6px;border:1px solid '+(s.all?'#0f2548':'var(--border)')+';background:'+(s.all?'#0f2548':'transparent')+';color:'+(s.all?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;">Full Year</button>';
+
+  var viewToggle='<div style="display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;">'
+    +'<button onclick="setSdView(\'products\')" style="padding:5px 14px;border:none;background:'+(s.view==='products'?'#0f2548':'var(--surface)')+';color:'+(s.view==='products'?'#fff':'var(--muted)')+';font-size:11px;font-weight:600;cursor:pointer;">Products</button>'
+    +'<button onclick="setSdView(\'customers\')" style="padding:5px 14px;border:none;background:'+(s.view==='customers'?'#0f2548':'var(--surface)')+';color:'+(s.view==='customers'?'#fff':'var(--muted)')+';font-size:11px;font-weight:600;cursor:pointer;">Customers</button>'
+    +'</div>';
+
+  var csvBtn='<button onclick="exportSalesDetailCSV()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">'
+    +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>';
+
+  // Returns toggle header
+  var retBadge=retList.length?'<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:6px;">'+retList.length+'</span>':'';
+  var retChevron=s.retOpen?'&#9650;':'&#9660;';
+  var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:1px solid '+(s.retOpen?'#fecaca':'var(--border)')+';">'
+    +'<div style="display:flex;align-items:center;">'
+    +'<span style="font-size:13px;font-weight:700;color:'+(retList.length?'#dc2626':'var(--muted)')+';">Returns</span>'+retBadge
+    +(retList.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+retTotUnits+' units · $'+retTotVal.toFixed(2)+'</span>':'')
+    +'</div>'
+    +'<span style="font-size:10px;color:var(--muted);">'+retChevron+'</span>'
+    +'</div>';
+
+  var retSection=retHeader+(s.retOpen
+    ?'<div style="border:1px solid #fecaca;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">'+retTable+'</div>'
+    :'');
+
+  return '<div style="padding:14px;">'
+    // Row 1: year + customer + view toggle
+    +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+yrSel+custSel+'</div>'
+    +viewToggle
+    +'</div>'
+    // Row 2: month buttons
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">'+moBtns+allBtn+'</div>'
+    // Row 3: period label + export
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'
+    +csvBtn
+    +'</div>'
+    // Sales card
+    +'<div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;">'+salesTable+'</div>'
+    // Returns card
+    +retSection
+    +'</div>';
+}
+
+function setSdMo(mo){var el=document.getElementById('home-body');el._sdMo=mo;el._sdAll=false;el.innerHTML=renderSalesDetailTab();}
+function setSdYr(yr){var el=document.getElementById('home-body');el._sdYr=yr;el.innerHTML=renderSalesDetailTab();}
+function setSdAll(){var el=document.getElementById('home-body');el._sdAll=true;el.innerHTML=renderSalesDetailTab();}
+function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;el.innerHTML=renderSalesDetailTab();}
+function setSdView(v){var el=document.getElementById('home-body');el._sdView=v;el.innerHTML=renderSalesDetailTab();}
+function setSdRetOpen(open){var el=document.getElementById('home-body');el._sdRetOpen=open;el.innerHTML=renderSalesDetailTab();}
+
+function exportSalesDetailCSV(){
+  var wrap=document.getElementById('home-body');
+  var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var now=new Date();
+  var s=_sdGetState();
+  var periodLabel=s.all?s.yr+'_FullYear':MONTHS[s.mo]+'_'+s.yr;
+
+  var filtered=DB.invoices.filter(function(inv){
+    if(!inv.date)return false;
+    var d=new Date(inv.date);
+    if(d.getFullYear()!==s.yr)return false;
+    if(!s.all&&d.getMonth()!==s.mo)return false;
+    if(s.cust&&inv.custName!==s.cust)return false;
+    return true;
+  });
+
+  var salesRows=[],retRows2=[];
+
+  if(s.view==='products'){
+    var pm={};
+    filtered.forEach(function(inv){(inv.lines||[]).forEach(function(l){if(l.ret)return;var n=l.desc.split(' \u2014 ')[0].trim();if(!pm[n])pm[n]={units:0,revenue:0};pm[n].units+=l.q;pm[n].revenue+=l.q*l.p;});});
+    salesRows.push(['Product','Units Sold','Revenue']);
+    var pe=Object.keys(pm).map(function(k){return{name:k,units:pm[k].units,revenue:pm[k].revenue};});
+    pe.sort(function(a,b){return b.revenue-a.revenue;});
+    pe.forEach(function(p){salesRows.push([p.name,p.units,p.revenue.toFixed(2)]);});
+    var tu=pe.reduce(function(s,p){return s+p.units;},0),tr=pe.reduce(function(s,p){return s+p.revenue;},0);
+    salesRows.push(['TOTAL',tu,tr.toFixed(2)]);
+  } else {
+    var cm={};
+    filtered.forEach(function(inv){var cn=inv.custName||'Unknown';if(!cm[cn])cm[cn]={units:0,revenue:0,invoices:0};cm[cn].invoices++;(inv.lines||[]).forEach(function(l){if(l.ret)return;cm[cn].units+=l.q;cm[cn].revenue+=l.q*l.p;});});
+    salesRows.push(['Customer','Invoices','Units','Revenue']);
+    var ce=Object.keys(cm).map(function(k){return{name:k,units:cm[k].units,revenue:cm[k].revenue,invoices:cm[k].invoices};});
+    ce.sort(function(a,b){return b.revenue-a.revenue;});
+    ce.forEach(function(c){salesRows.push([c.name,c.invoices,c.units,c.revenue.toFixed(2)]);});
+    var ctu=ce.reduce(function(s,c){return s+c.units;},0),ctr=ce.reduce(function(s,c){return s+c.revenue;},0);
+    salesRows.push(['TOTAL',ce.length,ctu,ctr.toFixed(2)]);
+  }
+
+  // Always include returns section in CSV
+  retRows2.push([]);
+  retRows2.push(['--- RETURNS ---']);
+  retRows2.push(['Date','Invoice','Customer','Product','Qty','Value']);
+  var rtu=0,rtv=0;
+  filtered.forEach(function(inv){(inv.lines||[]).forEach(function(l){if(!l.ret)return;rtu+=l.q;rtv+=l.q*l.p;retRows2.push([fmtDate(inv.date),inv.num||'',inv.custName||'',l.desc.split(' \u2014 ')[0].trim(),l.q,(l.q*l.p).toFixed(2)]);});});
+  retRows2.push(['TOTAL RETURNED','','','',rtu,rtv.toFixed(2)]);
+
+  var allRows=salesRows.concat(retRows2);
+  var csv=allRows.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='SalesDetail_'+periodLabel+(s.cust?'_'+s.cust.replace(/\s/g,'_'):'')+'.csv';
+  a.click();
+}
 
 function renderInvCard(inv){
   var g=grand(inv.lines);
