@@ -418,6 +418,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                   <input type="text" id="f-ref-label" value="Order Number" style="font-size:10px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:.05em;border:none;border-bottom:1px dashed #ccc;background:transparent;padding:0 0 1px;margin-bottom:4px;width:100%;outline:none;cursor:text;" title="Click to rename this field">
                   <input type="text" id="f-ref" placeholder="">
                 </div>
+                <div class="mf full">
+                  <label>Remarks / Special Instructions</label>
+                  <textarea id="f-remarks" placeholder="e.g. Handle with care, deliver before 12pm..." style="min-height:52px;resize:vertical;"></textarea>
+                </div>
               </div>
             </div>
           </div>
@@ -1150,7 +1154,8 @@ function _sdGetState(){
     view:wrap._sdView||'products',
     retOpen:wrap._sdRetOpen||false,
     sortCol:wrap._sdSortCol||'revenue',
-    sortDir:wrap._sdSortDir||'desc'
+    sortDir:wrap._sdSortDir||'desc',
+    search:wrap._sdSearch||''
   };
 }
 
@@ -1238,7 +1243,7 @@ function renderSalesDetailTab(){
   function ft(a,mono,extra){return 'padding:6px 8px;font-size:11px;font-weight:700;'+(a?'text-align:'+a+';':'')+(mono?'font-family:var(--mono);':'')+(extra||'');}
 
   // ── Products table ──
-  var prodEntries=Object.keys(prodMap).map(function(k){return prodMap[k];});
+  var prodEntries=Object.keys(prodMap).map(function(k){return prodMap[k];}).filter(function(p){return !s.search||p.name.toLowerCase().includes(s.search.toLowerCase());});
   // Sort by selected column
   prodEntries.sort(function(a,b){
     var dir=s.sortDir==='asc'?1:-1;
@@ -1407,7 +1412,8 @@ function renderSalesDetailTab(){
     +'</div>'
     // Revenue summary
     +summaryCard
-    // Sales card
+    // Search bar (products view only)
+    +(s.view==='products'?'<div style="position:relative;margin-bottom:8px;">'      +'<input type="text" value="'+esc(s.search)+'" oninput="setSdSearch(this.value)" placeholder="Search product..." style="width:100%;box-sizing:border-box;padding:7px 10px 7px 30px;border-radius:8px;border:1px solid var(--border);font-size:12px;background:var(--surface);color:var(--navy);outline:none;">'      +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'      +'</div>':'')    // Sales card
     +'<div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+salesTable+'</div></div>'
     // Returns card
     +retSection
@@ -1421,6 +1427,7 @@ function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;e
 function setSdOutlet(o){var el=document.getElementById('home-body');el._sdOutlet=o;el.innerHTML=renderSalesDetailTab();}
 function setSdView(v){var el=document.getElementById('home-body');el._sdView=v;el.innerHTML=renderSalesDetailTab();}
 function setSdRetOpen(open){var el=document.getElementById('home-body');el._sdRetOpen=open;el.innerHTML=renderSalesDetailTab();}
+function setSdSearch(q){var el=document.getElementById('home-body');el._sdSearch=q;el.innerHTML=renderSalesDetailTab();}
 function setSdSort(col){
   var el=document.getElementById('home-body');
   if(el._sdSortCol===col){
@@ -1503,7 +1510,8 @@ function renderInvCard(inv){
   var gstRateCard=getGSTRate(inv);
   if(gstRateCard!==null){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
   else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
-  return '<div class="inv-card-item" id="icard-'+inv.id+'" style="border-left:'+(inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)')+';transition:border .2s;">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
+  return '<div class="inv-card-item" id="icard-'+inv.id+'" style="border-left:'+(inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)')+';transition:border .2s;">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')
+      +(inv.remarks?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;padding:6px 8px;background:#fffbeb;border-radius:6px;border-left:3px solid #f59e0b;">💬 '+esc(inv.remarks)+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'<button class="btn btn-ghost btn-sm" onclick="duplicateInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">⧉ Duplicate</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
 }
 
 function togglePaid(id){
@@ -1529,6 +1537,35 @@ function toggleFlag(id){
   if(card)card.style.borderLeft=inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)';
   toast(inv.flagged?'Flagged':'Flag removed');
 }
+function duplicateInvoice(id){
+  var src=DB.invoices.find(function(i){return i.id===id;});
+  if(!src)return;
+  current={
+    id:'draft_'+Date.now(),
+    num:null,
+    custName:src.custName||'',
+    addr:src.addr||'',
+    outlet:src.outlet||'',
+    phone:src.phone||'',
+    date:new Date().toISOString().split('T')[0],
+    ref:src.ref||'',
+    pay:src.pay||'Cash on Delivery',
+    remarks:src.remarks||'',
+    company:src.company||'',
+    lines:src.lines.map(function(l){return Object.assign({},l);}),
+    confirmed:false
+  };
+  showPage('panel-editor');
+  loadEditor();
+  document.getElementById('btn-del').style.display='none';
+  document.getElementById('num-display').textContent='New';
+  document.getElementById('num-display').style.opacity='0.4';
+  setNav('nav-new');showPanel('panel-editor');
+  setTopbar('New Invoice (Duplicate)',BACK_BTN);
+  setItemDropdownsVisible(true);
+  toast('Duplicated — review and confirm');
+}
+
 function _attachSwipe(){
   document.querySelectorAll('.inv-card-item').forEach(function(card){
     if(card._swipeAttached)return;
@@ -1574,7 +1611,7 @@ function toggleCard(id){
 
 // ══ NEW / GENERATE ══
 function newInvoice(){
-  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',phone:'',date:new Date().toISOString().split('T')[0],ref:'',pay:'Cash on Delivery',lines:[],confirmed:false};
+  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',phone:'',date:new Date().toISOString().split('T')[0],ref:'',pay:'Cash on Delivery',remarks:'',lines:[],confirmed:false};
   current.lines.push({id:'l_'+Date.now(),desc:'',q:1,p:0,ret:false});
   loadEditor();
   document.getElementById('btn-del').style.display='none';
@@ -1614,7 +1651,7 @@ function generateFromOrder(orderId){
   var o=DB.pending.find(function(x){return x.id===orderId;});
   if(!o)return;
   current={
-    id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',
+    id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',remarks:'',
     phone:o.custPhone||o.phone||'',
     date:o.date,ref:o.id,pay:'Cash on Delivery',
     lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,pid:it.pid||'',unit:it.unit||'piece',desc:_richDesc(it),q:it.qty,p:it.price,ret:false};}),
@@ -1647,6 +1684,7 @@ function loadEditor(){
   document.getElementById('f-addr').value = current.addr||'';
   document.getElementById('f-ref').value = current.ref||'';
   document.getElementById('f-pay').value = current.pay||'Cash on Delivery';
+  var frEl=document.getElementById('f-remarks');if(frEl)frEl.value=current.remarks||'';
   // Populate phone
   var fphn=document.getElementById('f-phone');
   if(fphn){var pd=(current.phone||'').replace(/\D/g,'').slice(0,8);fphn.value=pd.length>4?pd.slice(0,4)+' '+pd.slice(4):pd;}
@@ -1848,6 +1886,7 @@ function readEditor(){
   current.ref=document.getElementById('f-ref').value.trim();
   var rl=document.getElementById('f-ref-label');if(rl)current._refLabel=rl.value.trim()||'Order Number';
   current.pay=document.getElementById('f-pay').value;
+  var frm=document.getElementById('f-remarks');current.remarks=frm?frm.value.trim():'';
 }
 
 function confirmInvoice(){
@@ -2041,6 +2080,7 @@ function buildPDF(inv){
     +'<table class="pdf-tbl"><thead><tr><th style="width:38%">Item</th><th style="width:22%">Pack Size</th><th class="r" style="width:8%">Qty</th><th class="r" style="width:16%">Unit Price</th><th class="r" style="width:16%">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
     +(function(){var n=useCo2?(cfg.co2notes||''):(cfg.notes||'');return n?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'';}())
+    +(current.remarks?'<div class="pdf-notes"><div class="lbl">Remarks</div><div class="val">'+current.remarks.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'')
     +'</div>';
 }
 
