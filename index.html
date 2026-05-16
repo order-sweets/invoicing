@@ -329,7 +329,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Incoming <span id="pending-badge" style="display:none;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
         <button class="sec-tab" id="tab-quotations" onclick="switchTab('quotations')">Quotations</button>
         <button class="sec-tab" id="tab-completed" onclick="switchTab('completed')">Invoiced</button>
-        <button class="sec-tab" id="tab-sales" onclick="switchTab('sales')">Sales</button>
         <button class="sec-tab" id="tab-salesdetail" onclick="switchTab('salesdetail')">Analytics</button>
       </div>
 
@@ -1016,7 +1015,6 @@ function switchTab(tab){
   document.getElementById('tab-pending').classList.toggle('active',tab==='pending');
   document.getElementById('tab-completed').classList.toggle('active',tab==='completed');
   var qt=document.getElementById('tab-quotations');if(qt)qt.classList.toggle('active',tab==='quotations');
-  var st=document.getElementById('tab-sales');if(st)st.classList.toggle('active',tab==='sales');
   var sd=document.getElementById('tab-salesdetail');if(sd)sd.classList.toggle('active',tab==='salesdetail');
   renderHome();
 }
@@ -1036,7 +1034,7 @@ function renderHome(){
   var massBar=document.getElementById('mass-bar');
   var filterBar=document.getElementById('filter-bar');
   var selAll=document.getElementById('sel-all');
-  var isSales=activeTab==='sales'||activeTab==='salesdetail';
+  var isSales=activeTab==='salesdetail';
   if(massBar)massBar.style.display=isSales?'none':'flex';
   if(filterBar)filterBar.style.display=isSales?'none':'flex';
   if(selAll){selAll.checked=false;selAll.indeterminate=false;}
@@ -1059,9 +1057,6 @@ function renderHome(){
     var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
     if(!qlist.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>No quotations yet.<br>Create one from the sidebar.</p></div>';return;}
     el.innerHTML=qlist.slice().reverse().map(function(q){return renderQuoCard(q);}).join('');
-    return;
-  } else if(activeTab==='sales'){
-    el.innerHTML=renderSalesTab();
     return;
   } else if(activeTab==='salesdetail'){
     el.innerHTML=renderSalesDetailTab();
@@ -1349,6 +1344,32 @@ function renderSalesDetailTab(){
     ?'<div style="border:2px solid #fca5a5;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+retTable+'</div></div>'
     :'');
 
+  // ── Revenue summary (merged from Sales tab) ──
+  var beeTot=0,swTot=0,beeCount=0,swCount=0;
+  filtered.forEach(function(inv){
+    var g=grand(inv.lines);
+    if(inv.company==='swits'){swTot+=g;swCount++;}
+    else{beeTot+=g;beeCount++;}
+  });
+  var combinedTotal=beeTot+swTot;
+  function revRow(label,val,count,color){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'
+      +'<div><div style="font-weight:600;font-size:13px;color:'+color+';">'+label+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+count+' invoice'+(count!==1?'s':'')+'</div></div>'
+      +'<div style="font-family:var(--mono);font-size:14px;font-weight:600;color:'+color+';">$'+val.toFixed(2)+'</div>'
+      +'</div>';
+  }
+  var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;">'
+    +'<div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'
+    +revRow('Bee Events',beeTot,beeCount,'var(--accent)')
+    +revRow('SWITS',swTot,swCount,'#3b82f6')
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">'
+    +'<div><div style="font-weight:600;font-size:13px;color:var(--navy);">Combined Total</div>'
+    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+'</div></div>'
+    +'<div style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--navy);">$'+combinedTotal.toFixed(2)+'</div>'
+    +'</div>'
+    +'</div>';
+
   return '<div style="padding:14px;">'
     // Row 1: view toggle (full width)
     +'<div style="display:flex;margin-bottom:10px;">'+viewToggle+'</div>'
@@ -1361,6 +1382,8 @@ function renderSalesDetailTab(){
     +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'
     +csvBtn
     +'</div>'
+    // Revenue summary
+    +summaryCard
     // Sales card
     +'<div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+salesTable+'</div></div>'
     // Returns card
