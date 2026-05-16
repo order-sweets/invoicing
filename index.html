@@ -348,17 +348,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         </select>
       </div>
 
-      <div id="mass-bar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:4px 0;">
-        <input type="checkbox" id="sel-all" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;" onchange="toggleSelectAll(this.checked)">
-        <label for="sel-all" style="font-size:12px;font-weight:600;cursor:pointer;">Select All</label>
-        <button class="btn btn-red btn-sm" onclick="deleteSelected()" style="padding:5px 12px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-          Delete
+      <div id="mass-bar" style="display:none;align-items:center;gap:5px;margin-bottom:10px;padding:3px 0;flex-wrap:nowrap;">
+        <input type="checkbox" id="sel-all" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="toggleSelectAll(this.checked)">
+        <label for="sel-all" style="font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">All</label>
+        <button class="btn btn-red btn-sm" onclick="deleteSelected()" style="padding:3px 8px;font-size:11px;white-space:nowrap;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Delete
         </button>
-        <span id="sel-count" style="font-size:11px;color:var(--muted);flex:1;"></span>
-        <div id="inv-filter-btns" style="display:none;gap:5px;align-items:center;">
-          <button onclick="_invFilter=_invFilter==='unpaid'?'':'unpaid';renderHome()" id="btn-f-unpaid" style="padding:4px 10px;border-radius:20px;border:1.5px solid #fca5a5;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#991b1b;">❗ Unpaid</button>
-          <button onclick="_invFilter=_invFilter==='undelivered'?'':'undelivered';renderHome()" id="btn-f-undelivered" style="padding:4px 10px;border-radius:20px;border:1.5px solid #fcd34d;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#92400e;">⏳ Undelivered</button>
+        <span id="sel-count" style="font-size:10px;color:var(--muted);flex:1;"></span>
+        <div id="inv-filter-btns" style="display:none;gap:4px;align-items:center;flex-shrink:0;">
+          <button onclick="_invFilter=_invFilter==='unpaid'?'':'unpaid';renderHome()" id="btn-f-unpaid" style="padding:3px 7px;border-radius:20px;border:1.5px solid #fca5a5;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:#991b1b;white-space:nowrap;">❗ Unpaid</button>
+          <button onclick="_invFilter=_invFilter==='undelivered'?'':'undelivered';renderHome()" id="btn-f-undelivered" style="padding:3px 7px;border-radius:20px;border:1.5px solid #fcd34d;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:#92400e;white-space:nowrap;">⏳ Undelivered</button>
         </div>
       </div>
       <div id="home-body"></div>
