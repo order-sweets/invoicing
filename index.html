@@ -1150,6 +1150,7 @@ function _sdGetState(){
     yr:  wrap._sdYr!==undefined?wrap._sdYr:now.getFullYear(),
     all: wrap._sdAll||false,
     cust:wrap._sdCust||'',
+    outlet:wrap._sdOutlet||'',
     view:wrap._sdView||'products',
     retOpen:wrap._sdRetOpen||false
   };
@@ -1166,10 +1167,18 @@ function renderSalesDetailTab(){
   years.sort(function(a,b){return b-a;});
   if(years.indexOf(now.getFullYear())<0)years.unshift(now.getFullYear());
 
-  // Collect unique customers
-  var custSet={};
-  DB.invoices.forEach(function(inv){if(inv.custName)custSet[inv.custName]=1;});
+  // Collect unique customers and their outlets
+  var custSet={},custOutlets={};
+  DB.invoices.forEach(function(inv){
+    if(!inv.custName)return;
+    custSet[inv.custName]=1;
+    if(!custOutlets[inv.custName])custOutlets[inv.custName]=[];
+    var ol=inv.outlet||'';
+    if(custOutlets[inv.custName].indexOf(ol)<0)custOutlets[inv.custName].push(ol);
+  });
   var custs=Object.keys(custSet).sort();
+  // Outlets for selected customer (sorted, blank first)
+  var outletOpts=s.cust?(custOutlets[s.cust]||[]).slice().sort(function(a,b){if(!a)return -1;if(!b)return 1;return a.localeCompare(b);}):[];
 
   // Filter invoices
   var filtered=DB.invoices.filter(function(inv){
@@ -1178,6 +1187,7 @@ function renderSalesDetailTab(){
     if(d.getFullYear()!==s.yr)return false;
     if(!s.all&&d.getMonth()!==s.mo)return false;
     if(s.cust&&inv.custName!==s.cust)return false;
+    if(s.outlet!==''&&(inv.outlet||'')!==s.outlet)return false;
     return true;
   });
 
@@ -1185,16 +1195,18 @@ function renderSalesDetailTab(){
   var prodMap={},custSalesMap={};
   filtered.forEach(function(inv){
     var cn=inv.custName||'Unknown';
-    if(!custSalesMap[cn])custSalesMap[cn]={units:0,revenue:0,invoices:0};
-    custSalesMap[cn].invoices++;
+    var ol=inv.outlet||'';
+    var key=cn+'|'+ol;
+    if(!custSalesMap[key])custSalesMap[key]={name:cn,outlet:ol,units:0,revenue:0,invoices:0};
+    custSalesMap[key].invoices++;
     (inv.lines||[]).forEach(function(l){
       if(l.ret)return;
       var name=l.desc.split(' \u2014 ')[0].trim();
       if(!prodMap[name])prodMap[name]={units:0,revenue:0};
       prodMap[name].units+=l.q;
       prodMap[name].revenue+=l.q*l.p;
-      custSalesMap[cn].units+=l.q;
-      custSalesMap[cn].revenue+=l.q*l.p;
+      custSalesMap[key].units+=l.q;
+      custSalesMap[key].revenue+=l.q*l.p;
     });
   });
 
@@ -1226,13 +1238,13 @@ function renderSalesDetailTab(){
     :'<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
 
   // ── Customers table ──
-  var custEntries=Object.keys(custSalesMap).map(function(k){return{name:k,units:custSalesMap[k].units,revenue:custSalesMap[k].revenue,invoices:custSalesMap[k].invoices};});
-  custEntries.sort(function(a,b){return b.revenue-a.revenue;});
+  var custEntries=Object.keys(custSalesMap).map(function(k){return custSalesMap[k];});
+  custEntries.sort(function(a,b){return a.name.localeCompare(b.name)||a.outlet.localeCompare(b.outlet)||b.revenue-a.revenue;});
   var cTotUnits=0,cTotRev=0;
   var custBody=custEntries.length
     ?custEntries.map(function(c){cTotUnits+=c.units;cTotRev+=c.revenue;
-        return '<tr style="'+TR+'"><td style="'+td()+'">'+esc(c.name)+'</td><td style="'+td('center',true)+'">'+c.units+'</td><td style="'+td('right',true)+'">$'+c.revenue.toFixed(2)+'</td><td style="'+td('center',true)+';color:var(--muted);">'+c.invoices+'</td></tr>';}).join('')
-    :'<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
+        return '<tr style="'+TR+'">'          +'<td style="'+td()+'">'+esc(c.name)+'</td>'          +'<td style="'+td()+';color:var(--muted);">'+esc(c.outlet||'\u2014')+'</td>'          +'<td style="'+td('center',true)+'">'+c.units+'</td>'          +'<td style="'+td('right',true)+'">$'+c.revenue.toFixed(2)+'</td>'          +'<td style="'+td('center',true)+';color:var(--muted);">'+c.invoices+'</td>'          +'</tr>';}).join('')
+    :'<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
 
   var salesTable=s.view==='products'
     ?'<table style="width:100%;border-collapse:collapse;">'
@@ -1250,15 +1262,17 @@ function renderSalesDetailTab(){
     :'<table style="width:100%;border-collapse:collapse;">'
       +'<thead><tr>'
       +'<th style="'+TH+'text-align:left;">Customer</th>'
+      +'<th style="'+TH+'text-align:left;">Outlet</th>'
       +'<th style="'+TH+'text-align:center;">Units</th>'
       +'<th style="'+TH+'text-align:right;">Revenue</th>'
       +'<th style="'+TH+'text-align:center;">Invoices</th>'
       +'</tr></thead><tbody>'+custBody+'</tbody>'
       +(custEntries.length?'<tfoot><tr style="background:var(--surface);">'
         +'<td style="'+ft()+'">Total</td>'
+        +'<td></td>'
         +'<td style="'+ft('center',true)+'">'+cTotUnits+'</td>'
         +'<td style="'+ft('right',true)+';color:var(--navy);">$'+cTotRev.toFixed(2)+'</td>'
-        +'<td style="'+ft('center',true)+';color:var(--muted);">'+custEntries.length+' customers</td>'
+        +'<td style="'+ft('center',true)+';color:var(--muted);">'+custEntries.length+' rows</td>'
         +'</tr></tfoot>':'')
       +'</table>';
 
@@ -1334,7 +1348,7 @@ function renderSalesDetailTab(){
   return '<div style="padding:14px;">'
     // Row 1: year + customer + view toggle
     +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
-    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+yrSel+custSel+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+yrSel+custSel+outletSel+'</div>'
     +viewToggle
     +'</div>'
     // Row 2: month buttons
@@ -1354,7 +1368,8 @@ function renderSalesDetailTab(){
 function setSdMo(mo){var el=document.getElementById('home-body');el._sdMo=mo;el._sdAll=false;el.innerHTML=renderSalesDetailTab();}
 function setSdYr(yr){var el=document.getElementById('home-body');el._sdYr=yr;el.innerHTML=renderSalesDetailTab();}
 function setSdAll(){var el=document.getElementById('home-body');el._sdAll=true;el.innerHTML=renderSalesDetailTab();}
-function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;el.innerHTML=renderSalesDetailTab();}
+function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;el._sdOutlet='';el.innerHTML=renderSalesDetailTab();}
+function setSdOutlet(o){var el=document.getElementById('home-body');el._sdOutlet=o;el.innerHTML=renderSalesDetailTab();}
 function setSdView(v){var el=document.getElementById('home-body');el._sdView=v;el.innerHTML=renderSalesDetailTab();}
 function setSdRetOpen(open){var el=document.getElementById('home-body');el._sdRetOpen=open;el.innerHTML=renderSalesDetailTab();}
 
