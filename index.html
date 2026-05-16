@@ -85,8 +85,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .panel{display:none;}.panel.active{display:block;}
 
 /* ── SECTION TABS (pending/completed) ── */
-.sec-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content;}
-.sec-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit;}
+.sec-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.sec-tabs::-webkit-scrollbar{display:none;}
+.sec-tab{padding:6px 14px;white-space:nowrap;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit;}
 .sec-tab.active{background:#fff;color:var(--ink);box-shadow:var(--sh);}
 
 /* ── FILTER BAR ── */
@@ -325,11 +326,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       <!-- Section tabs -->
       <div class="sec-tabs">
-        <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Pending Orders <span id="pending-badge" style="display:none;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
+        <button class="sec-tab active" id="tab-pending" onclick="switchTab('pending')">Pending <span id="pending-badge" style="display:none;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;"></span></button>
         <button class="sec-tab" id="tab-quotations" onclick="switchTab('quotations')">Quotations</button>
         <button class="sec-tab" id="tab-completed" onclick="switchTab('completed')">Invoiced</button>
         <button class="sec-tab" id="tab-sales" onclick="switchTab('sales')">Sales</button>
-        <button class="sec-tab" id="tab-salesdetail" onclick="switchTab('salesdetail')">Sales Detail</button>
+        <button class="sec-tab" id="tab-salesdetail" onclick="switchTab('salesdetail')">Detail</button>
       </div>
 
       <!-- Filter bar -->
@@ -1314,6 +1315,11 @@ function renderSalesDetailTab(){
   var custSel='<select onchange="setSdCust(this.value)" style="padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-size:12px;cursor:pointer;max-width:160px;">'
     +'<option value="">All Customers</option>'
     +custs.map(function(c){return '<option value="'+esc(c)+'"'+(c===s.cust?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select>';
+  var outletSel=s.cust&&outletOpts.length>1
+    ?'<select onchange="setSdOutlet(this.value)" style="padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-size:12px;cursor:pointer;max-width:140px;">'
+      +'<option value="">All Outlets</option>'
+      +outletOpts.map(function(o){return '<option value="'+esc(o)+'"'+(o===s.outlet?' selected':'')+'>'+esc(o||'(No outlet)')+'</option>';}).join('')+'</select>'
+    :'';
 
   var moBtns=MONTHS.map(function(m,i){
     var active=!s.all&&i===s.mo;
