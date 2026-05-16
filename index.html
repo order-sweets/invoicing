@@ -94,7 +94,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
 .filter-bar input,.filter-bar select{font-size:12px;padding:7px 10px;border:1.5px solid var(--border-md);border-radius:var(--r);background:var(--paper);color:var(--ink);font-family:inherit;outline:none;}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent);}
-.filter-bar input{min-width:160px;}
+.filter-bar input{min-width:160px;max-width:100%;}
+.filter-bar input[type="date"]{max-width:160px;}
 .filter-bar select{min-width:120px;}
 
 /* ── ORDER CARDS (pending) ── */
@@ -349,12 +350,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       <div id="mass-bar" style="display:none;align-items:center;gap:8px;margin-bottom:10px;padding:4px 0;">
         <input type="checkbox" id="sel-all" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;" onchange="toggleSelectAll(this.checked)">
-        <label for="sel-all" style="font-size:12px;font-weight:600;cursor:pointer;flex:1;">Select All</label>
-        <span id="sel-count" style="font-size:11px;color:var(--muted);"></span>
+        <label for="sel-all" style="font-size:12px;font-weight:600;cursor:pointer;">Select All</label>
         <button class="btn btn-red btn-sm" onclick="deleteSelected()" style="padding:5px 12px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:2px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
           Delete
         </button>
+        <span id="sel-count" style="font-size:11px;color:var(--muted);flex:1;"></span>
+        <div id="inv-filter-btns" style="display:none;gap:5px;align-items:center;">
+          <button onclick="_invFilter=_invFilter==='unpaid'?'':'unpaid';renderHome()" id="btn-f-unpaid" style="padding:4px 10px;border-radius:20px;border:1.5px solid #fca5a5;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#991b1b;">❗ Unpaid</button>
+          <button onclick="_invFilter=_invFilter==='undelivered'?'':'undelivered';renderHome()" id="btn-f-undelivered" style="padding:4px 10px;border-radius:20px;border:1.5px solid #fcd34d;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#92400e;">⏳ Undelivered</button>
+        </div>
       </div>
       <div id="home-body"></div>
     </div>
@@ -401,7 +406,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 </div>
                 <div class="mf">
                   <label>Invoice Date</label>
-                  <input type="date" id="f-date">
+                  <input type="date" id="f-date" style="max-width:160px;">
                 </div>
                 <div class="mf">
                   <label>Payment</label>
@@ -732,6 +737,7 @@ if(typeof DB.settings.dual==='string')DB.settings.dual=(DB.settings.dual==='true
 if(DB.settings.dual!==true)DB.settings.dual=false;
 var current = null;
 var activeTab = 'pending';
+var _invFilter = ''; // '' = all, 'unpaid', 'undelivered'
 
 function persist() {
   localStorage.setItem('beinv-invoices',  JSON.stringify(DB.invoices));
@@ -1016,6 +1022,11 @@ function deleteSelected(){
 }
 function switchTab(tab){
   activeTab=tab;
+  if(tab!=='completed'){
+    _invFilter='';
+    var ifb=document.getElementById('inv-filter-btns');
+    if(ifb)ifb.style.display='none';
+  }
   document.getElementById('tab-pending').classList.toggle('active',tab==='pending');
   document.getElementById('tab-completed').classList.toggle('active',tab==='completed');
   var qt=document.getElementById('tab-quotations');if(qt)qt.classList.toggle('active',tab==='quotations');
@@ -1066,7 +1077,19 @@ function renderHome(){
     el.innerHTML=renderSalesDetailTab();
     return;
   } else {
-    var list2=DB.invoices.filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
+    // Show filter buttons in mass-bar and update active state
+    var ifb=document.getElementById('inv-filter-btns');
+    if(ifb){ifb.style.display='flex';}
+    var bfu=document.getElementById('btn-f-unpaid');
+    var bfd=document.getElementById('btn-f-undelivered');
+    if(bfu)bfu.style.background=_invFilter==='unpaid'?'#fee2e2':'transparent';
+    if(bfd)bfd.style.background=_invFilter==='undelivered'?'#fef3c7':'transparent';
+    var list2=DB.invoices.filter(function(i){
+      if(!matchesFilter(i.custName,i.date,i.num))return false;
+      if(_invFilter==='unpaid'&&i.paid)return false;
+      if(_invFilter==='undelivered'&&i.delivered)return false;
+      return true;
+    });
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
     el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
     _attachSwipe();
