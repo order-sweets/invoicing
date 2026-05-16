@@ -1381,17 +1381,17 @@ function renderSalesDetailTab(){
   });
   var combinedTotal=beeTot+swTot;
   function revRow(label,val,count,color){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">'
       +'<div><div style="font-weight:600;font-size:13px;color:'+color+';">'+label+'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+count+' invoice'+(count!==1?'s':'')+'</div></div>'
       +'<div style="font-family:var(--mono);font-size:14px;font-weight:600;color:'+color+';">$'+val.toFixed(2)+'</div>'
       +'</div>';
   }
-  var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;">'
-    +'<div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'
+  var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;">'
+    +'<div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'
     +revRow('Bee Events',beeTot,beeCount,'var(--accent)')
     +revRow('SWITS',swTot,swCount,'#3b82f6')
-    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">'
     +'<div><div style="font-weight:600;font-size:13px;color:var(--navy);">Combined Total</div>'
     +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+'</div></div>'
     +'<div style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--navy);">$'+combinedTotal.toFixed(2)+'</div>'
@@ -1555,13 +1555,12 @@ function duplicateInvoice(id){
     lines:src.lines.map(function(l){return Object.assign({},l);}),
     confirmed:false
   };
-  showPage('panel-editor');
   loadEditor();
   document.getElementById('btn-del').style.display='none';
-  document.getElementById('num-display').textContent='New';
-  document.getElementById('num-display').style.opacity='0.4';
   setNav('nav-new');showPanel('panel-editor');
   setTopbar('New Invoice (Duplicate)',BACK_BTN);
+  renderCombineList();
+  document.getElementById('combine-sec').style.display='block';
   setItemDropdownsVisible(true);
   toast('Duplicated — review and confirm');
 }
