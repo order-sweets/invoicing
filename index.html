@@ -1172,10 +1172,11 @@ function renderSalesDetailTab(){
   var custSet={},custOutlets={};
   DB.invoices.forEach(function(inv){
     if(!inv.custName)return;
-    custSet[inv.custName]=1;
-    if(!custOutlets[inv.custName])custOutlets[inv.custName]=[];
+    var _cn=(inv.custName||'').trim();
+    custSet[_cn]=1;
+    if(!custOutlets[_cn])custOutlets[_cn]=[];
     var ol=inv.outlet||'';
-    if(custOutlets[inv.custName].indexOf(ol)<0)custOutlets[inv.custName].push(ol);
+    if(custOutlets[_cn].indexOf(ol)<0)custOutlets[_cn].push(ol);
   });
   var custs=Object.keys(custSet).sort();
   // Outlets for selected customer (sorted, blank first)
@@ -1187,7 +1188,7 @@ function renderSalesDetailTab(){
     var d=new Date(inv.date);
     if(d.getFullYear()!==s.yr)return false;
     if(!s.all&&d.getMonth()!==s.mo)return false;
-    if(s.cust&&inv.custName!==s.cust)return false;
+    if(s.cust&&(inv.custName||'').trim().toLowerCase()!==s.cust.trim().toLowerCase())return false;
     if(s.outlet!==''&&(inv.outlet||'')!==s.outlet)return false;
     return true;
   });
@@ -1195,7 +1196,7 @@ function renderSalesDetailTab(){
   // ── Aggregate SALES (exclude returns) ──
   var prodMap={},custSalesMap={};
   filtered.forEach(function(inv){
-    var cn=inv.custName||'Unknown';
+    var cn=(inv.custName||'Unknown').trim();
     var ol=inv.outlet||'';
     var key=cn+'|'+ol;
     if(!custSalesMap[key])custSalesMap[key]={name:cn,outlet:ol,units:0,revenue:0,invoices:0};
@@ -1288,7 +1289,7 @@ function renderSalesDetailTab(){
           +'<td style="'+td('center',true)+'">'+r.qty+'</td>'
           +'<td style="'+td('right',true)+';color:#dc2626;">$'+r.value.toFixed(2)+'</td>'
           +'</tr>';}).join('')
-    :'<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--muted);">No returns for this period.</td></tr>';
+    :'<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">No returns for this period.</td></tr>';
 
   var retTable='<table style="width:100%;border-collapse:collapse;">'
     +'<thead><tr>'
@@ -1299,7 +1300,7 @@ function renderSalesDetailTab(){
     +'<th style="'+TH+'text-align:right;">Value</th>'
     +'</tr></thead><tbody>'+retBody+'</tbody>'
     +(retList.length?'<tfoot><tr style="background:#fff5f5;">'
-      +'<td colspan="2" style="'+ft()+';color:#dc2626;">Total Returned</td>'
+      +'<td colspan="3" style="'+ft()+';color:#dc2626;">Total Returned</td>'
       +'<td style="'+ft('center',true)+';color:#dc2626;">'+retTotUnits+'</td>'
       +'<td style="'+ft('right',true)+';color:#dc2626;">$'+retTotVal.toFixed(2)+'</td>'
       +'</tr></tfoot>':'')
@@ -1349,14 +1350,13 @@ function renderSalesDetailTab(){
     :'');
 
   return '<div style="padding:14px;">'
-    // Row 1: year + customer + view toggle
-    +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
-    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+yrSel+custSel+outletSel+'</div>'
-    +viewToggle
-    +'</div>'
+    // Row 1: view toggle (full width)
+    +'<div style="display:flex;margin-bottom:10px;">'+viewToggle+'</div>'
     // Row 2: month buttons
-    +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">'+moBtns+allBtn+'</div>'
-    // Row 3: period label + export
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">'+moBtns+allBtn+'</div>'
+    // Row 3: year + customer + outlet dropdowns
+    +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'+yrSel+custSel+outletSel+'</div>'
+    // Row 4: period label + export
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
     +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'
     +csvBtn
@@ -1388,7 +1388,7 @@ function exportSalesDetailCSV(){
     var d=new Date(inv.date);
     if(d.getFullYear()!==s.yr)return false;
     if(!s.all&&d.getMonth()!==s.mo)return false;
-    if(s.cust&&inv.custName!==s.cust)return false;
+    if(s.cust&&(inv.custName||'').trim().toLowerCase()!==s.cust.trim().toLowerCase())return false;
     return true;
   });
 
