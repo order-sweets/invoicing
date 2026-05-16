@@ -1319,16 +1319,16 @@ function renderSalesDetailTab(){
   // Returns toggle header
   var retBadge=retList.length?'<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:6px;">'+retList.length+'</span>':'';
   var retChevron=s.retOpen?'&#9650;':'&#9660;';
-  var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:1px solid '+(s.retOpen?'#fecaca':'var(--border)')+';">'
+  var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:2px solid '+(s.retOpen?'#fca5a5':'#d1d5db')+';">'
     +'<div style="display:flex;align-items:center;">'
-    +'<span style="font-size:13px;font-weight:700;color:'+(retList.length?'#dc2626':'var(--muted)')+';">Returns</span>'+retBadge
+    +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:'+(retList.length?'#dc2626':'var(--muted)')+';">Returns</span>'+retBadge
     +(retList.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+retTotUnits+' units · $'+retTotVal.toFixed(2)+'</span>':'')
     +'</div>'
     +'<span style="font-size:10px;color:var(--muted);">'+retChevron+'</span>'
     +'</div>';
 
   var retSection=retHeader+(s.retOpen
-    ?'<div style="border:1px solid #fecaca;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">'+retTable+'</div>'
+    ?'<div style="border:2px solid #fca5a5;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">'+retTable+'</div>'
     :'');
 
   return '<div style="padding:14px;">'
