@@ -85,9 +85,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .panel{display:none;}.panel.active{display:block;}
 
 /* ── SECTION TABS (pending/completed) ── */
-.sec-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px;width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.sec-tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px;width:100%;}
 .sec-tabs::-webkit-scrollbar{display:none;}
-.sec-tab{padding:6px 14px;white-space:nowrap;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit;}
+.sec-tab{flex:1;padding:6px 4px;white-space:nowrap;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);transition:all .15s;font-family:inherit;text-align:center;}
 .sec-tab.active{background:#fff;color:var(--ink);box-shadow:var(--sh);}
 
 /* ── FILTER BAR ── */
