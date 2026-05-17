@@ -1415,7 +1415,39 @@ function renderSalesDetailTab(){
   var _sdKey = s.yr+'-'+(s.mo<9?'0':'')+(s.mo+1);
   var _shopee = !s.all && _shopeeData && _shopeeData[_sdKey] ? _shopeeData[_sdKey] : null;
   var shopeeSection = _shopee
-    ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">'      +'<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#f97316;margin-bottom:4px;">Shopee (Escrow)</div>'      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">'      +'<div style="font-size:12px;color:var(--muted);">Net Earnings</div>'      +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:#f97316;">$'+parseFloat(_shopee.earnings||0).toFixed(2)+'</div>'      +'</div>'      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">'      +'<div style="font-size:12px;color:var(--muted);">Units Sold</div>'      +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--navy);">'+(_shopee.units||0)+'</div>'      +'</div>'      +'<div style="font-size:9px;color:var(--muted);margin-top:3px;">Auto-updated · '+(_shopee.updatedAt?new Date(_shopee.updatedAt).toLocaleDateString('en-SG'):'—')+'</div>'      +'</div>'    : (!s.all ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);">No Shopee data for '+_sdKey+'</div></div>' : '');
+    ? (function(){
+        var prods = _shopee.products || {};
+        var prodKeys = Object.keys(prods).sort(function(a,b){ return prods[b]-prods[a]; });
+        var prodRows = prodKeys.map(function(k){
+          return '<tr>'
+            +'<td style="padding:3px 6px;font-size:11px;color:var(--navy);">'+esc(k)+'</td>'
+            +'<td style="padding:3px 6px;font-size:11px;font-family:var(--mono);text-align:right;color:var(--navy);">'+prods[k]+'</td>'
+            +'</tr>';
+        }).join('');
+        var prodTable = prodKeys.length
+          ? '<table style="width:100%;border-collapse:collapse;margin-top:6px;">'
+            +'<thead><tr>'
+            +'<th style="padding:3px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);">Product</th>'
+            +'<th style="padding:3px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;border-bottom:1px solid var(--border);">Qty</th>'
+            +'</tr></thead>'
+            +'<tbody>'+prodRows+'</tbody>'
+            +'</table>'
+          : '';
+        return '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">'
+          +'<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#f97316;margin-bottom:6px;">Shopee (Escrow)</div>'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">'
+          +'<div style="font-size:12px;color:var(--muted);">Net Earnings</div>'
+          +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:#f97316;">$'+parseFloat(_shopee.earnings||0).toFixed(2)+'</div>'
+          +'</div>'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;">'
+          +'<div style="font-size:12px;color:var(--muted);">Units Sold</div>'
+          +'<div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--navy);">'+(_shopee.units||0)+'</div>'
+          +'</div>'
+          +prodTable
+          +'<div style="font-size:9px;color:var(--muted);margin-top:6px;">Auto-updated · '+(_shopee.updatedAt?new Date(_shopee.updatedAt).toLocaleDateString('en-SG'):'—')+'</div>'
+          +'</div>';
+      })()
+    : (!s.all ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);"><div style="font-size:10px;color:var(--muted);">No Shopee data for '+_sdKey+'</div></div>' : '');
 
   var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;">'    +'<div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">'+periodLabel+(s.cust?' · '+esc(s.cust):'')+'</div>'    +revRow('Bee Events',beeTot,beeCount,'var(--accent)')    +revRow('SWITS',swTot,swCount,'#3b82f6')    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">'    +'<div><div style="font-weight:600;font-size:13px;color:var(--navy);">Combined Total</div>'    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+'</div></div>'    +'<div style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--navy);">$'+combinedTotal.toFixed(2)+'</div>'    +'</div>'    +shopeeSection    +'</div>';
 
