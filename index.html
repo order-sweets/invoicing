@@ -1386,7 +1386,7 @@ function renderSalesDetailTab(){
   // Returns toggle header
   var retBadge='';
   var retChevron=s.retOpen?'&#9650;':'&#9660;';
-  var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:2px solid '+(s.retOpen?'#fca5a5':'#d1d5db')+';">'
+  var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:3px solid '+(s.retOpen?'#fca5a5':'#e2e8f0')+';">'
     +'<div style="display:flex;align-items:center;">'
     +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:'+(retList.length?'#dc2626':'var(--muted)')+';">Returns</span>'+retBadge
     +(retList.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+retTotUnits+' units · $'+retTotVal.toFixed(2)+'</span>':'')
@@ -1395,7 +1395,7 @@ function renderSalesDetailTab(){
     +'</div>';
 
   var retSection=retHeader+(s.retOpen
-    ?'<div style="border:2px solid #fca5a5;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+retTable+'</div></div>'
+    ?'<div style="border:3px solid #fca5a5;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+retTable+'</div></div>'
     :'');
 
   // ── Revenue summary ──
@@ -1432,7 +1432,6 @@ function renderSalesDetailTab(){
 
   // ── New summary card ──
   var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;">'
-    +'<div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">'+periodLabel+(s.cust?'\u00b7 '+esc(s.cust):'')+'</div>'
     +earningsRow('Bee Events',beeNet,beeTot,beeRet,beeCount,'var(--accent)',true)
     +earningsRow('SWITS',swNet,swTot,swRet,swCount,'#3b82f6',true)
     +shopeeRow
@@ -1452,7 +1451,7 @@ function renderSalesDetailTab(){
     }).join('');
     var isOpen=s.shopeeOpen;
     var chevron=isOpen?'&#9650;':'&#9660;';
-    var hdr='<div onclick="setSdShopeeOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(isOpen?'#fff7ed':'var(--surface)')+';border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:2px solid '+(isOpen?'#fed7aa':'#d1d5db')+';margin-top:14px;">'
+    var hdr='<div onclick="setSdShopeeOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(isOpen?'#fff7ed':'var(--surface)')+';border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:3px solid '+(isOpen?'#fed7aa':'#e2e8f0')+';margin-top:14px;">'
       +'<div style="display:flex;align-items:center;">'
       +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f97316;">Shopee</span>'
       +'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+(_shopee.units||0)+' units \u00b7 $'+shopeeEarnings.toFixed(2)+'</span>'
@@ -1460,7 +1459,7 @@ function renderSalesDetailTab(){
       +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'
       +'</div>';
     var bdy=isOpen
-      ?'<div style="border:2px solid #fed7aa;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">'
+      ?'<div style="border:3px solid #fed7aa;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">'
 
         +(prodKeys.length
           ?'<table style="width:100%;border-collapse:collapse;">'
@@ -1497,8 +1496,16 @@ function renderSalesDetailTab(){
       var totRevVal = s.view==='products' ? totRev : cTotRev;
       var isOpen = s.prodOpen;
       var chevron = isOpen ? '&#9650;' : '&#9660;';
-      var hdr = '<div onclick="setSdProdOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:var(--surface);border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:2px solid var(--border);margin-bottom:'+(isOpen?'0':'14px')+';">'        +'<div style="display:flex;align-items:center;">'        +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);">Product Sales</span>'        +'</div>'        +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'        +'</div>';
-      var bdy = isOpen ? '<div style="background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:14px;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+salesTable+'</div></div>' : '';
+            var _prodTotUnits = s.view==='products' ? totUnits : cTotUnits;
+      var _prodTotRev = s.view==='products' ? totRev : cTotRev;
+      var hdr = '<div onclick="setSdProdOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(isOpen?'#eff6ff':'var(--surface)')+';border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:3px solid '+(isOpen?'#93c5fd':'#e2e8f0')+';margin-bottom:'+(isOpen?'0':'14px')+';">'
+        +'<div style="display:flex;align-items:center;">'
+        +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#3b82f6;">Product Sales</span>'
+        +(prodEntries.length||custEntries.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+_prodTotUnits+' units · $'+_prodTotRev.toFixed(2)+'</span>':'')
+        +'</div>'
+        +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'
+        +'</div>';
+            var bdy = isOpen ? '<div style="background:#fff;border:3px solid #93c5fd;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:14px;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+salesTable+'</div></div>' : '';
       return hdr + bdy;
     })()    +retSection
     +shopeeCollapse
