@@ -1177,6 +1177,7 @@ function _sdGetState(){
     outlet:wrap._sdOutlet||'',
     view:wrap._sdView||'products',
     retOpen:wrap._sdRetOpen||false,
+    prodOpen:wrap._sdProdOpen!==undefined?wrap._sdProdOpen:false,
     shopeeOpen:wrap._sdShopeeOpen||false,
     sortCol:wrap._sdSortCol||'revenue',
     sortDir:wrap._sdSortDir||'desc',
@@ -1331,7 +1332,7 @@ function renderSalesDetailTab(){
   var retBody=retList.length
     ?retList.map(function(r){retTotUnits+=r.qty;retTotVal+=r.value;
         return '<tr style="'+TR+'">'
-          +'<td style="'+td(null,false,'color:var(--muted);font-size:12px;')+'">'+esc(fmtDate(r.date))+'</td>'
+          +'<td style="'+td(null,false,'color:var(--muted);font-size:11px;')+'">'+esc(fmtDate(r.date))+'</td>'
           +'<td style="'+td()+'">'+esc(r.cust)+'</td>'
           +'<td style="'+td()+'">'+esc(r.product)+'</td>'
           +'<td style="'+td('center',true)+'">'+r.qty+'</td>'
@@ -1383,7 +1384,7 @@ function renderSalesDetailTab(){
     +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>';
 
   // Returns toggle header
-  var retBadge=retList.length?'<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:6px;">'+retList.length+'</span>':'';
+  var retBadge='';
   var retChevron=s.retOpen?'&#9650;':'&#9660;';
   var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:2px solid '+(s.retOpen?'#fca5a5':'#d1d5db')+';">'
     +'<div style="display:flex;align-items:center;">'
@@ -1427,7 +1428,7 @@ function renderSalesDetailTab(){
 
   var shopeeRow = '<div style="padding:8px 0;border-bottom:1px solid var(--border);">'    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'    +'<div>'    +'<div style="font-weight:600;font-size:13px;color:#f97316;">Shopee</div>'    +(_shopee      ?'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+shopeeOrders+' order'+(shopeeOrders!==1?'s':'')+'</div>'      :'<div style="font-size:10px;color:var(--muted);margin-top:1px;">No data</div>')    +'</div>'    +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:#f97316;">'    +(_shopee?'$'+shopeeEarnings.toFixed(2):'—')    +'</div>'    +'</div>'    +'</div>';
 
-  var combinedRow = '<div style="padding:8px 0;">'    +'<div style="display:flex;justify-content:space-between;align-items:center;">'    +'<div>'    +'<div style="font-weight:700;font-size:14px;color:var(--navy);">Combined Total</div>'    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+(_shopee?' + Shopee':'')+'</div>'    +'</div>'    +'<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--navy);">$'+combinedTotal.toFixed(2)+'</div>'    +'</div>'    +'</div>';
+  var combinedRow = '<div style="padding:8px 0;">'    +'<div style="display:flex;justify-content:space-between;align-items:center;">'    +'<div>'    +'<div style="font-weight:700;font-size:14px;color:var(--navy);">Combined Total</div>'    +'<div style="font-size:10px;color:var(--muted);margin-top:1px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+'</div>'    +'</div>'    +'<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--navy);">$'+combinedTotal.toFixed(2)+'</div>'    +'</div>'    +'</div>';
 
   // ── New summary card ──
   var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;">'
@@ -1454,22 +1455,25 @@ function renderSalesDetailTab(){
     var hdr='<div onclick="setSdShopeeOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(isOpen?'#fff7ed':'var(--surface)')+';border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:2px solid '+(isOpen?'#fed7aa':'#d1d5db')+';margin-top:14px;">'
       +'<div style="display:flex;align-items:center;">'
       +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f97316;">Shopee</span>'
-      +'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">$'+shopeeEarnings.toFixed(2)+' \u00b7 '+(_shopee.units||0)+' units</span>'
+      +'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+(_shopee.units||0)+' units \u00b7 $'+shopeeEarnings.toFixed(2)+'</span>'
       +'</div>'
       +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'
       +'</div>';
     var bdy=isOpen
-      ?'<div style="border:2px solid #fed7aa;border-top:none;border-radius:0 0 10px 10px;padding:10px 14px;">'
-        +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:3px 0;border-bottom:1px solid var(--border);margin-bottom:6px;">'
-        +'<span>Units Sold</span><span style="font-family:var(--mono);color:var(--navy);font-weight:600;">'+(_shopee.units||0)+'</span></div>'
+      ?'<div style="border:2px solid #fed7aa;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">'
+
         +(prodKeys.length
           ?'<table style="width:100%;border-collapse:collapse;">'
             +'<thead><tr>'
             +'<th style="padding:3px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;border-bottom:2px solid var(--border);">Product</th>'
             +'<th style="padding:3px 6px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;border-bottom:2px solid var(--border);">Qty</th>'
-            +'</tr></thead><tbody>'+prodRows+'</tbody></table>'
+            +'</tr></thead><tbody>'+prodRows+'</tbody>'
+            +'<tfoot><tr style="background:var(--surface);">'
+            +'<td style="padding:4px 8px;font-size:11px;font-weight:700;color:var(--navy);">Total Units</td>'
+            +'<td style="padding:4px 8px;font-size:11px;font-family:var(--mono);text-align:right;font-weight:700;color:var(--navy);">'+(_shopee.units||0)+'</td>'
+            +'</tr></tfoot></table>'
           :'')
-        +'<div style="font-size:9px;color:var(--muted);margin-top:8px;">Auto-updated \u00b7 '+(_shopee.updatedAt?new Date(_shopee.updatedAt).toLocaleDateString('en-SG'):'\u2014')+'</div>'
+        +'<div style="font-size:9px;color:var(--muted);margin-top:6px;padding:0 8px 8px 8px;">Auto-updated \u00b7 '+(_shopee.updatedAt?new Date(_shopee.updatedAt).toLocaleDateString('en-SG'):'\u2014')+'</div>'
         +'</div>'
       :'';
     return hdr+bdy;
@@ -1488,8 +1492,15 @@ function renderSalesDetailTab(){
       +'<input type="text" value="'+esc(s.search)+'" oninput="setSdSearch(this.value)" placeholder="Search product..." style="width:100%;box-sizing:border-box;padding:7px 10px 7px 30px;border-radius:8px;border:1px solid var(--border);font-size:12px;background:var(--surface);color:var(--navy);outline:none;">'
       +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
       +'</div>':'')
-    +'<div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+salesTable+'</div></div>'
-    +retSection
+    +(function(){
+      var totUnits = s.view==='products' ? totUnits : cTotUnits;
+      var totRevVal = s.view==='products' ? totRev : cTotRev;
+      var isOpen = s.prodOpen;
+      var chevron = isOpen ? '&#9650;' : '&#9660;';
+      var hdr = '<div onclick="setSdProdOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:var(--surface);border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:2px solid var(--border);margin-bottom:'+(isOpen?'0':'14px')+';">'        +'<div style="display:flex;align-items:center;">'        +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);">Product Sales</span>'        +'</div>'        +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'        +'</div>';
+      var bdy = isOpen ? '<div style="background:#fff;border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:14px;"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+salesTable+'</div></div>' : '';
+      return hdr + bdy;
+    })()    +retSection
     +shopeeCollapse
     +'</div>';
 }
@@ -1501,6 +1512,7 @@ function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;e
 function setSdOutlet(o){var el=document.getElementById('home-body');el._sdOutlet=o;el.innerHTML=renderSalesDetailTab();}
 function setSdView(v){var el=document.getElementById('home-body');el._sdView=v;el.innerHTML=renderSalesDetailTab();}
 function setSdRetOpen(open){var el=document.getElementById('home-body');el._sdRetOpen=open;el.innerHTML=renderSalesDetailTab();}
+function setSdProdOpen(open){var el=document.getElementById('home-body');el._sdProdOpen=open;el.innerHTML=renderSalesDetailTab();}
 function setSdShopeeOpen(open){var el=document.getElementById('home-body');el._sdShopeeOpen=open;el.innerHTML=renderSalesDetailTab();}
 function setSdSearch(q){var el=document.getElementById('home-body');el._sdSearch=q;el.innerHTML=renderSalesDetailTab();}
 function setSdSort(col){
