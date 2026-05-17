@@ -566,6 +566,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Profiles
       </button>
+
     </div>
 
   </div><!-- /content -->
@@ -579,7 +580,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
       <button class="pdf-close" onclick="closeExportModal()">&#x2715;</button>
     </div>
     <div style="padding:20px;">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Filter by month, year and company, then download.</p>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.8;">
+        <div style="margin-bottom:4px;">Filter by month, year and company, then download:</div>
+        <div style="padding-left:8px;">
+          <div>· <strong>CSV Only</strong> — spreadsheet of all invoices &amp; line items</div>
+          <div>· <strong>ZIP + PDFs</strong> — CSV plus individual PDF for each invoice</div>
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
         <div class="mf">
           <label>Month</label>
@@ -619,6 +626,58 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           ZIP + PDFs
         </button>
+      </div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Analytics</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;padding-left:8px;">
+            <div>· <strong>Analytics CSV</strong> — earnings summary, product sales, Shopee, returns &amp; customer breakdown</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="mf">
+              <label>Month</label>
+              <select id="ana-month" style="font-size:13px;padding:7px 9px;border:1.5px solid var(--border-md);border-radius:7px;background:var(--surface);color:var(--ink);font-family:inherit;outline:none;width:100%;">
+                <option value="">All months</option>
+                <option value="01">January</option><option value="02">February</option>
+                <option value="03">March</option><option value="04">April</option>
+                <option value="05">May</option><option value="06">June</option>
+                <option value="07">July</option><option value="08">August</option>
+                <option value="09">September</option><option value="10">October</option>
+                <option value="11">November</option><option value="12">December</option>
+              </select>
+            </div>
+            <div class="mf">
+              <label>Year</label>
+              <select id="ana-year" style="font-size:13px;padding:7px 9px;border:1.5px solid var(--border-md);border-radius:7px;background:var(--surface);color:var(--ink);font-family:inherit;outline:none;width:100%;">
+                <option value="">All years</option>
+                <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="exportAnalyticsFromModal()" style="width:100%;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Analytics CSV
+          </button>
+        </div>
+        <div style="padding-top:12px;border-top:1px solid var(--border);margin-bottom:10px;"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">JSON Data</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.8;padding-left:8px;">
+          <div>· <strong>Download Backup</strong> — all invoices, quotations &amp; settings as a JSON file</div>
+          <div>· <strong>Restore Backup</strong> — reload a previously saved JSON backup</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="backupAllData()" style="flex:1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Backup
+          </button>
+          <label class="btn btn-ghost btn-lg" style="flex:1;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Restore Backup
+            <input type="file" accept=".json" onchange="restoreBackup(event)" style="display:none;">
+          </label>
+        </div>
+        <div id="backup-status" style="margin-top:8px;font-size:12px;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1380,8 +1439,7 @@ function renderSalesDetailTab(){
     +'<button onclick="setSdView(\'customers\')" style="padding:5px 14px;border:none;background:'+(s.view==='customers'?'#0f2548':'var(--surface)')+';color:'+(s.view==='customers'?'#fff':'var(--muted)')+';font-size:11px;font-weight:600;cursor:pointer;">Customers</button>'
     +'</div>';
 
-  var csvBtn='<button onclick="exportSalesDetailCSV()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--navy);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">'
-    +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV</button>';
+  var csvBtn='';
 
   // Returns toggle header
   var retBadge='';
@@ -1482,10 +1540,6 @@ function renderSalesDetailTab(){
     +'<div style="display:flex;margin-bottom:10px;">'+viewToggle+'</div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">'+moBtns+allBtn+'</div>'
     +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'+yrSel+custSel+outletSel+'</div>'
-    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
-    +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">'+periodLabel+(s.cust?'\u00b7 '+esc(s.cust):'')+'</div>'
-    +csvBtn
-    +'</div>'
     +summaryCard
     +(s.view==='products'?'<div style="position:relative;margin-bottom:8px;">'
       +'<input type="text" value="'+esc(s.search)+'" oninput="setSdSearch(this.value)" placeholder="Search product..." style="width:100%;box-sizing:border-box;padding:7px 10px 7px 30px;border-radius:8px;border:1px solid var(--border);font-size:12px;background:var(--surface);color:var(--navy);outline:none;">'
@@ -1531,6 +1585,25 @@ function setSdSort(col){
     el._sdSortDir='desc';
   }
   el.innerHTML=renderSalesDetailTab();
+}
+
+function exportAnalyticsFromModal(){
+  // Read filters from the analytics-specific dropdowns
+  var mo = document.getElementById('ana-month').value; // e.g. "04" or ""
+  var yr = document.getElementById('ana-year').value;  // e.g. "2026" or ""
+
+  // Temporarily override analytics state to match modal filters
+  var wrap = document.getElementById('home-body');
+  var origMo = wrap._sdMo, origYr = wrap._sdYr, origAll = wrap._sdAll;
+
+  if(yr) wrap._sdYr = parseInt(yr);
+  if(mo){ wrap._sdMo = parseInt(mo)-1; wrap._sdAll = false; }
+  else  { wrap._sdAll = true; }
+
+  exportSalesDetailCSV();
+
+  // Restore original state
+  wrap._sdMo = origMo; wrap._sdYr = origYr; wrap._sdAll = origAll;
 }
 
 function exportSalesDetailCSV(){
@@ -2439,6 +2512,56 @@ function saveSetting(key,val){
     if(db)db.style.display=val?'block':'none';
   }
 }
+function backupAllData(){
+  var backup = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    invoices: DB.invoices,
+    quotations: DB.quotations,
+    pending: DB.pending,
+    counter: DB.counter,
+    quoCounter: DB.quoCounter,
+    settings: DB.settings
+  };
+  var json = JSON.stringify(backup, null, 2);
+  var blob = new Blob([json], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  var d = new Date();
+  var dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  a.download = 'invoicing_backup_'+dateStr+'.json';
+  a.click();
+  document.getElementById('backup-status').innerHTML = '<span style="color:var(--accent);">✅ Backup downloaded! Save it to Google Drive.</span>';
+}
+
+function restoreBackup(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var status = document.getElementById('backup-status');
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      var backup = JSON.parse(ev.target.result);
+      if(!backup.version || !backup.invoices){
+        status.innerHTML = '<span style="color:#dc2626;">❌ Invalid backup file.</span>';
+        return;
+      }
+      if(!confirm('This will REPLACE all your current invoices and settings with the backup from '+backup.exportedAt.split('T')[0]+'. Are you sure?')) return;
+      if(backup.invoices)   { DB.invoices = backup.invoices; localStorage.setItem('beinv-invoices', JSON.stringify(DB.invoices)); }
+      if(backup.quotations) { DB.quotations = backup.quotations; localStorage.setItem('beinv-quotations', JSON.stringify(DB.quotations)); }
+      if(backup.pending)    { DB.pending = backup.pending; localStorage.setItem('beinv-pending', JSON.stringify(DB.pending)); }
+      if(backup.counter)    { DB.counter = backup.counter; localStorage.setItem('beinv-counter', backup.counter); }
+      if(backup.quoCounter) { DB.quoCounter = backup.quoCounter; localStorage.setItem('beinv-quo-counter', backup.quoCounter); }
+      if(backup.settings)   { DB.settings = backup.settings; localStorage.setItem('beinv-settings', JSON.stringify(DB.settings)); }
+      status.innerHTML = '<span style="color:var(--accent);">✅ Restore complete! Refreshing...</span>';
+      setTimeout(function(){ location.reload(); }, 1500);
+    } catch(err) {
+      status.innerHTML = '<span style="color:#dc2626;">❌ Could not read backup file: '+err.message+'</span>';
+    }
+  };
+  reader.readAsText(file);
+}
+
 function saveSettings(){
   DB.settings.name=document.getElementById('s-name').value.trim();
   DB.settings.phone=document.getElementById('s-phone').value.trim();
