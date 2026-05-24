@@ -2318,7 +2318,7 @@ function buildPDF(inv){
     +'<table class="pdf-tbl"><thead><tr><th style="width:38%">Item</th><th style="width:22%">Pack Size</th><th class="r" style="width:8%">Qty</th><th class="r" style="width:16%">Unit Price</th><th class="r" style="width:16%">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'
     +'<div class="pdf-tots"><div class="pdf-tots-inner">'+tots+'</div></div>'
     +(function(){var n=useCo2?(cfg.co2notes||''):(cfg.notes||'');return n?'<div class="pdf-notes"><div class="lbl">Notes</div><div class="val">'+n.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'';}())
-    +(current.remarks?'<div class="pdf-notes"><div class="lbl">Remarks</div><div class="val">'+current.remarks.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'')
+    +(inv.remarks?'<div class="pdf-notes"><div class="lbl">Remarks</div><div class="val">'+inv.remarks.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')+'</div></div>':'')
     +'</div>';
 }
 
