@@ -1241,7 +1241,8 @@ function _sdGetState(){
     sortCol:wrap._sdSortCol||'revenue',
     sortDir:wrap._sdSortDir||'desc',
     search:wrap._sdSearch||'',
-    drill:wrap._sdDrill||''
+    drill:wrap._sdDrill||'',
+    drillAz:wrap._sdDrillAz||false
   };
 }
 
@@ -1347,9 +1348,13 @@ function renderSalesDetailTab(){
         var pkey=p.name+'||'+(p.spec||'');
         var drillKey=pkey;
         var isOpen=s.drill===pkey;
-        var drillRows=(drillMap[drillKey]||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+        var drillRows=(drillMap[drillKey]||[]).slice().sort(function(a,b){
+          if(s.drillAz) return (a.cust||'').localeCompare(b.cust||'');
+          return (b.date||'').localeCompare(a.date||'');
+        });
+        var azLabel=s.drillAz?'A→Z ▾':'Date ▾';
         var drillHtml=isOpen
-          ?'<tr style="background:#f8fafc;"><td colspan="4" style="padding:0 0 6px 0;">'            +'<table style="width:100%;border-collapse:collapse;margin-top:2px;">'            +'<thead><tr style="background:#f1f5f9;">'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Invoice</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Customer</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Date</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;">Qty</th>'            +'</tr></thead><tbody>'            +drillRows.map(function(d){              return '<tr style="border-bottom:1px solid #e2e8f0;">'                +'<td style="padding:4px 10px;font-size:11px;font-family:var(--mono);color:var(--navy);">'+esc(d.num)+'</td>'                +'<td style="padding:4px 10px;font-size:11px;color:var(--navy);">'+esc(d.cust)+(d.outlet?' <span style="color:var(--muted);font-size:10px;">· '+esc(d.outlet)+'</span>':'')+'</td>'                +'<td style="padding:4px 10px;font-size:11px;color:var(--muted);">'+esc(fmtDate(d.date))+'</td>'                +'<td style="padding:4px 10px;font-size:11px;font-family:var(--mono);text-align:right;color:var(--navy);">'+d.qty+'</td>'                +'</tr>';            }).join('')            +'</tbody></table></td></tr>'          :'';
+          ?'<tr style="background:#f8fafc;"><td colspan="4" style="padding:0 0 6px 0;">'            +'<table style="width:100%;border-collapse:collapse;margin-top:2px;">'            +'<thead><tr style="background:#f1f5f9;">'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Invoice</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;"><span onclick="setSdDrillAz();event.stopPropagation();" style="cursor:pointer;text-decoration:underline dotted;">Customer '+azLabel+'</span></th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Date</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;">Qty</th>'            +'</tr></thead><tbody>'            +drillRows.map(function(d){              return '<tr style="border-bottom:1px solid #e2e8f0;">'                +'<td style="padding:4px 10px;font-size:11px;font-family:var(--mono);color:var(--navy);">'+esc(d.num)+'</td>'                +'<td style="padding:4px 10px;font-size:11px;color:var(--navy);">'+esc(d.cust)+(d.outlet?' <span style="color:var(--muted);font-size:10px;">· '+esc(d.outlet)+'</span>':'')+'</td>'                +'<td style="padding:4px 10px;font-size:11px;color:var(--muted);">'+esc(fmtDate(d.date))+'</td>'                +'<td style="padding:4px 10px;font-size:11px;font-family:var(--mono);text-align:right;color:var(--navy);">'+d.qty+'</td>'                +'</tr>';            }).join('')            +'</tbody></table></td></tr>'          :'';
         return '<tr style="'+TR+';cursor:pointer;background:'+(isOpen?'#eff6ff':'')+'" onclick="setSdDrill(this.dataset.k)" data-k="'+pkey.replace(/"/g,'&quot;')+'">'          +'<td style="'+td()+'">'          +'<span style="font-size:10px;color:var(--muted);margin-right:4px;">'+(isOpen?'▾':'▸')+'</span>'          +esc(p.name)+'</td>'          +'<td style="'+td()+';color:var(--muted);font-size:10px;">'+esc(p.spec||'\u2014')+'</td>'          +'<td style="'+td('center',true)+'">'+p.units+'</td>'          +'<td style="'+td('right',true)+'">$'+p.revenue.toFixed(2)+'</td>'          +'</tr>'          +drillHtml;}).join('')
     :'<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
 
@@ -1578,6 +1583,7 @@ function setSdCust(c){var el=document.getElementById('home-body');el._sdCust=c;e
 function setSdOutlet(o){var el=document.getElementById('home-body');el._sdOutlet=o;el.innerHTML=renderSalesDetailTab();}
 function setSdView(v){var el=document.getElementById('home-body');el._sdView=v;el.innerHTML=renderSalesDetailTab();}
 function setSdDrill(k){var el=document.getElementById('home-body');el._sdDrill=(el._sdDrill===k?'':k);el.innerHTML=renderSalesDetailTab();}
+function setSdDrillAz(){var el=document.getElementById('home-body');el._sdDrillAz=!el._sdDrillAz;el.innerHTML=renderSalesDetailTab();}
 function setSdRetOpen(open){var el=document.getElementById('home-body');el._sdRetOpen=open;el.innerHTML=renderSalesDetailTab();}
 function setSdProdOpen(open){var el=document.getElementById('home-body');el._sdProdOpen=open;el.innerHTML=renderSalesDetailTab();}
 function setSdShopeeOpen(open){var el=document.getElementById('home-body');el._sdShopeeOpen=open;el.innerHTML=renderSalesDetailTab();}
