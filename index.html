@@ -2144,8 +2144,7 @@ function renderTotals(){
   if(retLines.length>0){
     retLines.forEach(function(l){
       var lineAmt=l.q*l.p;
-      var shortDesc=l.desc?l.desc.split(' — ')[0]:'Deduction';
-      html+='<div class="tot-row ret"><span style="font-size:11px;">'+esc(shortDesc)+'</span><span class="mono">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
+      html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
     });
   }
   // Grand total
@@ -2359,8 +2358,7 @@ function buildPDF(inv){
   if(r>0){
     retLines.forEach(function(l){
       var lineAmt=l.q*l.p;
-      var retDesc=l.desc?l.desc.split(' — ')[0]:'Deduction';
-      tots+='<div class="ptr ret"><span>'+esc(retDesc)+'</span><span class="m">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
+      tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
     });
   }
   var grandTotal=s+gstAmtPDF-r;
