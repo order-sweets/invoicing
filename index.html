@@ -336,17 +336,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 
       <!-- Filter bar -->
       <div class="filter-bar" id="filter-bar">
-        <input type="text" id="filter-name" placeholder="Search customer/order no./Inv/Quo" oninput="renderHome()" style="min-width:240px;">
-        <select id="filter-month" onchange="renderHome()">
-          <option value="">All months</option>
-          <option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option>
-          <option>May</option><option>Jun</option><option>Jul</option><option>Aug</option>
-          <option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option>
-        </select>
-        <select id="filter-year" onchange="renderHome()">
-          <option value="">All years</option>
-          <option>2025</option><option>2026</option><option>2027</option>
-        </select>
+        <input type="text" id="filter-name" placeholder="Search customer/order no./Inv/Quo" oninput="renderHome()" style="min-width:200px;flex:1;">
+      </div>
+      <div id="inv-mo-bar" style="display:none;margin-bottom:8px;">
+        <div id="inv-mo-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;"></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <select id="inv-yr-sel" onchange="setInvYr(parseInt(this.value))" style="padding:5px 8px;border-radius:7px;border:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;"></select>
+        </div>
       </div>
 
       <div id="mass-bar" style="display:none;align-items:center;gap:5px;margin-bottom:10px;padding:3px 0;flex-wrap:nowrap;">
@@ -1103,11 +1099,7 @@ function switchTab(tab){
 
 function matchesFilter(name,date,num){
   var q=(document.getElementById('filter-name').value||'').toLowerCase().trim();
-  var mo=document.getElementById('filter-month').value;
-  var yr=document.getElementById('filter-year').value;
   if(q&&!((name||'').toLowerCase().includes(q)||(num||'').toLowerCase().includes(q)))return false;
-  if(mo&&date){var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];var d=new Date(date);if(months[d.getMonth()]!==mo)return false;}
-  if(yr&&date&&!date.startsWith(yr))return false;
   return true;
 }
 
@@ -1151,10 +1143,44 @@ function renderHome(){
     var bfd=document.getElementById('btn-f-undelivered');
     if(bfu)bfu.style.background=_invFilter==='unpaid'?'#fee2e2':'transparent';
     if(bfd)bfd.style.background=_invFilter==='undelivered'?'#fef3c7':'transparent';
+    // Build month-tab bar
+    var _MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var _now=new Date();
+    var _invWrap=document.getElementById('home-body');
+    if(_invWrap._invMo===undefined)_invWrap._invMo=_now.getMonth();
+    if(_invWrap._invYr===undefined)_invWrap._invYr=_now.getFullYear();
+    if(_invWrap._invAll===undefined)_invWrap._invAll=false;
+    var _selMo=_invWrap._invMo, _selYr=_invWrap._invYr, _viewAll=_invWrap._invAll;
+    // Build year options from invoice data
+    var _invYears=[];
+    DB.invoices.forEach(function(i){if(i.date){var y=parseInt(i.date.split('-')[0],10);if(_invYears.indexOf(y)<0)_invYears.push(y);}});
+    _invYears.sort(function(a,b){return b-a;});
+    if(_invYears.indexOf(_now.getFullYear())<0)_invYears.unshift(_now.getFullYear());
+    var moBar=document.getElementById('inv-mo-bar');
+    var moBtnsEl=document.getElementById('inv-mo-btns');
+    var yrSel=document.getElementById('inv-yr-sel');
+    if(moBar)moBar.style.display='block';
+    if(moBtnsEl){
+      moBtnsEl.innerHTML=_MONTHS.map(function(m,i){
+        var active=!_viewAll&&i===_selMo;
+        return '<button onclick="setInvMo('+i+')" style="padding:4px 8px;border-radius:6px;border:1px solid '+(active?'#1a2e4a':'var(--border)')+';background:'+(active?'#1a2e4a':'transparent')+';color:'+(active?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);cursor:pointer;">'+m+'</button>';
+      }).join('')+'<button onclick="setInvAll()" style="padding:4px 10px;border-radius:6px;border:1px solid '+(_viewAll?'#1a2e4a':'var(--border)')+';background:'+(_viewAll?'#1a2e4a':'transparent')+';color:'+(_viewAll?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;">Full Year</button>';
+    }
+    if(yrSel){
+      yrSel.innerHTML=_invYears.map(function(y){return '<option value="'+y+'"'+(y===_selYr?' selected':'')+'>'+y+'</option>';}).join('');
+    }
+    var _q=(document.getElementById('filter-name').value||'').trim();
     var list2=DB.invoices.filter(function(i){
       if(!matchesFilter(i.custName,i.date,i.num))return false;
       if(_invFilter==='unpaid'&&i.paid)return false;
       if(_invFilter==='undelivered'&&i.delivered)return false;
+      if(!_q){
+        if(!i.date)return false;
+        var parts=i.date.split('-');
+        var iYr=parseInt(parts[0],10), iMo=parseInt(parts[1],10)-1;
+        if(parseInt(parts[0],10)!==_selYr)return false;
+        if(!_viewAll&&iMo!==_selMo)return false;
+      }
       return true;
     });
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
@@ -1241,6 +1267,22 @@ function setSalesAll(){
   var el=document.getElementById('home-body');
   el._salAll=true;
   el.innerHTML=renderSalesTab();
+}
+
+function setInvMo(mo){
+  var wrap=document.getElementById('home-body');
+  wrap._invMo=mo;wrap._invAll=false;
+  renderHome();
+}
+function setInvYr(yr){
+  var wrap=document.getElementById('home-body');
+  wrap._invYr=yr;
+  renderHome();
+}
+function setInvAll(){
+  var wrap=document.getElementById('home-body');
+  wrap._invAll=true;
+  renderHome();
 }
 
 // ── SALES DETAIL TAB ────────────────────────────────────────────────────────
