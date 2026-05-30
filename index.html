@@ -1768,50 +1768,65 @@ function renderSplitCard(pair){
   var beeTot=beeinv?grand(beeinv.lines):0;
   var swTot=swinv?grand(swinv.lines):0;
   var combined=beeTot+swTot;
-  var amtHtml;
+
+  // Build combined rows from both invoices
+  var allLines=(beeinv?beeinv.lines:[]).concat(swinv?swinv.lines:[]);
+  var rows=allLines.map(function(l){
+    var t=l.q*(l.ret?-1:1)*l.p;
+    var spec=_getLineSpec(l);
+    var descParts=l.desc.split(' — ');
+    var baseName=descParts[0];
+    var specHtml=spec?'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+esc(spec)+'</div>':'';
+    return '<tr><td>'+(l.ret?'<span class="qv-ret">Deduction</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+  }).join('');
+
+  // Totals block: show each company subtotal then combined total
+  var tots='';
   if(beeinv&&swinv){
-    amtHtml='<div style="text-align:right;line-height:1.3;">'
-      +'<div style="font-family:monospace;font-size:13px;font-weight:700;">$'+combined.toFixed(2)+'</div>'
-      +'<div style="font-size:10px;color:var(--muted);">BE $'+beeTot.toFixed(2)+' &middot; SW $'+swTot.toFixed(2)+'</div>'
-      +'</div>';
-  } else {
-    amtHtml='<div style="font-family:monospace;font-size:13px;font-weight:700;">$'+combined.toFixed(2)+'</div>';
+    tots+='<div class="qvt dim"><span>Bee Events</span><span class="m">$'+beeTot.toFixed(2)+'</span></div>';
+    tots+='<div class="qvt dim"><span>SWITS</span><span class="m">$'+swTot.toFixed(2)+'</span></div>';
   }
-  var subBtns='<div style="display:flex;gap:8px;margin-bottom:12px;">';
+  tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+combined.toFixed(2)+'</span></div>';
+
+  // Action buttons row — Bee Inv, SWITS Inv, Delete Bee, Delete SWITS
+  var actionBtns='<div class="inv-card-actions" style="justify-content:space-between;">'
+    +'<div style="display:flex;gap:6px;">';
   if(beeinv){
-    subBtns+='<button class="btn btn-sm" onclick="previewInv(&apos;'+beeinv.id+'&apos;);event.stopPropagation()" style="flex:1;background:#FAECE7;color:#D85A30;border:1.5px solid rgba(216,90,48,.25);font-weight:700;padding:8px;">Bee Inv</button>';
+    actionBtns+='<button class="btn btn-ghost btn-sm" onclick="previewInv(&apos;'+beeinv.id+'&apos;);event.stopPropagation()" style="padding:4px 8px;font-size:11px;background:#FAECE7;color:#D85A30;border:1.5px solid rgba(216,90,48,.25);">Bee Inv</button>';
   }
   if(swinv){
-    subBtns+='<button class="btn btn-sm" onclick="previewInv(&apos;'+swinv.id+'&apos;);event.stopPropagation()" style="flex:1;background:#EEF2FF;color:#4F46E5;border:1.5px solid rgba(79,70,229,.25);font-weight:700;padding:8px;">SWITS Inv</button>';
+    actionBtns+='<button class="btn btn-ghost btn-sm" onclick="previewInv(&apos;'+swinv.id+'&apos;);event.stopPropagation()" style="padding:4px 8px;font-size:11px;background:#EEF2FF;color:#4F46E5;border:1.5px solid rgba(79,70,229,.25);">SWITS Inv</button>';
   }
-  subBtns+='</div>';
-  var delBtns='<div style="display:flex;gap:8px;margin-top:8px;">';
   if(beeinv){
-    delBtns+='<button class="btn btn-ghost btn-sm" onclick="deleteInvoice(&apos;'+beeinv.id+'&apos;);event.stopPropagation()" style="font-size:11px;color:var(--red);">Delete Bee</button>';
+    actionBtns+='<button class="btn btn-ghost btn-sm" onclick="deleteInvoice(&apos;'+beeinv.id+'&apos;);event.stopPropagation()" style="padding:4px 8px;font-size:11px;color:var(--red);">Delete Bee</button>';
   }
   if(swinv){
-    delBtns+='<button class="btn btn-ghost btn-sm" onclick="deleteInvoice(&apos;'+swinv.id+'&apos;);event.stopPropagation()" style="font-size:11px;color:var(--red);">Delete SWITS</button>';
+    actionBtns+='<button class="btn btn-ghost btn-sm" onclick="deleteInvoice(&apos;'+swinv.id+'&apos;);event.stopPropagation()" style="padding:4px 8px;font-size:11px;color:var(--red);">Delete SWITS</button>';
   }
-  delBtns+='</div>';
+  actionBtns+='</div></div>';
+
   return '<div class="inv-card-item" id="icard-'+cardId+'">'
     +'<div class="inv-card-header">'
       +'<div onclick="toggleCard(&apos;ic-'+cardId+'&apos;)" style="flex:1;min-width:0;cursor:pointer;">'
         +'<div class="inv-card-num">'
-          +'<span style="font-size:9px;font-weight:700;background:#f0fdf4;color:#16a34a;padding:1px 5px;border-radius:4px;margin-right:4px;">SPLIT</span>'
           +(beeinv?esc(beeinv.num):'')+(beeinv&&swinv?' &middot; ':'')+(swinv?esc(swinv.num):'')
+          +' <span style="font-size:9px;font-weight:700;background:#f0fdf4;color:#16a34a;padding:1px 5px;border-radius:4px;margin-left:2px;">SPLIT</span>'
         +'</div>'
         +'<div class="inv-card-name">'+esc(first.custName)+(first.outlet?' &middot; '+esc(first.outlet):'')+'</div>'
         +'<div class="inv-card-meta">'+esc(fmtDate(first.date))+' &middot; '+esc(first.ref||'&#8212;')+'</div>'
       +'</div>'
-      +amtHtml
-      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;margin-left:8px;">'
+      +'<div class="inv-card-amount">$'+combined.toFixed(2)+'</div>'
+      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
         +'<button class="btn btn-accent btn-sm" onclick="editSplitInvoice(&apos;'+groupId+'&apos;);event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'
         +'<svg class="inv-card-chevron" id="chev-ic-'+cardId+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(&apos;ic-'+cardId+'&apos;);event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'
       +'</div>'
     +'</div>'
     +'<div class="inv-card-body" id="ic-'+cardId+'">'
-      +subBtns
-      +delBtns
+      +(first.outlet||first.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">&#x1F4CD; '+[first.outlet,first.addr].filter(Boolean).map(esc).join(' &middot; ')+'</div>':'')
+      +(first.remarks?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;padding:6px 8px;background:#fffbeb;border-radius:6px;border-left:3px solid #f59e0b;">&#x1F4AC; '+esc(first.remarks)+'</div>':'')
+      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'
+      +actionBtns
     +'</div>'
   +'</div>';
 }
