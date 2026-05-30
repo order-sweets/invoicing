@@ -701,6 +701,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download
         </button>
+        <button class="btn btn-ghost btn-sm" id="pdf-bar-receipt" onclick="_pdfReceiptAction()" style="display:none;">Receipt</button>
+        <button class="btn btn-ghost btn-sm" id="pdf-bar-duplicate" onclick="_pdfDuplicateAction()" style="display:none;">Duplicate</button>
         <button class="pdf-close" onclick="closePDF()">&#x2715;</button>
       </div>
     </div>
@@ -1151,7 +1153,19 @@ function renderHome(){
       return true;
     });
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
-    el.innerHTML=list2.slice().reverse().map(function(inv){return renderInvCard(inv);}).join('');
+    var rendered=[];
+    var seenGroups={};
+    list2.slice().reverse().forEach(function(inv){
+      if(inv.splitGroup){
+        if(seenGroups[inv.splitGroup])return;
+        seenGroups[inv.splitGroup]=true;
+        var pair=list2.filter(function(i){return i.splitGroup===inv.splitGroup;});
+        rendered.push(renderSplitCard(pair));
+      } else {
+        rendered.push(renderInvCard(inv));
+      }
+    });
+    el.innerHTML=rendered.join('');
     _attachSwipe();
   }
 }
@@ -1745,6 +1759,101 @@ function exportSalesDetailCSV(){
   a.click();
 }
 
+function renderSplitCard(pair){
+  var beeinv=pair.find(function(i){return i.company==='bee';});
+  var swinv=pair.find(function(i){return i.company==='swits';});
+  var first=beeinv||swinv;
+  var groupId=first.splitGroup;
+  var cardId='split-'+groupId;
+  var beeTot=beeinv?grand(beeinv.lines):0;
+  var swTot=swinv?grand(swinv.lines):0;
+  var combined=beeTot+swTot;
+  var amtHtml;
+  if(beeinv&&swinv){
+    amtHtml='<div style="text-align:right;line-height:1.3;">'
+      +'<div style="font-family:monospace;font-size:13px;font-weight:700;">$'+combined.toFixed(2)+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);">BE $'+beeTot.toFixed(2)+' &middot; SW $'+swTot.toFixed(2)+'</div>'
+      +'</div>';
+  } else {
+    amtHtml='<div style="font-family:monospace;font-size:13px;font-weight:700;">$'+combined.toFixed(2)+'</div>';
+  }
+  var subBtns='<div style="display:flex;gap:8px;margin-bottom:12px;">';
+  if(beeinv){
+    subBtns+='<button class="btn btn-sm" onclick="previewInv(&apos;'+beeinv.id+'&apos;);event.stopPropagation()" style="flex:1;background:#FAECE7;color:#D85A30;border:1.5px solid rgba(216,90,48,.25);font-weight:700;padding:8px;">Bee Inv</button>';
+  }
+  if(swinv){
+    subBtns+='<button class="btn btn-sm" onclick="previewInv(&apos;'+swinv.id+'&apos;);event.stopPropagation()" style="flex:1;background:#EEF2FF;color:#4F46E5;border:1.5px solid rgba(79,70,229,.25);font-weight:700;padding:8px;">SWITS Inv</button>';
+  }
+  subBtns+='</div>';
+  var delBtns='<div style="display:flex;gap:8px;margin-top:8px;">';
+  if(beeinv){
+    delBtns+='<button class="btn btn-ghost btn-sm" onclick="deleteInvoice(&apos;'+beeinv.id+'&apos;);event.stopPropagation()" style="font-size:11px;color:var(--red);">Delete Bee</button>';
+  }
+  if(swinv){
+    delBtns+='<button class="btn btn-ghost btn-sm" onclick="deleteInvoice(&apos;'+swinv.id+'&apos;);event.stopPropagation()" style="font-size:11px;color:var(--red);">Delete SWITS</button>';
+  }
+  delBtns+='</div>';
+  return '<div class="inv-card-item" id="icard-'+cardId+'">'
+    +'<div class="inv-card-header">'
+      +'<div onclick="toggleCard(&apos;ic-'+cardId+'&apos;)" style="flex:1;min-width:0;cursor:pointer;">'
+        +'<div class="inv-card-num">'
+          +'<span style="font-size:9px;font-weight:700;background:#f0fdf4;color:#16a34a;padding:1px 5px;border-radius:4px;margin-right:4px;">SPLIT</span>'
+          +(beeinv?esc(beeinv.num):'')+(beeinv&&swinv?' &middot; ':'')+(swinv?esc(swinv.num):'')
+        +'</div>'
+        +'<div class="inv-card-name">'+esc(first.custName)+(first.outlet?' &middot; '+esc(first.outlet):'')+'</div>'
+        +'<div class="inv-card-meta">'+esc(fmtDate(first.date))+' &middot; '+esc(first.ref||'&#8212;')+'</div>'
+      +'</div>'
+      +amtHtml
+      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;margin-left:8px;">'
+        +'<button class="btn btn-accent btn-sm" onclick="editSplitInvoice(&apos;'+groupId+'&apos;);event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'
+        +'<svg class="inv-card-chevron" id="chev-ic-'+cardId+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(&apos;ic-'+cardId+'&apos;);event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'
+      +'</div>'
+    +'</div>'
+    +'<div class="inv-card-body" id="ic-'+cardId+'">'
+      +subBtns
+      +delBtns
+    +'</div>'
+  +'</div>';
+}
+
+function editSplitInvoice(groupId){
+  var pair=DB.invoices.filter(function(i){return i.splitGroup===groupId;});
+  var beeinv=pair.find(function(i){return i.company==='bee';});
+  var swinv=pair.find(function(i){return i.company==='swits';});
+  var modal=document.createElement('div');
+  modal.id='split-edit-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  var wrap=document.createElement('div');
+  wrap.style.cssText='background:#fff;border-radius:14px;padding:22px;max-width:320px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18);';
+  wrap.innerHTML='<div style="font-weight:700;font-size:15px;margin-bottom:6px;">Which invoice to edit?</div>'
+    +'<div style="font-size:12px;color:#666;margin-bottom:16px;">Changes will only affect the selected company invoice.</div>';
+  var btnWrap=document.createElement('div');
+  btnWrap.style.cssText='display:flex;flex-direction:column;gap:10px;';
+  if(beeinv){
+    var bBtn=document.createElement('button');
+    bBtn.style.cssText='padding:12px;background:#FAECE7;color:#D85A30;border:1.5px solid rgba(216,90,48,.3);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;';
+    bBtn.textContent='Bee Events — '+beeinv.num;
+    bBtn.onclick=function(){modal.remove();editInvoice(beeinv.id);};
+    btnWrap.appendChild(bBtn);
+  }
+  if(swinv){
+    var sBtn=document.createElement('button');
+    sBtn.style.cssText='padding:12px;background:#EEF2FF;color:#4F46E5;border:1.5px solid rgba(79,70,229,.3);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;';
+    sBtn.textContent='SWITS — '+swinv.num;
+    sBtn.onclick=function(){modal.remove();editInvoice(swinv.id);};
+    btnWrap.appendChild(sBtn);
+  }
+  var cBtn=document.createElement('button');
+  cBtn.style.cssText='padding:10px;background:#f3f4f6;color:#555;border:none;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;';
+  cBtn.textContent='Cancel';
+  cBtn.onclick=function(){modal.remove();};
+  btnWrap.appendChild(cBtn);
+  wrap.appendChild(btnWrap);
+  modal.appendChild(wrap);
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+
 function renderInvCard(inv){
   var g=grand(inv.lines);
   var sb=sub(inv.lines),rt=rets(inv.lines);
@@ -2198,6 +2307,7 @@ function confirmInvoice(){
     var beelines=current.lines.filter(function(l){return l.desc.toLowerCase().includes('cotton candy');});
     var swlines=current.lines.filter(function(l){return !l.desc.toLowerCase().includes('cotton candy');});
     if(!beelines.length&&!swlines.length){toast('No items to invoice.');return;}
+    var splitGroupId='split_'+Date.now();
     var splitNums=[];
     if(beelines.length){
       var beeinv=JSON.parse(JSON.stringify(current));
@@ -2206,6 +2316,7 @@ function confirmInvoice(){
       beeinv.lines=beelines;
       beeinv.company='bee';
       beeinv.confirmed=true;
+      beeinv.splitGroup=splitGroupId;
       DB.invoices.push(beeinv);
       splitNums.push(beeinv.num+' (Bee Events)');
     }
@@ -2216,6 +2327,7 @@ function confirmInvoice(){
       swinv.lines=swlines;
       swinv.company='swits';
       swinv.confirmed=true;
+      swinv.splitGroup=splitGroupId;
       DB.invoices.push(swinv);
       splitNums.push(swinv.num+' (SWITS)');
     }
@@ -2225,12 +2337,6 @@ function confirmInvoice(){
     persist();
     toast('\u2713 '+splitNums.join(' + '),4000);
     gotoHome();switchTab('completed');
-    // Offer to print both in one go
-    var printBoth=confirm('Split invoices confirmed!\n\nOpen both PDFs for printing now?');
-    if(printBoth){
-      if(beelines.length) setTimeout(function(){doPrintInv(DB.invoices.find(function(i){return i.id===beeinv.id;}));},300);
-      if(swlines.length)  setTimeout(function(){doPrintInv(DB.invoices.find(function(i){return i.id===swinv.id;}));},800);
-    }
     return;
   }
 
@@ -2377,9 +2483,16 @@ function openPDF(inv){
   _pdfInv=inv;
   document.getElementById('pdf-area').innerHTML=buildPDF(inv);
   document.getElementById('pdf-bar-title').textContent=(inv.num||'Draft')+' — Preview';
+  var isSaved=!!DB.invoices.find(function(i){return i.id===inv.id;});
+  var rBtn=document.getElementById('pdf-bar-receipt');
+  var dBtn=document.getElementById('pdf-bar-duplicate');
+  if(rBtn)rBtn.style.display=isSaved?'':'none';
+  if(dBtn)dBtn.style.display=isSaved?'':'none';
   document.getElementById('pdf-ov').classList.add('open');
 }
 function closePDF(){document.getElementById('pdf-ov').classList.remove('open');}
+function _pdfReceiptAction(){if(_pdfInv)openReceiptPrinter(_pdfInv.id);}
+function _pdfDuplicateAction(){if(_pdfInv){closePDF();duplicateInvoice(_pdfInv.id);}}
 
 function buildInvHTML(inv){
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+esc(inv.num||'Invoice')+'</title>'
