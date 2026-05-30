@@ -240,7 +240,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 .pdf-tots{display:flex;justify-content:flex-end;margin-bottom:14px;}
 .pdf-tots-inner{width:260px;}
 .ptr{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;}
-.ptr.dim{color:#111;}.ptr.ret{color:#B91C1C;}
+.ptr.dim{color:#111;}.ptr.ret{color:#B91C1C;}.ptr.ret-hdr-pdf{color:#B91C1C;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding-top:10px;border-top:1px solid #eee;margin-top:4px;}
 .ptr.grand{font-size:13px;font-weight:700;border-top:1.5px solid #1C1B18;padding-top:7px;margin-top:4px;}
 .ptr .m{font-family:'DM Mono',monospace;}
 .pdf-notes{margin-top:16px;padding-top:13px;border-top:1px solid #E0DED8;}
@@ -2077,14 +2077,28 @@ function renderLines(){
   var tbody=document.getElementById('line-body');
   tbody.innerHTML=current.lines.map(function(ln){
     var t=ln.q*(ln.ret?-1:1)*ln.p;
-    return '<tr data-lid="'+ln.id+'">'
-      +'<td style="min-width:120px;">'+(ln.ret?'<span class="ret-badge">Return</span>':'')
-        +'<textarea class="li" rows="2" placeholder="Description of item/ service..." oninput="upF(\''+ln.id+'\',\'desc\',this.value)" style="resize:vertical;min-height:36px;background:#fff;border-color:var(--border-md);'+(ln.ret?'color:var(--red)':'')+'">'+esc(ln.desc)+'</textarea>'
+    var isManual=!ln.pid;
+    var priceVal=ln.ret?('-'+ln.p.toFixed(2)):ln.p.toFixed(2);
+    var priceMinAttr=isManual?'':' min="0"';
+    var priceStyle=ln.ret?'color:var(--red);':'';
+    var priceTitle=isManual?' title="Enter a negative value e.g. -1.80 to mark as a return"':'';
+    var negCls=t<0?' neg':'';
+    var negSign=t<0?'&#8722;':'';
+    var lid=ln.id;
+    return '<tr data-lid="'+lid+'">'
+      +'<td style="min-width:120px;">'+(ln.ret?'<span class="ret-badge">Deduction</span>':'')
+        +'<textarea class="li" rows="2" placeholder="Description of item/ service..."'
+        +' oninput="upF(&apos;'+lid+'&apos;,&apos;desc&apos;,this.value)"'
+        +' style="resize:vertical;min-height:36px;background:#fff;border-color:var(--border-md);'+(ln.ret?'color:var(--red)':'')+'">'
+        +(ln.desc?esc(ln.desc):'')
+        +'</textarea>'
       +'</td>'
-      +'<td><input class="li qty" type="number" min="0" value="'+Math.abs(ln.q)+'" oninput="upF(\''+ln.id+'\',\'q\',this.value)"></td>'
-      +'<td><input class="li price" type="number" min="0" step="0.01" value="'+ln.p.toFixed(2)+'" oninput="upF(\''+ln.id+'\',\'p\',this.value)"></td>'
-      +'<td class="lt'+(t<0?' neg':'')+'">'+( t<0?'−':'')+'$'+Math.abs(t).toFixed(2)+'</td>'
-      +'<td><button class="lrm" onclick="removeLine(\''+ln.id+'\')">&#x2715;</button></td>'
+      +'<td><input class="li qty" type="number" min="0" value="'+Math.abs(ln.q)+'"'
+        +' oninput="upF(&apos;'+lid+'&apos;,&apos;q&apos;,this.value)"></td>'
+      +'<td><input class="li price" type="number"'+priceMinAttr+' step="0.01" value="'+priceVal+'"'+priceTitle
+        +' oninput="upF(&apos;'+lid+'&apos;,&apos;p&apos;,this.value)" style="'+priceStyle+'"></td>'
+      +'<td class="lt'+negCls+'">'+negSign+'$'+Math.abs(t).toFixed(2)+'</td>'
+      +'<td><button class="lrm" onclick="removeLine(&apos;'+lid+'&apos;)">&#x2715;</button></td>'
       +'</tr>';
   }).join('');
   renderTotals();
@@ -2093,26 +2107,49 @@ function renderLines(){
 function upF(lid,field,val){
   var ln=current.lines.find(function(l){return l.id===lid;});if(!ln)return;
   if(field==='desc'){ln.desc=val;return;}
-  if(field==='q')ln.q=Math.abs(parseFloat(val)||0);
-  if(field==='p')ln.p=Math.abs(parseFloat(val)||0);
+  if(field==='q'){ln.q=Math.abs(parseFloat(val)||0);}
+  if(field==='p'){
+    var rawP=parseFloat(val)||0;
+    if(!ln.pid){
+      // Manual line: negative price auto-flags as return, positive clears it
+      var wasRet=ln.ret;
+      ln.ret=rawP<0;
+      ln.p=Math.abs(rawP);
+      if(ln.ret!==wasRet){renderLines();return;}
+    } else {
+      ln.p=Math.abs(rawP);
+    }
+  }
   var row=document.querySelector('[data-lid="'+lid+'"]');
   if(row){var lt=row.querySelector('.lt');var t=ln.q*(ln.ret?-1:1)*ln.p;if(lt){lt.className='lt'+(t<0?' neg':'');lt.textContent=(t<0?'−':'')+'$'+Math.abs(t).toFixed(2);}}
   renderTotals();
 }
 
 function renderTotals(){
-  var s=sub(current.lines),r=rets(current.lines),g=s-r;
-  var html='<div class="totals-block">';
-  if(r>0){html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div><div class="tot-row ret"><span>Returns</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
+  var posLines=current.lines.filter(function(l){return !l.ret;});
+  var retLines=current.lines.filter(function(l){return l.ret;});
+  var s=posLines.reduce(function(a,l){return a+l.q*l.p;},0);
+  var r=retLines.reduce(function(a,l){return a+l.q*l.p;},0);
   var gstRate=getGSTRate(current);
+  var gstAmt=gstRate!==null?s*(gstRate/100):0;
+  var grandTotal=s+(gstRate!==null?gstAmt:0)-r;
+  var html='<div class="totals-block">';
+  // Subtotal (always show)
+  html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div>';
+  // GST if applicable
   if(gstRate!==null){
-    var gstAmt=g*(gstRate/100);
-    html+='<div class="tot-row dim"><span>Before GST</span><span class="mono">$'+g.toFixed(2)+'</span></div>';
     html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+gstAmt.toFixed(2)+'</span></div>';
-    html+='<div class="tot-row grand"><span>Total (incl. GST)</span><span class="mono">$'+(g+gstAmt).toFixed(2)+'</span></div>';
-  } else {
-    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+g.toFixed(2)+'</span></div>';
   }
+  // Returns section — itemised in red
+  if(retLines.length>0){
+    retLines.forEach(function(l){
+      var lineAmt=l.q*l.p;
+      var shortDesc=l.desc?l.desc.split(' — ')[0]:'Deduction';
+      html+='<div class="tot-row ret"><span style="font-size:11px;">'+esc(shortDesc)+'</span><span class="mono">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
+    });
+  }
+  // Grand total
+  html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal.toFixed(2)+'</span></div>';
   html+='</div>';
   document.getElementById('totals-block').innerHTML=html;
 }
@@ -2268,7 +2305,7 @@ function getPDFCSS(){
     +'.pdf-neg{color:#B91C1C;}'
     +'.pdf-tots{display:flex;justify-content:flex-end;margin-bottom:12px;}.pdf-tots-inner{width:260px;}'
     +'.ptr{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;}'
-    +'.ptr.dim{color:#111;}.ptr.ret{color:#B91C1C;}'
+    +'.ptr.dim{color:#111;}.ptr.ret{color:#B91C1C;}.ptr.ret-hdr-pdf{color:#B91C1C;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding-top:10px;border-top:1px solid #eee;margin-top:4px;}'
     +'.ptr.grand{font-size:13px;font-weight:700;border-top:1.5px solid #111;padding-top:7px;margin-top:4px;}'
     +'.ptr .m{font-family:"DM Mono",monospace;}'
     +'.pdf-notes{margin-top:16px;padding-top:12px;border-top:1px solid #ccc;}'
@@ -2305,21 +2342,29 @@ function buildPDF(inv){
     }).join('');
   }
   var delivRows=buildRows(delivLines);
-  var retRows=retLines.length?'<tr><td colspan="5" style="padding-top:14px;padding-bottom:4px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#B91C1C;border-top:1px solid #eee;">Returns</td></tr>'+buildRows(retLines):'';
+  // Returns shown in item table with red section header, then totals below
+  var retRows=retLines.length
+    ?'<tr><td colspan="5" style="padding-top:14px;padding-bottom:4px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#B91C1C;border-top:1px solid #eee;">Returns</td></tr>'+buildRows(retLines)
+    :'';
   var rows=delivRows+retRows;
+  // Build totals: Subtotal → GST → Returns total in red → Total
   var tots='';
-  if(r>0){tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div><div class="ptr ret"><span>Returns</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
+  tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div>';
   var gstRatePDF=getGSTRate(inv);
-  var grandTotal=g;
+  var gstAmtPDF=0;
   if(gstRatePDF!==null){
-    var gstAmtPDF=g*(gstRatePDF/100);
-    grandTotal=g+gstAmtPDF;
-    tots+='<div class="ptr dim"><span>Before GST</span><span class="m">$'+g.toFixed(2)+'</span></div>';
+    gstAmtPDF=s*(gstRatePDF/100);
     tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF.toFixed(2)+'</span></div>';
-    tots+='<div class="ptr grand"><span>Total (incl. GST)</span><span class="m">$'+grandTotal.toFixed(2)+'</span></div>';
-  } else {
-    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';
   }
+  if(r>0){
+    retLines.forEach(function(l){
+      var lineAmt=l.q*l.p;
+      var retDesc=l.desc?l.desc.split(' — ')[0]:'Deduction';
+      tots+='<div class="ptr ret"><span>'+esc(retDesc)+'</span><span class="m">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
+    });
+  }
+  var grandTotal=s+gstAmtPDF-r;
+  tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotal.toFixed(2)+'</span></div>';
   return '<div class="pdf-doc">'
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub2+'</div></div>'
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
