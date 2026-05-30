@@ -265,9 +265,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
   #editor-left{order:1;}
 }
 .mono,.inv-amount,.lt,.tot-row .mono,.ptr .m{font-feature-settings:"tnum";}
+
+/* ── LOCK SCREEN ── */
+#lock-screen{position:fixed;inset:0;background:#1C1B18;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;font-family:'DM Sans',sans-serif;}
+#lock-card{background:#fff;border-radius:18px;padding:36px 28px;width:100%;max-width:340px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.35);}
+#lock-brand{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#D85A30;margin-bottom:8px;}
+#lock-card h2{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:700;margin-bottom:24px;color:#1C1B18;}
+#lock-pw{width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:10px;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;text-align:center;letter-spacing:.1em;}
+#lock-pw:focus{border-color:#D85A30;}
+#lock-btn{width:100%;padding:12px;background:#D85A30;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;}
+#lock-btn:hover{background:#c04e28;}
+#lock-err{font-size:12px;color:#B91C1C;margin-top:8px;min-height:18px;font-family:'DM Sans',sans-serif;}
 </style>
 </head>
 <body>
+<div id="lock-screen">
+  <div id="lock-card">
+    <div id="lock-brand">Bee Events &amp; SWITS</div>
+    <h2>Invoicing System</h2>
+    <input type="password" id="lock-pw" placeholder="Password" onkeydown="if(event.key==='Enter')unlockApp()">
+    <button id="lock-btn" onclick="unlockApp()">Unlock</button>
+    <div id="lock-err"></div>
+  </div>
+</div>
 
 <!-- SIDEBAR OVERLAY (mobile) -->
 <div class="sb-overlay" id="sb-overlay" onclick="closeMobMenu()"></div>
@@ -711,6 +731,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
 <div class="toast" id="toast"></div>
 
 <script>
+// ── PASSWORD LOCK ──
+var _PW_HASH='69e399851c8419993d46757025fd51e415e0277e8def8cb283dfbe7867212e8a';
+async function _sha256(str){
+  var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+async function unlockApp(){
+  var pw=document.getElementById('lock-pw').value;
+  var err=document.getElementById('lock-err');
+  if(!pw){err.textContent='Please enter a password.';return;}
+  var hash=await _sha256(pw);
+  if(hash===_PW_HASH){
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('lock-pw').value='';
+  } else {
+    err.textContent='Incorrect password. Please try again.';
+    document.getElementById('lock-pw').value='';
+    document.getElementById('lock-pw').focus();
+  }
+}
+// End lock
 
 
 // ══ REAL STORE DATA ══
