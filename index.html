@@ -2317,8 +2317,9 @@ function confirmInvoice(){
     if(window.syncPendingToStore)window.syncPendingToStore();
   }
 
-  if(DB.settings.dual===true){
+  if(DB.settings.dual===true && !current.splitGroup){
     // Dual-company split: Bee Events = Cotton Candy, SWITS = everything else
+    // Skip if this is an existing split invoice being edited (splitGroup already set)
     var beelines=current.lines.filter(function(l){return l.desc.toLowerCase().includes('cotton candy');});
     var swlines=current.lines.filter(function(l){return !l.desc.toLowerCase().includes('cotton candy');});
     if(!beelines.length&&!swlines.length){toast('No items to invoice.');return;}
