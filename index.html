@@ -2142,10 +2142,7 @@ function renderTotals(){
   }
   // Returns section — itemised in red
   if(retLines.length>0){
-    retLines.forEach(function(l){
-      var lineAmt=l.q*l.p;
-      html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
-    });
+    if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
   }
   // Grand total
   html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal.toFixed(2)+'</span></div>';
@@ -2356,10 +2353,7 @@ function buildPDF(inv){
     tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF.toFixed(2)+'</span></div>';
   }
   if(r>0){
-    retLines.forEach(function(l){
-      var lineAmt=l.q*l.p;
-      tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+lineAmt.toFixed(2)+'</span></div>';
-    });
+    if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
   }
   var grandTotal=s+gstAmtPDF-r;
   tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotal.toFixed(2)+'</span></div>';
