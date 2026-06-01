@@ -743,6 +743,7 @@ async function unlockApp(){
   if(!pw){err.textContent='Please enter a password.';return;}
   var hash=await _sha256(pw);
   if(hash===_PW_HASH){
+    sessionStorage.setItem('inv_unlocked','1');
     document.getElementById('lock-screen').style.display='none';
     document.getElementById('lock-pw').value='';
   } else {
@@ -751,6 +752,7 @@ async function unlockApp(){
     document.getElementById('lock-pw').focus();
   }
 }
+(function(){if(sessionStorage.getItem('inv_unlocked')==='1'){var ls=document.getElementById('lock-screen');if(ls)ls.style.display='none';}})();
 // End lock
 
 
