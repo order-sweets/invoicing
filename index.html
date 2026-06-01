@@ -1152,6 +1152,7 @@ function renderHome(){
   var isSales=activeTab==='salesdetail';
   if(massBar)massBar.style.display=isSales?'none':'flex';
   if(filterBar)filterBar.style.display=isSales?'none':'flex';
+  var moBar=document.getElementById('inv-mo-bar');if(moBar)moBar.style.display='none';
   if(selAll){selAll.checked=false;selAll.indeterminate=false;}
   var selCount=document.getElementById('sel-count');if(selCount)selCount.textContent='';
   var el=document.getElementById('home-body');
