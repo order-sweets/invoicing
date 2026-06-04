@@ -3496,6 +3496,13 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 
   function applyStorePending(remotePending) {
     var normalized = normalizePendingOrders(remotePending || []);
+    // Build set of all order IDs already invoiced — never re-add these to pending
+    var invoicedOrderIds = {};
+    DB.invoices.forEach(function(inv) {
+      if (inv._sourceOrderId) invoicedOrderIds[inv._sourceOrderId] = true;
+      if (inv._mergedOrders) inv._mergedOrders.forEach(function(id) { invoicedOrderIds[id] = true; });
+    });
+    normalized = normalized.filter(function(o) { return !invoicedOrderIds[o.id]; });
     var nextState = stableStringify(normalized);
     if (nextState === _lastPendingState && stableStringify(DB.pending) === nextState) return;
     _applyingRemote = true;
