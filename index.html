@@ -1045,6 +1045,7 @@ window.toggleOrderCard=function(id){
 // ══ UTILS ══
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function fmtDate(d){if(!d)return'';try{var p=d.split('-');return p[2]+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(p[1])-1]+' '+p[0];}catch(e){return d;}}
+function fmt(n){var x=parseFloat(n||0).toFixed(2);var parts=x.split('.');return parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',')+'.'+parts[1];}
 function fmtDateDisplay(d){return(!d||d==='KIV')?'KIV':fmtDate(d);}
 function toast(m,dur){var t=document.getElementById('toast');t.innerHTML=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},dur||2400);}
 function sub(lines){return lines.filter(function(l){return !l.ret;}).reduce(function(s,l){return s+l.q*l.p;},0);}
@@ -1169,11 +1170,11 @@ function renderHome(){
       var tot=o.items.reduce(function(s,i){return s+i.qty*i.price;},0);
       var meta=esc(o.items.length)+' item'+(o.items.length>1?'s':'')+' &nbsp;&middot;&nbsp; '+esc(fmtDate(o.date))+(o.outlet?' &nbsp;&middot;&nbsp; '+esc(o.outlet):'');
       var oid=o.id;
-      var itemRows=(o.items||[]).map(function(it){var t=(it.qty*it.price).toFixed(2);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+Number(it.price).toFixed(2)+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');
+      var itemRows=(o.items||[]).map(function(it){var t=fmt(it.qty*it.price);return '<tr><td style="padding:5px 8px;font-size:12px;">'+esc(it.desc)+'</td><td style="padding:5px 8px;font-size:12px;text-align:center;color:var(--muted);">'+it.qty+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;">$'+fmt(Number(it.price))+'</td><td style="padding:5px 8px;font-size:12px;text-align:right;font-family:monospace;font-weight:600;">$'+t+'</td></tr>';}).join('');
       var notes=o.notes?'<div style="margin-top:8px;padding:8px;background:var(--surface);border-radius:6px;font-size:12px;color:var(--muted);"><strong>Notes:</strong> '+esc(o.notes)+'</div>':'';
       var addr=o.addr?'<div style="margin-top:6px;font-size:12px;color:var(--muted);">📍 '+esc(o.addr)+'</div>':'';
       var phone=(o.custPhone||o.phone)?'<div style="margin-top:4px;font-size:12px;color:var(--muted);">📞 +65 '+esc((o.custPhone||o.phone||'').replace(/\s/g,'').replace(/(\d{4})(\d+)/,'$1 $2'))+'</div>':'';
-      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+tot.toFixed(2)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+phone+notes+'</div></div>';   }).join('');
+      return '<div class="order-card" style="flex-direction:column;align-items:stretch;">'+'<div style="display:flex;align-items:center;gap:8px;"><input type="checkbox" class="mass-cb" data-id="'+esc(oid)+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" onchange="updateSelCount()">'+'<div class="oc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="toggleOrderCard(\'oc-'+oid+'\')">'+'<div class="oc-ref">'+esc(o.id)+'</div>'+'<div class="oc-name">'+esc(o.custName)+(o.outlet?' — '+esc(o.outlet):'')+'</div>'+'<div class="oc-meta">'+meta+'</div></div>'+'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'+'<div class="oc-amount">$'+fmt(tot)+'</div>'+'<button class="btn btn-accent btn-sm" onclick="generateFromOrder(\''+oid+'\')" style="padding:5px 8px;white-space:nowrap;">Generate &#x2192;</button>'+'<button class="btn btn-red btn-sm" onclick="deletePendingOrder(\''+oid+'\')" title="Delete" style="padding:5px 8px;">'+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>'+'</button>'+'<svg id="chev-oc-'+oid+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0;color:var(--muted);cursor:pointer;transition:transform .2s;" onclick="toggleOrderCard(\'oc-'+oid+'\')" ><polyline points="6 9 12 15 18 9"/></svg>'+'</div></div>'+'<div id="oc-'+oid+'" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">'+'<table style="width:100%;border-collapse:collapse;margin-bottom:8px;"><thead><tr>'+'<th style="padding:4px 8px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Item</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:center;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Qty</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Unit $</th>'+'<th style="padding:4px 8px;font-size:10px;text-align:right;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);">Amount</th>'+'</tr></thead><tbody>'+itemRows+'</tbody></table>'+addr+phone+notes+'</div></div>';   }).join('');
     el.innerHTML='<div class="order-list">'+html+'</div>';
   } else if(activeTab==='quotations'){
     var qlist=(DB.quotations||[]).filter(function(i){return matchesFilter(i.custName,i.date,i.num);});
@@ -1304,10 +1305,10 @@ function renderSalesTab(){
   var allBtn='<button onclick="setSalesAll()" style="padding:4px 10px;border-radius:6px;border:1px solid '+(viewAll?'var(--navy)':'var(--border)')+';background:'+(viewAll?'var(--navy)':'transparent')+';color:'+(viewAll?'#fff':'var(--muted)')+';font-size:11px;font-family:var(--mono);font-weight:600;cursor:pointer;">Full Year</button>';
 
   function row(label,val,count,color){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">'      +'<div><div style="font-weight:600;font-size:14px;color:'+color+';">'+label+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">'+count+' invoice'+(count!==1?'s':'')+'</div></div>'      +'<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:'+color+';">$'+val.toFixed(2)+'</div>'      +'</div>';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">'      +'<div><div style="font-weight:600;font-size:14px;color:'+color+';">'+label+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">'+count+' invoice'+(count!==1?'s':'')+'</div></div>'      +'<div style="font-family:var(--mono);font-size:18px;font-weight:700;color:'+color+';">$'+fmt(val)+'</div>'      +'</div>';
   }
 
-  return '<div style="padding:16px;">'+yrBtns    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">'+moBtns+allBtn+'</div>'    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">'    +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">'+(viewAll?selYr+' Total':MONTHS[selMo]+' '+selYr)+'</div>'    +row('Bee Events',beeTot,beeCount,'var(--accent)')    +row('SWITS',swTot,swCount,'#3b82f6')    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 0 0;">'    +'<div style="font-weight:700;font-size:15px;">Combined Total</div>'    +'<div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--navy);">$'+total.toFixed(2)+'</div>'    +'</div>'    +'</div>'    +'</div>';
+  return '<div style="padding:16px;">'+yrBtns    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">'+moBtns+allBtn+'</div>'    +'<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">'    +'<div style="font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">'+(viewAll?selYr+' Total':MONTHS[selMo]+' '+selYr)+'</div>'    +row('Bee Events',beeTot,beeCount,'var(--accent)')    +row('SWITS',swTot,swCount,'#3b82f6')    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0 0 0;">'    +'<div style="font-weight:700;font-size:15px;">Combined Total</div>'    +'<div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--navy);">$'+fmt(total)+'</div>'    +'</div>'    +'</div>'    +'</div>';
 }
 
 function setSalesMo(mo){
@@ -1473,7 +1474,7 @@ function renderSalesDetailTab(){
         var azLabel=s.drillAz?'A→Z ▾':'Date ▾';
         var drillHtml=isOpen
           ?'<tr style="background:#f8fafc;"><td colspan="4" style="padding:0 0 6px 0;">'            +'<table style="width:100%;border-collapse:collapse;margin-top:2px;">'            +'<thead><tr style="background:#f1f5f9;">'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Invoice</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;"><span onclick="setSdDrillAz();event.stopPropagation();" style="cursor:pointer;text-decoration:underline dotted;">Customer '+azLabel+'</span></th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;">Date</th>'            +'<th style="padding:4px 10px;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;">Qty</th>'            +'</tr></thead><tbody>'            +drillRows.map(function(d){              return '<tr style="border-bottom:1px solid #e2e8f0;">'                +'<td style="padding:4px 10px;font-size:11px;font-family:var(--mono);color:var(--navy);">'+esc(d.num)+'</td>'                +'<td style="padding:4px 10px;font-size:11px;color:var(--navy);">'+esc(d.cust)+(d.outlet?' <span style="color:var(--muted);font-size:10px;">· '+esc(d.outlet)+'</span>':'')+'</td>'                +'<td style="padding:4px 10px;font-size:11px;color:var(--muted);">'+esc(fmtDate(d.date))+'</td>'                +'<td style="padding:4px 10px;font-size:11px;font-family:var(--mono);text-align:right;color:var(--navy);">'+d.qty+'</td>'                +'</tr>';            }).join('')            +'</tbody></table></td></tr>'          :'';
-        return '<tr style="'+TR+';cursor:pointer;background:'+(isOpen?'#eff6ff':'')+'" onclick="setSdDrill(this.dataset.k)" data-k="'+pkey.replace(/"/g,'&quot;')+'">'          +'<td style="'+td()+'">'          +'<span style="font-size:10px;color:var(--muted);margin-right:4px;">'+(isOpen?'▾':'▸')+'</span>'          +esc(p.name)+'</td>'          +'<td style="'+td()+';color:var(--muted);font-size:10px;">'+esc(p.spec||'\u2014')+'</td>'          +'<td style="'+td('center',true)+'">'+p.units+'</td>'          +'<td style="'+td('right',true)+'">$'+p.revenue.toFixed(2)+'</td>'          +'</tr>'          +drillHtml;}).join('')
+        return '<tr style="'+TR+';cursor:pointer;background:'+(isOpen?'#eff6ff':'')+'" onclick="setSdDrill(this.dataset.k)" data-k="'+pkey.replace(/"/g,'&quot;')+'">'          +'<td style="'+td()+'">'          +'<span style="font-size:10px;color:var(--muted);margin-right:4px;">'+(isOpen?'▾':'▸')+'</span>'          +esc(p.name)+'</td>'          +'<td style="'+td()+';color:var(--muted);font-size:10px;">'+esc(p.spec||'\u2014')+'</td>'          +'<td style="'+td('center',true)+'">'+p.units+'</td>'          +'<td style="'+td('right',true)+'">$'+fmt(p.revenue)+'</td>'          +'</tr>'          +drillHtml;}).join('')
     :'<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
 
   // ── Customers table ──
@@ -1482,7 +1483,7 @@ function renderSalesDetailTab(){
   var cTotUnits=0,cTotRev=0;
   var custBody=custEntries.length
     ?custEntries.map(function(c){cTotUnits+=c.units;cTotRev+=c.revenue;
-        return '<tr style="'+TR+'">'          +'<td style="'+td()+'">'+esc(c.name)+'</td>'          +'<td style="'+td()+';color:var(--muted);">'+esc(c.outlet||'\u2014')+'</td>'          +'<td style="'+td('center',true)+'">'+c.units+'</td>'          +'<td style="'+td('right',true)+'">$'+c.revenue.toFixed(2)+'</td>'          +'<td style="'+td('center',true)+';color:var(--muted);">'+c.invoices+'</td>'          +'</tr>';}).join('')
+        return '<tr style="'+TR+'">'          +'<td style="'+td()+'">'+esc(c.name)+'</td>'          +'<td style="'+td()+';color:var(--muted);">'+esc(c.outlet||'\u2014')+'</td>'          +'<td style="'+td('center',true)+'">'+c.units+'</td>'          +'<td style="'+td('right',true)+'">$'+fmt(c.revenue)+'</td>'          +'<td style="'+td('center',true)+';color:var(--muted);">'+c.invoices+'</td>'          +'</tr>';}).join('')
     :'<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">No sales for this period.</td></tr>';
 
   var salesTable=s.view==='products'
@@ -1494,7 +1495,7 @@ function renderSalesDetailTab(){
         +'<td style="'+ft()+'">Total</td>'
         +'<td></td>'
         +'<td style="'+ft('center',true)+'">'+totUnits+'</td>'
-        +'<td style="'+ft('right',true)+';color:var(--navy);">$'+totRev.toFixed(2)+'</td>'
+        +'<td style="'+ft('right',true)+';color:var(--navy);">$'+fmt(totRev)+'</td>'
         +'</tr></tfoot>':'')
       +'</table>'
     :'<table style="width:100%;border-collapse:collapse;">'
@@ -1509,7 +1510,7 @@ function renderSalesDetailTab(){
         +'<td style="'+ft()+'">Total</td>'
         +'<td></td>'
         +'<td style="'+ft('center',true)+'">'+cTotUnits+'</td>'
-        +'<td style="'+ft('right',true)+';color:var(--navy);">$'+cTotRev.toFixed(2)+'</td>'
+        +'<td style="'+ft('right',true)+';color:var(--navy);">$'+fmt(cTotRev)+'</td>'
         +'<td style="'+ft('center',true)+';color:var(--muted);">'+custEntries.length+' rows</td>'
         +'</tr></tfoot>':'')
       +'</table>';
@@ -1523,7 +1524,7 @@ function renderSalesDetailTab(){
           +'<td style="'+td()+'">'+esc(r.cust)+'</td>'
           +'<td style="'+td()+'">'+esc(r.product)+'</td>'
           +'<td style="'+td('center',true)+'">'+r.qty+'</td>'
-          +'<td style="'+td('right',true)+';color:#dc2626;">$'+r.value.toFixed(2)+'</td>'
+          +'<td style="'+td('right',true)+';color:#dc2626;">$'+fmt(r.value)+'</td>'
           +'</tr>';}).join('')
     :'<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">No returns for this period.</td></tr>';
 
@@ -1538,7 +1539,7 @@ function renderSalesDetailTab(){
     +(retList.length?'<tfoot><tr style="background:#fff5f5;">'
       +'<td colspan="3" style="'+ft()+';color:#dc2626;">Total Returned</td>'
       +'<td style="'+ft('center',true)+';color:#dc2626;">'+retTotUnits+'</td>'
-      +'<td style="'+ft('right',true)+';color:#dc2626;">$'+retTotVal.toFixed(2)+'</td>'
+      +'<td style="'+ft('right',true)+';color:#dc2626;">$'+fmt(retTotVal)+'</td>'
       +'</tr></tfoot>':'')
     +'</table>';
 
@@ -1575,7 +1576,7 @@ function renderSalesDetailTab(){
   var retHeader='<div onclick="setSdRetOpen('+(!s.retOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(s.retOpen?'#fff5f5':'var(--surface)')+';border-radius:'+(s.retOpen?'10px 10px 0 0':'10px')+';border:3px solid '+(s.retOpen?'#fca5a5':'#e2e8f0')+';">'
     +'<div style="display:flex;align-items:center;">'
     +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:'+(retList.length?'#dc2626':'var(--muted)')+';">Returns</span>'+retBadge
-    +(retList.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+retTotUnits+' units · $'+retTotVal.toFixed(2)+'</span>':'')
+    +(retList.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+retTotUnits+' units · $'+fmt(retTotVal)+'</span>':'')
     +'</div>'
     +'<span style="font-size:10px;color:var(--muted);">'+retChevron+'</span>'
     +'</div>';
@@ -1609,12 +1610,12 @@ function renderSalesDetailTab(){
   // ── Earnings card ──
   function earningsRow(label,net,revenue,returns,count,color,border){
     var subline = count+' invoice'+(count!==1?'s':'');
-    return '<div style="padding:10px 0;'+(border?'border-bottom:1px solid var(--border);':'')+'">'      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'      +'<div>'      +'<div style="font-weight:600;font-size:15px;color:'+color+';">'+label+'</div>'      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+subline+'</div>'      +'</div>'      +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:'+color+';">$'+net.toFixed(2)+'</div>'      +'</div>'      +(revenue>0||returns>0        ?'<div style="margin-top:5px;padding-left:10px;">'          +'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:2px 0;">'          +'<span>Revenue</span><span style="font-family:var(--mono);">$'+revenue.toFixed(2)+'</span></div>'          +(returns>0            ?'<div style="display:flex;justify-content:space-between;font-size:13px;color:#dc2626;padding:2px 0;">'              +'<span>Returns</span><span style="font-family:var(--mono);">-$'+returns.toFixed(2)+'</span></div>'            :'')          +'</div>'        :'')      +'</div>';
+    return '<div style="padding:10px 0;'+(border?'border-bottom:1px solid var(--border);':'')+'">'      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'      +'<div>'      +'<div style="font-weight:600;font-size:15px;color:'+color+';">'+label+'</div>'      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+subline+'</div>'      +'</div>'      +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:'+color+';">$'+fmt(net)+'</div>'      +'</div>'      +(revenue>0||returns>0        ?'<div style="margin-top:5px;padding-left:10px;">'          +'<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);padding:2px 0;">'          +'<span>Revenue</span><span style="font-family:var(--mono);">$'+fmt(revenue)+'</span></div>'          +(returns>0            ?'<div style="display:flex;justify-content:space-between;font-size:13px;color:#dc2626;padding:2px 0;">'              +'<span>Returns</span><span style="font-family:var(--mono);">-$'+fmt(returns)+'</span></div>'            :'')          +'</div>'        :'')      +'</div>';
   }
 
-  var shopeeRow = '<div style="padding:10px 0;border-bottom:1px solid var(--border);">'    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'    +'<div>'    +'<div style="font-weight:600;font-size:15px;color:#f97316;">Shopee</div>'    +(_shopee      ?'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+shopeeOrders+' order'+(shopeeOrders!==1?'s':'')+'</div>'      :'<div style="font-size:12px;color:var(--muted);margin-top:2px;">No data</div>')    +'</div>'    +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:#f97316;">'    +(_shopee?'$'+shopeeEarnings.toFixed(2):'—')    +'</div>'    +'</div>'    +'</div>';
+  var shopeeRow = '<div style="padding:10px 0;border-bottom:1px solid var(--border);">'    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'    +'<div>'    +'<div style="font-weight:600;font-size:15px;color:#f97316;">Shopee</div>'    +(_shopee      ?'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+shopeeOrders+' order'+(shopeeOrders!==1?'s':'')+'</div>'      :'<div style="font-size:12px;color:var(--muted);margin-top:2px;">No data</div>')    +'</div>'    +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:#f97316;">'    +(_shopee?'$'+fmt(shopeeEarnings):'—')    +'</div>'    +'</div>'    +'</div>';
 
-  var combinedRow = '<div style="padding:10px 0;">'    +'<div style="display:flex;justify-content:space-between;align-items:center;">'    +'<div>'    +'<div style="font-weight:600;font-size:15px;color:var(--navy);">Combined Total</div>'    +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+'</div>'    +'</div>'    +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--navy);">$'+combinedTotal.toFixed(2)+'</div>'    +'</div>'    +'</div>';
+  var combinedRow = '<div style="padding:10px 0;">'    +'<div style="display:flex;justify-content:space-between;align-items:center;">'    +'<div>'    +'<div style="font-weight:600;font-size:15px;color:var(--navy);">Combined Total</div>'    +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+(beeCount+swCount)+' invoice'+((beeCount+swCount)!==1?'s':'')+'</div>'    +'</div>'    +'<div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--navy);">$'+fmt(combinedTotal)+'</div>'    +'</div>'    +'</div>';
 
   // ── New summary card ──
   var summaryCard='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px;">'
@@ -1640,7 +1641,7 @@ function renderSalesDetailTab(){
     var hdr='<div onclick="setSdShopeeOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(isOpen?'#fff7ed':'var(--surface)')+';border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:3px solid '+(isOpen?'#fed7aa':'#e2e8f0')+';margin-top:14px;">'
       +'<div style="display:flex;align-items:center;">'
       +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f97316;">Shopee</span>'
-      +'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+(_shopee.units||0)+' units \u00b7 $'+shopeeEarnings.toFixed(2)+'</span>'
+      +'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+(_shopee.units||0)+' units \u00b7 $'+fmt(shopeeEarnings)+'</span>'
       +'</div>'
       +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'
       +'</div>';
@@ -1683,7 +1684,7 @@ function renderSalesDetailTab(){
       var hdr = '<div onclick="setSdProdOpen('+(!isOpen)+')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;background:'+(isOpen?'#eff6ff':'var(--surface)')+';border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';border:3px solid '+(isOpen?'#93c5fd':'#e2e8f0')+';margin-bottom:'+(isOpen?'0':'14px')+';">'
         +'<div style="display:flex;align-items:center;">'
         +'<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#3b82f6;">Product Sales</span>'
-        +(prodEntries.length||custEntries.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+_prodTotUnits+' units · $'+_prodTotRev.toFixed(2)+'</span>':'')
+        +(prodEntries.length||custEntries.length?'<span style="font-size:11px;color:var(--muted);margin-left:10px;font-family:var(--mono);">'+_prodTotUnits+' units · $'+fmt(_prodTotRev)+'</span>':'')
         +'</div>'
         +'<span style="font-size:10px;color:var(--muted);">'+chevron+'</span>'
         +'</div>';
@@ -1883,16 +1884,16 @@ function renderSplitCard(pair){
     var descParts=l.desc.split(' — ');
     var baseName=descParts[0];
     var specHtml=spec?'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+esc(spec)+'</div>':'';
-    return '<tr><td>'+(l.ret?'<span class="qv-ret">Deduction</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+    return '<tr><td>'+(l.ret?'<span class="qv-ret">Deduction</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+fmt(l.p)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+fmt(Math.abs(t))+'</td></tr>';
   }).join('');
 
   // Totals
   var tots='';
   if(beeinv&&swinv){
-    tots+='<div class="qvt dim"><span>Bee Events</span><span class="m">$'+beeTot.toFixed(2)+'</span></div>';
-    tots+='<div class="qvt dim"><span>SWITS</span><span class="m">$'+swTot.toFixed(2)+'</span></div>';
+    tots+='<div class="qvt dim"><span>Bee Events</span><span class="m">$'+fmt(beeTot)+'</span></div>';
+    tots+='<div class="qvt dim"><span>SWITS</span><span class="m">$'+fmt(swTot)+'</span></div>';
   }
-  tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+combined.toFixed(2)+'</span></div>';
+  tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+fmt(combined)+'</span></div>';
 
   // Action buttons — Bee Inv, SWITS Inv only (delete moved to PDF bar)
   var actionBtns='<div class="inv-card-actions" style="justify-content:space-between;">'
@@ -1919,7 +1920,7 @@ function renderSplitCard(pair){
         +'<div class="inv-card-name">'+esc(first.custName)+(first.outlet?' &middot; '+esc(first.outlet):'')+'</div>'
         +'<div class="inv-card-meta">'+esc(fmtDateDisplay(first.date))+' &middot; '+esc(first.ref||'&#8212;')+'</div>'
       +'</div>'
-      +'<div class="inv-card-amount">$'+combined.toFixed(2)+'</div>'
+      +'<div class="inv-card-amount">$'+fmt(combined)+'</div>'
       +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'
         +'<button onclick="toggleSplitPaid(&apos;'+groupId+'&apos;);event.stopPropagation()" title="'+(paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(paid?'#d1fae5':'#fee2e2')+';color:'+(paid?'#065f46':'#991b1b')+';">'+(paid?'$':'❗')+'</button>'
         +'<button onclick="toggleSplitDelivered(&apos;'+groupId+'&apos;);event.stopPropagation()" title="'+(delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(delivered?'#d1fae5':'#fee2e2')+';">'+(delivered?'✅':'⏳')+'</button>'
@@ -1984,22 +1985,22 @@ function renderInvCard(inv){
     var descParts=l.desc.split(' — ');
     var baseName=descParts[0];
     var specHtml=spec?'<div style="font-size:9px;color:var(--muted);margin-top:1px;">'+esc(spec)+'</div>':'';
-    return '<tr><td>'+(l.ret?'<span class="qv-ret">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+l.p.toFixed(2)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td></tr>';
+    return '<tr><td>'+(l.ret?'<span class="qv-ret">Return</span>':'')+esc(baseName)+specHtml+'</td><td class="r">'+l.q+'</td><td class="r">$'+fmt(l.p)+'</td><td class="r'+(t<0?' qv-neg':'')+'">'+(t<0?'&#8722;':'')+'$'+fmt(Math.abs(t))+'</td></tr>';
   }).join('');
   var tots='';
-  if(rt>0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+sb.toFixed(2)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+rt.toFixed(2)+'</span></div>';}
+  if(rt>0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+fmt(sb)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+fmt(rt)+'</span></div>';}
   var gstRateCard=getGSTRate(inv);
   if(gstRateCard!==null&&inv.gstInclusive){
     var netCard=g/(1+gstRateCard/100);var gstAmtCard=g-netCard;
-    tots+='<div class="qvt dim"><span>Subtotal (excl. GST)</span><span class="m">$'+netCard.toFixed(2)+'</span></div>';
-    tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';
-    tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';
+    tots+='<div class="qvt dim"><span>Subtotal (excl. GST)</span><span class="m">$'+fmt(netCard)+'</span></div>';
+    tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+fmt(gstAmtCard)+'</span></div>';
+    tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+fmt(g)+'</span></div>';
   } else if(gstRateCard!==null){
     var gstAmtCard2=g*(gstRateCard/100);
-    tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard2.toFixed(2)+'</span></div>';
-    tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard2).toFixed(2)+'</span></div>';
-  } else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
-  return '<div class="inv-card-item" id="icard-'+inv.id+'" style="border-left:'+(inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)')+';transition:border .2s;">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDateDisplay(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')
+    tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+fmt(gstAmtCard2)+'</span></div>';
+    tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+fmt((g+gstAmtCard2))+'</span></div>';
+  } else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+fmt(g)+'</span></div>';}
+  return '<div class="inv-card-item" id="icard-'+inv.id+'" style="border-left:'+(inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)')+';transition:border .2s;">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDateDisplay(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+fmt(g)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')
       +(inv.remarks?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;padding:6px 8px;background:#fffbeb;border-radius:6px;border-left:3px solid #f59e0b;">💬 '+esc(inv.remarks)+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'<button class="btn btn-ghost btn-sm" onclick="duplicateInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">⧉ Duplicate</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
 }
 
@@ -2101,8 +2102,8 @@ function openReceiptPrinter(id){
   if(inv.company==='swits'&&gstRate!==null){p.set('gst','1');p.set('gstrate',String(gstRate));}
   var itemLines=inv.lines.filter(function(l){return !l.ret;});
   var retLines =inv.lines.filter(function(l){return  l.ret;});
-  if(itemLines.length) p.set('items',itemLines.map(function(l){return encodeURIComponent(l.desc)+'|'+l.q+'|'+l.p.toFixed(2);}).join('||'));
-  if(retLines.length)  p.set('returns',retLines.map(function(l){return encodeURIComponent(l.desc)+'|'+l.q+'|'+l.p.toFixed(2);}).join('||'));
+  if(itemLines.length) p.set('items',itemLines.map(function(l){return encodeURIComponent(l.desc)+'|'+l.q+'|'+fmt(l.p);}).join('||'));
+  if(retLines.length)  p.set('returns',retLines.map(function(l){return encodeURIComponent(l.desc)+'|'+l.q+'|'+fmt(l.p);}).join('||'));
   window.open('receipt-printer.html?'+p.toString(),'_blank');
 }
 function toggleCard(id){
@@ -2375,7 +2376,7 @@ function renderLines(){
         +' oninput="upF(&apos;'+lid+'&apos;,&apos;q&apos;,this.value)"></td>'
       +'<td><input class="li price" type="number"'+priceMinAttr+' step="0.01" value="'+priceVal+'"'+priceTitle
         +' oninput="upF(&apos;'+lid+'&apos;,&apos;p&apos;,this.value)" style="'+priceStyle+'"></td>'
-      +'<td class="lt'+negCls+'">'+negSign+'$'+Math.abs(t).toFixed(2)+'</td>'
+      +'<td class="lt'+negCls+'">'+negSign+'$'+fmt(Math.abs(t))+'</td>'
       +'<td><button class="lrm" onclick="removeLine(&apos;'+lid+'&apos;)">&#x2715;</button></td>'
       +'</tr>';
   }).join('');
@@ -2399,7 +2400,7 @@ function upF(lid,field,val){
     }
   }
   var row=document.querySelector('[data-lid="'+lid+'"]');
-  if(row){var lt=row.querySelector('.lt');var t=ln.q*(ln.ret?-1:1)*ln.p;if(lt){lt.className='lt'+(t<0?' neg':'');lt.textContent=(t<0?'−':'')+'$'+Math.abs(t).toFixed(2);}}
+  if(row){var lt=row.querySelector('.lt');var t=ln.q*(ln.ret?-1:1)*ln.p;if(lt){lt.className='lt'+(t<0?' neg':'');lt.textContent=(t<0?'−':'')+'$'+fmt(Math.abs(t));}}
   renderTotals();
 }
 
@@ -2415,17 +2416,17 @@ function renderTotals(){
     var net=s/(1+gstRate/100);
     var gstAmt=s-net;
     var grandTotal=s-r;
-    html+='<div class="tot-row dim"><span>Subtotal (excl. GST)</span><span class="mono">$'+net.toFixed(2)+'</span></div>';
-    html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+gstAmt.toFixed(2)+'</span></div>';
-    if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
-    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal.toFixed(2)+'</span></div>';
+    html+='<div class="tot-row dim"><span>Subtotal (excl. GST)</span><span class="mono">$'+fmt(net)+'</span></div>';
+    html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+fmt(gstAmt)+'</span></div>';
+    if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+fmt(r)+'</span></div>';}
+    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+fmt(grandTotal)+'</span></div>';
   } else {
     var gstAmt2=gstRate!==null?s*(gstRate/100):0;
     var grandTotal2=s+(gstRate!==null?gstAmt2:0)-r;
-    html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div>';
-    if(gstRate!==null){html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+gstAmt2.toFixed(2)+'</span></div>';}
-    if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
-    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal2.toFixed(2)+'</span></div>';
+    html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+fmt(s)+'</span></div>';
+    if(gstRate!==null){html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+fmt(gstAmt2)+'</span></div>';}
+    if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+fmt(r)+'</span></div>';}
+    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+fmt(grandTotal2)+'</span></div>';
   }
   html+='</div>';
   document.getElementById('totals-block').innerHTML=html;
@@ -2612,8 +2613,8 @@ function buildPDF(inv){
         +'<td style="font-size:11px;">'+esc(baseName)+'</td>'
         +'<td style="font-size:11px;color:#555;">'+esc(packSize)+'</td>'
         +'<td class="r" style="font-size:11px;">'+l.q+'</td>'
-        +'<td class="r" style="font-size:11px;">$'+l.p.toFixed(2)+'</td>'
-        +'<td class="r'+(t<0?' pdf-neg':'')+'" style="font-size:11px;">'+(t<0?'&#8722;':'')+'$'+Math.abs(t).toFixed(2)+'</td>'
+        +'<td class="r" style="font-size:11px;">$'+fmt(l.p)+'</td>'
+        +'<td class="r'+(t<0?' pdf-neg':'')+'" style="font-size:11px;">'+(t<0?'&#8722;':'')+'$'+fmt(Math.abs(t))+'</td>'
         +'</tr>';
     }).join('');
   }
@@ -2630,17 +2631,17 @@ function buildPDF(inv){
     var netPDF=s/(1+gstRatePDF/100);
     var gstAmtPDF=s-netPDF;
     var grandTotalPDF=s-r;
-    tots+='<div class="ptr dim"><span>Subtotal (excl. GST)</span><span class="m">$'+netPDF.toFixed(2)+'</span></div>';
-    tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF.toFixed(2)+'</span></div>';
-    if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
-    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotalPDF.toFixed(2)+'</span></div>';
+    tots+='<div class="ptr dim"><span>Subtotal (excl. GST)</span><span class="m">$'+fmt(netPDF)+'</span></div>';
+    tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+fmt(gstAmtPDF)+'</span></div>';
+    if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+fmt(r)+'</span></div>';}
+    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+fmt(grandTotalPDF)+'</span></div>';
   } else {
     var gstAmtPDF2=gstRatePDF!==null?s*(gstRatePDF/100):0;
     var grandTotalPDF2=s+gstAmtPDF2-r;
-    tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div>';
-    if(gstRatePDF!==null){tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF2.toFixed(2)+'</span></div>';}
-    if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
-    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotalPDF2.toFixed(2)+'</span></div>';
+    tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+fmt(s)+'</span></div>';
+    if(gstRatePDF!==null){tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+fmt(gstAmtPDF2)+'</span></div>';}
+    if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+fmt(r)+'</span></div>';}
+    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+fmt(grandTotalPDF2)+'</span></div>';
   }
   return '<div class="pdf-doc">'
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub2+'</div></div>'
@@ -2946,7 +2947,7 @@ function doEmail(inv){
   if(!to){to=prompt("Send to email:","b33events.sg@gmail.com");}if(!to)to="b33events.sg@gmail.com";
   if(!to)return;
   var s=encodeURIComponent((inv.num||"Invoice")+" from Bee Events");
-  var parts=["Hi,","","Invoice "+(inv.num||"")+" details:","Customer: "+(inv.custName||""),"Date: "+fmtDate(inv.date),"Total: $"+grand(inv.lines).toFixed(2),"Payment: "+(inv.pay||""),"","[Please attach the PDF file that just downloaded]","","Thank you,","Bee Events","Tel: "+(DB.settings.phone||"+65 8164 8864")];
+  var parts=["Hi,","","Invoice "+(inv.num||"")+" details:","Customer: "+(inv.custName||""),"Date: "+fmtDate(inv.date),"Total: $"+fmt(grand(inv.lines)),"Payment: "+(inv.pay||""),"","[Please attach the PDF file that just downloaded]","","Thank you,","Bee Events","Tel: "+(DB.settings.phone||"+65 8164 8864")];
   var b=encodeURIComponent(parts.join("\n"));
   window.open("mailto:"+encodeURIComponent(to)+"?subject="+s+"&body="+b,"_blank");
   // Download the invoice file first, then open email
@@ -2961,7 +2962,7 @@ function doWA(inv){
   if(!waNum)waNum="6581648864";
   var g=grand(inv.lines);
   var outlet=inv.outlet?" ("+inv.outlet+")":"";
-  var parts=["Invoice "+(inv.num||"")+" from *Bee Events*","","Customer: *"+(inv.custName||"")+outlet+"*","Date: "+fmtDate(inv.date),"Total: *$"+g.toFixed(2)+"*","Payment: "+(inv.pay||""),"","[Please attach the PDF file that just downloaded]","","Thank you! Bee Events"];
+  var parts=["Invoice "+(inv.num||"")+" from *Bee Events*","","Customer: *"+(inv.custName||"")+outlet+"*","Date: "+fmtDate(inv.date),"Total: *$"+fmt(g)+"*","Payment: "+(inv.pay||""),"","[Please attach the PDF file that just downloaded]","","Thank you! Bee Events"];
   var msg=parts.join("\n");
   // Download the invoice file first, then open WhatsApp
   downloadInvFile(inv);
@@ -3009,9 +3010,9 @@ function renderQuoCard(quo){
     var spec=_getLineSpec(l);
     var baseName=l.desc.split(" — ")[0];
     var specHtml=spec?"<div style=\"font-size:9px;color:var(--muted);margin-top:1px;\">"+esc(spec)+"</div>":"";
-    return "<tr><td>"+esc(baseName)+specHtml+"</td><td class=\"r\">"+l.q+"</td><td class=\"r\">$"+l.p.toFixed(2)+"</td><td class=\"r"+cls+"\">"+neg+"$"+Math.abs(t).toFixed(2)+"</td></tr>";
+    return "<tr><td>"+esc(baseName)+specHtml+"</td><td class=\"r\">"+l.q+"</td><td class=\"r\">$"+fmt(l.p)+"</td><td class=\"r"+cls+"\">"+neg+"$"+fmt(Math.abs(t))+"</td></tr>";
   }).join("");
-  var tots="<div class=\"qvt grand\"><span>Total</span><span class=\"m\">$"+g.toFixed(2)+"</span></div>";
+  var tots="<div class=\"qvt grand\"><span>Total</span><span class=\"m\">$"+fmt(g)+"</span></div>";
   var qid=quo.id;
   var TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>';
   var h="";
@@ -3024,7 +3025,7 @@ function renderQuoCard(quo){
   h+='<div class="inv-card-meta">'+esc(fmtDateDisplay(quo.date))+' · '+esc(quo.ref||'\u2014')+'</div>';
   h+='</div>';
   h+='<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">';
-  h+='<span class="inv-card-amount">$'+g.toFixed(2)+'</span>';
+  h+='<span class="inv-card-amount">$'+fmt(g)+'</span>';
   h+='<button class="btn btn-accent btn-sm qbtn-edit" style="padding:4px 8px;font-size:11px;">Edit</button>';
   h+='<button class="btn btn-ghost btn-sm qbtn-pdf" style="padding:4px 8px;font-size:11px;">PDF</button>';
   h+='<button class="btn btn-red btn-sm qbtn-del" style="padding:4px 8px;font-size:11px;" title="Delete">'+TRASH+'</button>';
@@ -3105,7 +3106,7 @@ function updateExpCount(){
     ['exp-btn-csv','exp-btn-zip'].forEach(function(id){var b=document.getElementById(id);if(b){b.disabled=true;b.style.opacity='0.5';}});
   } else {
     var total=list.reduce(function(s,inv){return s+grand(inv.lines);},0);
-    el.textContent=list.length+' invoice'+(list.length>1?'s':'')+' · Total $'+total.toFixed(2);
+    el.textContent=list.length+' invoice'+(list.length>1?'s':'')+' · Total $'+fmt(total);
     ['exp-btn-csv','exp-btn-zip'].forEach(function(id){var b=document.getElementById(id);if(b){b.disabled=false;b.style.opacity='1';}});
   }
 }
