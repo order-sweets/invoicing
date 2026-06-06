@@ -421,8 +421,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                   </select>
                 </div>
                 <div class="mf">
-                  <label>Invoice Date</label>
-                  <input type="date" id="f-date" style="max-width:160px;">
+                  <label>Date</label>
+                  <input type="text" id="f-date" placeholder="KIV" style="max-width:160px;" onfocus="this.type='date'" onblur="if(!this.value){this.type='text';}">
                 </div>
                 <div class="mf">
                   <label>Payment</label>
@@ -469,6 +469,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--ink)
                 <tbody id="line-body"></tbody>
               </table>
               <button class="btn btn-sm" onclick="addCustomLine(false)" style="margin-top:6px;width:100%;background:var(--accent-lt,#FAECE7);color:var(--accent,#D85A30);border:1.5px solid rgba(216,90,48,.25);font-weight:600;">+ Add Item</button>
+              <div id="gst-incl-wrap" style="display:none;margin-top:10px;margin-bottom:2px;">
+                <button id="gst-incl-btn" onclick="toggleGstInclusive()" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1.5px solid #a5b4fc;background:#eef2ff;color:#4338ca;font-family:inherit;cursor:pointer;font-weight:600;"></button>
+              </div>
               <div id="totals-block"></div>
             </div>
           </div>
@@ -1219,18 +1222,27 @@ function renderHome(){
       if(_invFilter==='unpaid'&&i.paid)return false;
       if(_invFilter==='undelivered'&&i.delivered)return false;
       if(!_q){
-        if(!i.date)return false;
+        // KIV invoices always shown regardless of selected month/year
+        if(i.date==='KIV'||!i.date)return !_q; // KIV: include always; blank: include only on search
         var parts=i.date.split('-');
         var iYr=parseInt(parts[0],10), iMo=parseInt(parts[1],10)-1;
-        if(parseInt(parts[0],10)!==_selYr)return false;
+        if(iYr!==_selYr)return false;
         if(!_viewAll&&iMo!==_selMo)return false;
       }
       return true;
     });
     if(!list2.length){el.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.95-1.56L23 6H6"/></svg><p>No invoiced orders yet.</p></div>';return;}
+    // Sort: KIV/undated first, then by date descending
+    list2.sort(function(a,b){
+      var aKiv=(!a.date||a.date==='KIV'), bKiv=(!b.date||b.date==='KIV');
+      if(aKiv&&!bKiv)return -1;
+      if(!aKiv&&bKiv)return 1;
+      if(aKiv&&bKiv)return 0;
+      return (b.date||'').localeCompare(a.date||'');
+    });
     var rendered=[];
     var seenGroups={};
-    list2.slice().reverse().forEach(function(inv){
+    list2.forEach(function(inv){
       if(inv.splitGroup){
         if(seenGroups[inv.splitGroup])return;
         seenGroups[inv.splitGroup]=true;
@@ -1976,8 +1988,16 @@ function renderInvCard(inv){
   var tots='';
   if(rt>0){tots+='<div class="qvt dim"><span>Subtotal</span><span class="m">$'+sb.toFixed(2)+'</span></div><div class="qvt ret"><span>Returns</span><span class="m">&#8722;$'+rt.toFixed(2)+'</span></div>';}
   var gstRateCard=getGSTRate(inv);
-  if(gstRateCard!==null){var gstAmtCard=g*(gstRateCard/100);tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard).toFixed(2)+'</span></div>';}
-  else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
+  if(gstRateCard!==null&&inv.gstInclusive){
+    var netCard=g/(1+gstRateCard/100);var gstAmtCard=g-netCard;
+    tots+='<div class="qvt dim"><span>Subtotal (excl. GST)</span><span class="m">$'+netCard.toFixed(2)+'</span></div>';
+    tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard.toFixed(2)+'</span></div>';
+    tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';
+  } else if(gstRateCard!==null){
+    var gstAmtCard2=g*(gstRateCard/100);
+    tots+='<div class="qvt dim"><span>GST ('+gstRateCard+'%)</span><span class="m">$'+gstAmtCard2.toFixed(2)+'</span></div>';
+    tots+='<div class="qvt grand"><span>Total (incl. GST)</span><span class="m">$'+(g+gstAmtCard2).toFixed(2)+'</span></div>';
+  } else{tots+='<div class="qvt grand"><span>Total</span><span class="m">$'+g.toFixed(2)+'</span></div>';}
   return '<div class="inv-card-item" id="icard-'+inv.id+'" style="border-left:'+(inv.flagged?'5px solid #10b981':'1.5px solid var(--border-md)')+';transition:border .2s;">'     +'<div class="inv-card-header">'      +'<input type="checkbox" class="mass-cb" data-id="'+inv.id+'" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-right:4px;" onchange="updateSelCount()" onclick="event.stopPropagation()">'      +'<div onclick="toggleCard(\'ic-'+inv.id+'\')" style="flex:1;min-width:0;cursor:pointer;">'        +'<div class="inv-card-num">'+(inv.isQuotation?'<span style="font-size:9px;font-weight:700;background:var(--blue-bg,#E8F2FB);color:var(--blue-text,#1A4F7A);padding:1px 5px;border-radius:4px;margin-right:4px;">QUO</span>':'')+esc(inv.num)+'</div>'        +'<div class="inv-card-name">'+esc(inv.custName)+(inv.outlet?' · '+esc(inv.outlet):'')+'</div>'        +'<div class="inv-card-meta">'+esc(fmtDate(inv.date))+' · '+esc(inv.ref||'—')+'</div>'      +'</div>'      +'<div class="inv-card-amount" style="color:'+(g<0?'var(--red)':'')+'">$'+g.toFixed(2)+'</div>'      +'<div style="display:flex;gap:4px;flex-shrink:0;align-items:center;">'      +'<button onclick="togglePaid(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.paid?'Paid':'Unpaid')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:'+(inv.paid?'#d1fae5':'#fee2e2')+';color:'+(inv.paid?'#065f46':'#991b1b')+';">'+(inv.paid?'$':'❗')+'</button>'      +'<button onclick="toggleDelivered(\''+inv.id+'\');event.stopPropagation()" title="'+(inv.delivered?'Delivered':'Undelivered')+'" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:22px;border-radius:20px;border:none;cursor:pointer;font-size:11px;background:'+(inv.delivered?'#d1fae5':'#fee2e2')+';">'+(inv.delivered?'✅':'⏳')+'</button>'      +'<button class="btn btn-accent btn-sm" onclick="editInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">Edit</button>'      +'<svg class="inv-card-chevron" id="chev-ic-'+inv.id+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;cursor:pointer;" onclick="toggleCard(\'ic-'+inv.id+'\');event.stopPropagation()"><polyline points="6 9 12 15 18 9"/></svg>'    +'</div>'    +'</div>'    +'<div class="inv-card-body" id="ic-'+inv.id+'">'      +(inv.outlet||inv.addr?'<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">📍 '+[inv.outlet,inv.addr].filter(Boolean).map(esc).join(' · ')+'</div>':'')
       +(inv.remarks?'<div style="font-size:12px;color:var(--muted);margin-bottom:8px;padding:6px 8px;background:#fffbeb;border-radius:6px;border-left:3px solid #f59e0b;">💬 '+esc(inv.remarks)+'</div>':'')      +'<table class="qv-table"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Unit $</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'      +'<div class="qv-totals"><div class="qv-totals-inner">'+tots+'</div></div>'      +'<div class="inv-card-actions" style="justify-content:space-between;">'      +'<div style="display:flex;gap:6px;">'      +'<button class="btn btn-ghost btn-sm" onclick="openReceiptPrinter(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">&#x1F5A8; Receipt</button>'      +'<button class="btn btn-ghost btn-sm" onclick="previewInv(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">PDF</button>'      +'<button class="btn btn-ghost btn-sm" onclick="duplicateInvoice(\''+inv.id+'\');event.stopPropagation()" style="padding:4px 8px;font-size:11px;">⧉ Duplicate</button>'      +'</div>'      +'</div>'    +'</div>'    +'</div>';
 }
@@ -2094,7 +2114,7 @@ function toggleCard(id){
 
 // ══ NEW / GENERATE ══
 function newInvoice(){
-  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',phone:'',date:new Date().toISOString().split('T')[0],ref:'',pay:'Cash on Delivery',remarks:'',lines:[],confirmed:false};
+  current={id:'draft_'+Date.now(),num:null,custName:'',addr:'',outlet:'',phone:'',date:'KIV',ref:'',pay:'Cash on Delivery',remarks:'',lines:[],confirmed:false};
   current.lines.push({id:'l_'+Date.now(),desc:'',q:1,p:0,ret:false});
   loadEditor();
   document.getElementById('btn-del').style.display='none';
@@ -2136,7 +2156,7 @@ function generateFromOrder(orderId){
   current={
     id:'draft_'+Date.now(),num:null,custName:o.custName,addr:o.addr,outlet:o.outlet||'',remarks:'',
     phone:o.custPhone||o.phone||'',
-    date:o.date,ref:o.id,pay:'Cash on Delivery',
+    date:'KIV',ref:o.id,pay:'Cash on Delivery',
     lines:o.items.map(function(it,i){return{id:'l_'+Date.now()+'_'+i,pid:it.pid||'',unit:it.unit||'piece',desc:_richDesc(it),q:it.qty,p:it.price,ret:false};}),
     confirmed:false,_sourceOrderId:o.id
   };
@@ -2163,7 +2183,12 @@ function loadEditor(){
   else if(refLabel && current._refLabel) refLabel.value = current._refLabel;
   document.getElementById('f-cust-name').value = current.custName||'';
   var fco=document.getElementById('f-company');if(fco)fco.value=current.company||'bee';
-  document.getElementById('f-date').value = current.date||'';
+  (function(){
+    var fd=document.getElementById('f-date');
+    var dv=current.date||'';
+    if(dv&&dv!=='KIV'){fd.type='date';fd.value=dv;}
+    else{fd.type='text';fd.value=dv==='KIV'?'KIV':'';}
+  })();
   document.getElementById('f-addr').value = current.addr||'';
   document.getElementById('f-ref').value = current.ref||'';
   document.getElementById('f-pay').value = current.pay||'Cash on Delivery';
@@ -2190,11 +2215,30 @@ function loadEditor(){
     outWrap.style.display='none';
   }
   renderLines();
+  updateGstInclWrap();
 }
 
 function onCompanyChange(){
   var fco=document.getElementById("f-company");
   if(fco)current.company=fco.value;
+  if(current.company!=='swits')current.gstInclusive=false;
+  updateGstInclWrap();
+  renderTotals();
+}
+function updateGstInclWrap(){
+  var wrap=document.getElementById('gst-incl-wrap');
+  var btn=document.getElementById('gst-incl-btn');
+  if(!wrap||!btn)return;
+  var isSwits=(current&&current.company==='swits');
+  var gstRate=getGSTRate(current);
+  var show=isSwits&&gstRate!==null;
+  wrap.style.display=show?'block':'none';
+  if(show){btn.textContent=current.gstInclusive?'GST-Inclusive ✓':'GST-Exclusive';}
+}
+function toggleGstInclusive(){
+  if(!current)return;
+  current.gstInclusive=!current.gstInclusive;
+  updateGstInclWrap();
   renderTotals();
 }
 function fmtInvPhone(inp){
@@ -2364,23 +2408,27 @@ function renderTotals(){
   var s=posLines.reduce(function(a,l){return a+l.q*l.p;},0);
   var r=retLines.reduce(function(a,l){return a+l.q*l.p;},0);
   var gstRate=getGSTRate(current);
-  var gstAmt=gstRate!==null?s*(gstRate/100):0;
-  var grandTotal=s+(gstRate!==null?gstAmt:0)-r;
   var html='<div class="totals-block">';
-  // Subtotal (always show)
-  html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div>';
-  // GST if applicable
-  if(gstRate!==null){
+  if(gstRate!==null&&current.gstInclusive){
+    // GST-inclusive: price entered already contains GST
+    var net=s/(1+gstRate/100);
+    var gstAmt=s-net;
+    var grandTotal=s-r;
+    html+='<div class="tot-row dim"><span>Subtotal (excl. GST)</span><span class="mono">$'+net.toFixed(2)+'</span></div>';
     html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+gstAmt.toFixed(2)+'</span></div>';
-  }
-  // Returns section — itemised in red
-  if(retLines.length>0){
     if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
+    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal.toFixed(2)+'</span></div>';
+  } else {
+    var gstAmt2=gstRate!==null?s*(gstRate/100):0;
+    var grandTotal2=s+(gstRate!==null?gstAmt2:0)-r;
+    html+='<div class="tot-row dim"><span>Subtotal</span><span class="mono">$'+s.toFixed(2)+'</span></div>';
+    if(gstRate!==null){html+='<div class="tot-row dim"><span>GST ('+gstRate+'%)</span><span class="mono">$'+gstAmt2.toFixed(2)+'</span></div>';}
+    if(r>0){html+='<div class="tot-row ret"><span style="font-size:11px;">Deduction</span><span class="mono">&#8722;$'+r.toFixed(2)+'</span></div>';}
+    html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal2.toFixed(2)+'</span></div>';
   }
-  // Grand total
-  html+='<div class="tot-row grand"><span>Total</span><span class="mono">$'+grandTotal.toFixed(2)+'</span></div>';
   html+='</div>';
   document.getElementById('totals-block').innerHTML=html;
+  updateGstInclWrap();
 }
 
 // ══ CONFIRM & GENERATE ══
@@ -2576,18 +2624,23 @@ function buildPDF(inv){
   var rows=delivRows+retRows;
   // Build totals: Subtotal → GST → Returns total in red → Total
   var tots='';
-  tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div>';
   var gstRatePDF=getGSTRate(inv);
-  var gstAmtPDF=0;
-  if(gstRatePDF!==null){
-    gstAmtPDF=s*(gstRatePDF/100);
+  if(gstRatePDF!==null&&inv.gstInclusive){
+    var netPDF=s/(1+gstRatePDF/100);
+    var gstAmtPDF=s-netPDF;
+    var grandTotalPDF=s-r;
+    tots+='<div class="ptr dim"><span>Subtotal (excl. GST)</span><span class="m">$'+netPDF.toFixed(2)+'</span></div>';
     tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF.toFixed(2)+'</span></div>';
-  }
-  if(r>0){
     if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
+    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotalPDF.toFixed(2)+'</span></div>';
+  } else {
+    var gstAmtPDF2=gstRatePDF!==null?s*(gstRatePDF/100):0;
+    var grandTotalPDF2=s+gstAmtPDF2-r;
+    tots+='<div class="ptr dim"><span>Subtotal</span><span class="m">$'+s.toFixed(2)+'</span></div>';
+    if(gstRatePDF!==null){tots+='<div class="ptr dim"><span>GST ('+gstRatePDF+'%)</span><span class="m">$'+gstAmtPDF2.toFixed(2)+'</span></div>';}
+    if(r>0){tots+='<div class="ptr ret"><span>Deduction</span><span class="m">&#8722;$'+r.toFixed(2)+'</span></div>';}
+    tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotalPDF2.toFixed(2)+'</span></div>';
   }
-  var grandTotal=s+gstAmtPDF-r;
-  tots+='<div class="ptr grand"><span>Total</span><span class="m">$'+grandTotal.toFixed(2)+'</span></div>';
   return '<div class="pdf-doc">'
     +'<div class="pdf-top"><div><div class="pdf-brand-name">'+esc(companyName)+'</div><div class="pdf-brand-sub">'+brandSub2+'</div></div>'
       +'<div class="pdf-inv-box"><div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#C8501F;">'+docLabel+'</div><div class="num">'+esc(inv.num||'DRAFT')+'</div><div class="dt">'+esc(fmtDate(inv.date))+'</div></div></div>'
@@ -2920,7 +2973,7 @@ function doWA(inv){
 function nextQuoNum(){DB.quoCounter++;persist();return "QUO-"+String(DB.quoCounter).padStart(4,"0");}
 function newQuotation(){
   current={id:"quo_"+Date.now(),num:null,isQuotation:true,company:"bee",custName:"",addr:"",outlet:"",phone:"",
-    date:new Date().toISOString().split("T")[0],ref:"",pay:"",lines:[],confirmed:false};
+    date:"KIV",ref:"",pay:"",lines:[],confirmed:false};
   current.lines.push({id:'l_'+Date.now(),desc:'',q:1,p:0,ret:false});
   loadEditor();
   document.getElementById("btn-del").style.display="none";
