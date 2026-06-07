@@ -852,6 +852,17 @@ function persist() {
   localStorage.setItem('beinv-settings',  JSON.stringify(DB.settings));
   localStorage.setItem('beinv-quo-counter', String(DB.quoCounter));
   localStorage.setItem('beinv-quotations',  JSON.stringify(DB.quotations));
+  // Rotating backup — saves a timestamped snapshot every time data is committed locally.
+  // Provides a recovery point if Firebase ever pushes stale data that overwrites local state.
+  try{
+    localStorage.setItem('beinv-backup', JSON.stringify({
+      ts: Date.now(),
+      invoices:   DB.invoices,
+      quotations: DB.quotations,
+      counter:    DB.counter,
+      quoCounter: DB.quoCounter
+    }));
+  }catch(e){}
   updateBadge();
   if(window._invFbDebouncedPush) window._invFbDebouncedPush();
 }
@@ -942,15 +953,18 @@ function deductStockForInvoice(lines){
     .then(function(fbInv){
       var localInv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
       var inv=Object.assign({},localInv,fbInv||{});
+      // Build patch of only the keys that changed — never PUT full inv blob
+      var patch={};
       Object.keys(deductions).forEach(function(pid){
         var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
-        inv[pid]=Math.max(0,current-deductions[pid]);
+        patch[pid]=Math.max(0,current-deductions[pid]);
+        inv[pid]=patch[pid];
       });
       localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
       return fetch(FB_URL+'/store/inv.json',{
-        method:'PUT',
+        method:'PATCH',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(inv)
+        body:JSON.stringify(patch)
       });
     })
     .catch(function(){
@@ -1001,15 +1015,18 @@ function adjustStockForInvoiceEdit(oldLines, newLines){
     .then(function(fbInv){
       var localInv=JSON.parse(localStorage.getItem('snack-inv-v5')||'{}');
       var inv=Object.assign({},localInv,fbInv||{});
+      // Build patch of only the keys that changed — never PUT full inv blob
+      var patch={};
       Object.keys(delta).forEach(function(pid){
         var current=parseInt(inv[pid]!==undefined&&inv[pid]!==null?inv[pid]:0,10);
-        inv[pid]=Math.max(0,current-delta[pid]); // deduct if positive, restore if negative
+        patch[pid]=Math.max(0,current-delta[pid]); // deduct if positive, restore if negative
+        inv[pid]=patch[pid];
       });
       localStorage.setItem('snack-inv-v5',JSON.stringify(inv));
       return fetch(FB_URL+'/store/inv.json',{
-        method:'PUT',
+        method:'PATCH',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(inv)
+        body:JSON.stringify(patch)
       });
     })
     .catch(function(){
@@ -3482,18 +3499,21 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
       if (pushedInvoice) _lastInvoiceState = invoiceStateStr;
       if (pushedPending) _lastPendingState = pendingStateStr;
       fbStatus('Saved', '#38a169');
+      // On success: SSE echo will arrive shortly and applyInvData handles it via _pushId guard.
+      // fetchStorePending confirms pending state is in sync.
+      setTimeout(function(){ fetchStorePending().catch(function(){}); }, 300);
     }).catch(function(){
-      fbStatus('Save failed', '#e53e3e');
+      // On failure: do NOT fetch from Firebase — that would overwrite correct local data
+      // with whatever stale version Firebase has. Instead retry the push after 5s.
+      fbStatus('Save failed — retrying…', '#e53e3e');
+      setTimeout(function(){
+        if (!_pushInFlight) debouncedPush();
+      }, 5000);
     }).finally(function(){
       _pushInFlight = false;
       if (_pushQueued) {
         _pushQueued = false;
         fbPush();
-      } else {
-        setTimeout(function(){
-          fetchInvoiceSnapshot().catch(function(){});
-          fetchStorePending().catch(function(){});
-        }, 300);
       }
     });
   }
@@ -3517,7 +3537,21 @@ var _mob=document.getElementById('mob-topbar-actions');if(_mob)_mob.innerHTML=HO
 
   function applyInvData(d) {
     if (!d) return;
+    // Skip our own echo
     if (d._pushId && d._pushId === _lastPushId) return;
+
+    // Version guard: reject remote data that is older than our last local save.
+    // This prevents a stale Firebase snapshot (from a failed push, old device, or
+    // network blip) from silently overwriting newer local invoice data.
+    var remoteV  = typeof d._v === 'number' ? d._v : 0;
+    var backupRaw = null;
+    try { backupRaw = JSON.parse(localStorage.getItem('beinv-backup') || 'null'); } catch(e) {}
+    var localV = backupRaw && typeof backupRaw.ts === 'number' ? backupRaw.ts : 0;
+    if (remoteV > 0 && localV > 0 && remoteV < localV) {
+      // Remote is older than our last confirmed local save — reject and push local version
+      if (!_pushInFlight && !_applyingRemote) debouncedPush();
+      return;
+    }
 
     var counter    = d.counter    != null ? parseInt(d.counter)    : null;
     var quoCounter = d.quoCounter != null ? parseInt(d.quoCounter) : null;
